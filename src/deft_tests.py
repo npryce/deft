@@ -122,22 +122,22 @@ class Ordering_Test:
         
         o.move(src=3, dst=1)
         
-        o2 = new_ordering()
-        new_order = o2[:]
+        new_order = new_ordering()[:]
         assert new_order == [11, 44, 22, 33, 55]
 
-    def Xtest_can_move_items_down_in_ordering(self):
+    
+    def test_can_move_items_down_in_ordering(self):
         o = new_ordering()
-        o.add(11)
-        o.add(22)
-        o.add(33)
-        o.add(44)
-        o.add(55)
+        o.add(0)
+        o.add(1)
+        o.add(2)
+        o.add(3)
+        o.add(4)
         
         o.move(src=1, dst=3)
         
-        o2 = new_ordering()
-        o2[:] == [11, 44, 22, 33, 55]
+        new_order = new_ordering()[:]
+        assert new_order == [0, 2, 3, 1, 4]
 
 
 def new_ordering():

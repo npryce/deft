@@ -64,29 +64,46 @@ class Ordering:
             raise TypeError, "don't know how to index with a " + type(n) + ", should be an int or a slice"
         
     def _get_element(self, n):
-        line_index = n if n >= 0 else (len(self) + n)
-        
-        if not (0 <= line_index < len(self)):
-            raise IndexError, "cannot get element %d of %d"%(n, len(self))
+        line_index = self._abs_index(n)
         
         return int(self._line(line_index).strip())
+    
+    def _abs_index(self, n):
+        abs_index = n if n >= 0 else (len(self) + n)
+        
+        if not (0 <= abs_index < len(self)):
+            raise IndexError, "cannot get element %d of %d"%(n, len(self))
+        
+        return abs_index
     
     def _get_slice(self, s):
         return [self._get_element(i) for i in range(*s.indices(len(self)))]
     
+
     def move(self, src, dst):
+        if src == dst:
+            return
+        
+        src = self._abs_index(src)
+        dst = self._abs_index(dst)
+        
         src_start = self._start_of(src)
         dst_start = self._start_of(dst)
         src_line = self._line(src)
         
-        moved_mem_start = dst_start
-        moved_mem_end = src_start
-        moved_mem_size = moved_mem_end - moved_mem_start
-        moved_mem_dst = dst_start+self.line_length
-        self.mem.move(moved_mem_dst, moved_mem_start, moved_mem_size)
+        if src > dst:
+            moved_mem_start = dst_start
+            moved_mem_end = src_start
+            moved_mem_dst = dst_start + self.line_length
+        else:
+            moved_mem_start = src_start + self.line_length
+            moved_mem_end = dst_start + self.line_length
+            moved_mem_dst = src_start
         
-        self.mem.seek(dst_start)
-        self.mem.write(src_line)
+        moved_mem_size = moved_mem_end - moved_mem_start
+        
+        self.mem.move(moved_mem_dst, moved_mem_start, moved_mem_size)
+        self.mem[dst_start:dst_start+self.line_length] = src_line
         self.mem.flush()
         
     def close(self):
