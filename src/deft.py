@@ -2,6 +2,29 @@
 import os
 import mmap
 
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader
+    from yaml import CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
+
+
+class Deft:
+    def __init__(self, abspath):
+        pass
+
+
+class Feature:
+    def __init__(self, id, name, description, created_by):
+        self.id = id
+        self.name = name
+        self.description = description
+        self.status = "pending"
+        self.created_by = created_by
+
+
 class Ordering:
     max_digits = 7
     line_length = max_digits+1
@@ -29,12 +52,51 @@ class Ordering:
         self.mem.write(new_line)
         self.mem.flush()
     
+    def __len__(self):
+        return (len(self.mem) - self.offset) / self.line_length
+        
     def __getitem__(self, n):
-        line_start = self.offset + self.line_length*n
-        line_end = line_start + self.line_length
-        line = self.mem[line_start:line_end]
-        return int(line.strip())
+        if type(n) == int:
+            return self._get_element(n)
+        elif type(n) == slice:
+            return self._get_slice(n)
+        else:
+            raise TypeError, "don't know how to index with a " + type(n) + ", should be an int or a slice"
+        
+    def _get_element(self, n):
+        line_index = n if n >= 0 else (len(self) + n)
+        
+        if not (0 <= line_index < len(self)):
+            raise IndexError, "cannot get element %d of %d"%(n, len(self))
+        
+        return int(self._line(line_index).strip())
     
+    def _get_slice(self, s):
+        return [self._get_element(i) for i in range(*s.indices(len(self)))]
+    
+    def move(self, src, dst):
+        src_start = self._start_of(src)
+        dst_start = self._start_of(dst)
+        src_line = self._line(src)
+        
+        moved_mem_start = dst_start
+        moved_mem_end = src_start
+        moved_mem_size = moved_mem_end - moved_mem_start
+        moved_mem_dst = dst_start+self.line_length
+        self.mem.move(moved_mem_dst, moved_mem_start, moved_mem_size)
+        
+        self.mem.seek(dst_start)
+        self.mem.write(src_line)
+        self.mem.flush()
+        
     def close(self):
         self.mem.close()
         self.file.close()
+    
+    def _start_of(self, n):
+        return self.offset + self.line_length*n
+    
+    def _line(self, n):
+        line_start = self._start_of(n)
+        line_end = line_start + self.line_length
+        return self.mem[line_start:line_end]
