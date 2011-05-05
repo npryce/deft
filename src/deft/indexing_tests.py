@@ -2,7 +2,7 @@
 import inspect
 import os
 import shutil
-from deft import Ordering
+from .indexing import Ordering
 
 
 class Ordering_Test:
@@ -143,8 +143,4 @@ def ensure_dir_exists(dirpath):
 def ensure_dir_not_exists(dirpath):
     if os.path.exists(dirpath):
         shutil.rmtree(dirpath)
-
-class Deft_Test:
-    pass
-
 
