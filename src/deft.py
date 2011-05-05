@@ -117,3 +117,9 @@ class Ordering:
         line_start = self._start_of(n)
         line_end = line_start + self.line_length
         return self.mem[line_start:line_end]
+    
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *ignored):
+        self.close()
