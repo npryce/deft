@@ -52,6 +52,8 @@ class Ordering_Test:
         assert o[-3:-1] == [80,90]
         assert o[8:] == [90,100]
         assert o[:] == [10,20,30,40,50,60,70,80,90,100]
+        assert o[:100] == o[:]
+        assert o[-100:] == o[:]
     
 
     def test_reports_if_positive_index_out_of_bounds(self):
