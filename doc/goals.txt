@@ -1,0 +1,7 @@
+
+* store tracked features in VCS, not another tool
+* absolute prioritisation of all features (per status)
+* store features per-branch
+* store the feature database in plain-text files that play well with VCS and diff/merge tools
+* don't re-implement functionality that is already in the VCS
+* simplify correlation of commits to tracked features

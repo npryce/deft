@@ -2,28 +2,6 @@
 import os
 import mmap
 
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader
-    from yaml import CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
-
-
-
-class Deft:
-    def __init__(self, abspath):
-        pass
-
-
-class Feature:
-    def __init__(self, id, name, description, created_by):
-        self.id = id
-        self.name = name
-        self.description = description
-        self.status = "pending"
-        self.created_by = created_by
-
 
 class Ordering:
     max_digits = 7
