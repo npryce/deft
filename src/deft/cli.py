@@ -78,11 +78,10 @@ def run(argv):
     
     close_parser = subparsers.add_parser("close",
         help="delete one or more features from the working copy")
-    close_parser.add_argument("feature",
+    close_parser.add_argument("features",
         help="feature id",
         metavar="id",
-        nargs="+",
-        type=int)
+        nargs="+")
     
     args = parser.parse_args(argv[1:])
     command = argv[1]
@@ -106,6 +105,10 @@ def run_list(args):
     for f in tracker.list_status(args.status):
         print f.id, f.name
 
+def run_close(args):
+    tracker = FeatureTracker()
+    for id in args.features:
+        tracker.close(id)
 
 if __name__ == "__main__":
     run(sys.argv)

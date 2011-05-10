@@ -5,20 +5,46 @@ import shutil
 from subprocess import Popen, PIPE, CalledProcessError
 
 
-def run(command, cwd=os.path.curdir):
-    process = Popen(command, 
-                    stdin=PIPE, stdout=PIPE, stderr=PIPE, 
-                    close_fds=True, 
-                    cwd=cwd)
-    (stdout, stderr) = process.communicate()
+Deft = os.path.abspath("deft")
+
+class SystestEnvironment:
+    def __init__(self):
+        self.testdir = testdir = os.path.join("output", "testing", "systest", tname())
+        ensure_empty_dir_exists(self.testdir)
     
-    if process.returncode != 0:
-        error = str(command) + " returned status code " + str(process.returncode) + "\n" + \
-                "stderr: " + stderr + "\n" + \
-                "stdout: " + stdout + "\n"
-        raise AssertionError(error)
+    def deft(self, *args):
+        return self.run(Deft, *args)
     
-    return stdout
+    def run(self, *command):
+        process = Popen(command, 
+                        stdin=PIPE, stdout=PIPE, stderr=PIPE, 
+                        close_fds=True, 
+                        cwd=self.testdir)
+        
+        (stdout, stderr) = process.communicate()
+        
+        return ProcessResult(command, process.returncode, stdout, stderr)
+        
+
+class ProcessResult:
+    def __init__(self, command, status, stdout, stderr):
+        self.command = command
+        self.status = status
+        self.stdout = stdout
+        self.stderr = stderr
+    
+    def succeeds(self):
+        if self.status != 0:
+            error = str(self.command) + " returned status code " + str(self.status) + "\n" + \
+                    "stderr: " + self.stderr + "\n" + \
+                    "stdout: " + self.stdout + "\n"
+            raise AssertionError(error)
+        else:
+            return self
+    
+    def stdout0(self):
+        self.succeeds()
+        return self.stdout
 
 
 def ensure_dir_exists(dirpath):
@@ -43,17 +69,25 @@ def tname():
     
     raise ValueError, "no test method in call stack"
 
-Deft = os.path.abspath("deft")
+
+def parse_feature_list(s):
+    return [(line[0:32], line[33:]) for line in s.split("\n")[:-1]]
+
 
 def test_basic_usage():
-    testdir = os.path.join("output", "testing", "systest", tname())
-    ensure_empty_dir_exists(testdir)
+    env = SystestEnvironment()
     
-    run([Deft, "init", "-d", "data"], cwd=testdir)
-    idx = run([Deft, "create", "x", "--description", "a description"], cwd=testdir).strip()
-    idy = run([Deft, "create", "y", "--description", "a description"], cwd=testdir).strip()
+    env.deft("init", "-d", "data").succeeds()
+    idx = env.deft("create", "x", "--description", "a description").stdout0().strip()
+    idy = env.deft("create", "y", "--description", "a description").stdout0().strip()
     
-    output = run([Deft, "list", "--status", "new"], cwd=testdir)
+    features = parse_feature_list(env.deft("list", "--status", "new").stdout0())
+    assert features == [(idx, "x"), (idy, "y")]
     
-    assert output == "%s x\n%s y\n"%(idx, idy)
+    env.deft("close", idx).succeeds()
+    
+    features = parse_feature_list(env.deft("list", "--status", "new").stdout0())
+    
+    assert features == [(idy, "y")]
+
 

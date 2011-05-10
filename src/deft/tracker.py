@@ -21,14 +21,6 @@ def load_yaml(path):
         return yaml.safe_load(input)
 
 
-class Config(yaml.YAMLObject):
-    yaml_tag = "!deft/1.0/config"
-    
-    def __init__(self, datadir):
-        self.datadir = datadir
-        self.format = "1.0"
-
-
 class FeatureTracker:
     def __init__(self):
         self.config = load_yaml(ConfigFile)
@@ -36,7 +28,7 @@ class FeatureTracker:
     def create(self, name, description, status):
         priority = len(self._load_features_with_status(status))
         
-        feature = Feature(self.next_id(), name, status, description)
+        feature = Feature(self._next_id(), name, status, description)
         feature.priority = priority
         
         save_yaml(self._id_to_path(feature.id), feature)
@@ -47,7 +39,10 @@ class FeatureTracker:
         l = [f for f in self._load_features_with_status(status)]
         return sorted(l, key = lambda f: f.priority)
     
-    def next_id(self):
+    def close(self, id):
+        os.remove(self._id_to_path(id))
+    
+    def _next_id(self):
         return uuid.uuid4().hex
     
     def _load_features_with_status(self, status):
@@ -75,5 +70,5 @@ class Feature(yaml.YAMLObject):
 def init_tracker(datadir):
     os.mkdir(ConfigDir)
     os.makedirs(datadir)
-    save_yaml(ConfigFile, {'datadir': datadir})
+    save_yaml(ConfigFile, {'datadir': datadir, 'format': '1.0'})
 
