@@ -3,7 +3,9 @@ import inspect
 import os
 import shutil
 from subprocess import Popen, PIPE, CalledProcessError
+from nose.plugins.attrib import attr
 
+systest = attr('systest')
 
 Deft = os.path.abspath("deft")
 
@@ -74,6 +76,7 @@ def parse_feature_list(s):
     return [(line[0:32], line[33:]) for line in s.split("\n")[:-1]]
 
 
+@systest
 def test_basic_usage():
     env = SystestEnvironment()
     
