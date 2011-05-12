@@ -111,4 +111,9 @@ def run_close(args):
         tracker.close(id)
 
 if __name__ == "__main__":
-    run(sys.argv)
+    try:
+        run(sys.argv)
+    except Exception as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
+        

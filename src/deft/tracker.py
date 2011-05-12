@@ -68,6 +68,9 @@ class Feature(yaml.YAMLObject):
     
 
 def init_tracker(datadir):
+    if os.path.exists(ConfigDir):
+        raise ValueError("tracker already initialised in directory " + ConfigDir)
+    
     os.mkdir(ConfigDir)
     os.makedirs(datadir)
     save_yaml(ConfigFile, {'datadir': datadir, 'format': '1.0'})

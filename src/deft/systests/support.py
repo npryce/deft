@@ -38,16 +38,25 @@ class ProcessResult:
     
     def succeeds(self):
         if self.status != 0:
-            error = str(self.command) + " returned status code " + str(self.status) + "\n" + \
-                    "stderr: " + self.stderr + "\n" + \
-                    "stdout: " + self.stdout + "\n"
-            raise AssertionError(error)
+            self._fail(str(self.command) + " failed")
+        else:
+            return self
+    
+    def fails(self):
+        if self.status == 0:
+            self._fail(str(self.command) + " succeeded, expected it to fail")
         else:
             return self
     
     def stdout0(self):
         self.succeeds()
         return self.stdout
+    
+    def _fail(self, message):
+        raise AssertionError(message + "\n" + \
+                             "status: " + str(self.status) + "\n" + \
+                             "stderr: " + self.stderr + "\n" + \
+                             "stdout: " + self.stdout + "\n")
 
 
 def ensure_dir_exists(dirpath):
