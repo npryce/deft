@@ -2,7 +2,7 @@
 import sys
 import os
 from argparse import ArgumentParser
-import deft.tracker
+from deft.tracker import FeatureTracker
 
 
 
@@ -14,8 +14,8 @@ def _ignore_output(s):
     
 
 class CommandLineInterface:
-    def __init__(self, backend):
-        self.backend = backend
+    def __init__(self, tracker):
+        self.tracker = tracker
     
     def run(self, argv):
         parser = ArgumentParser(
@@ -45,7 +45,7 @@ class CommandLineInterface:
                                             help="initialise an empty Deft tracker within the current directory")
         init_parser.add_argument("-d", "--data-dir",
                                  help="the directory in which features are stored",
-                                 default=self.backend.DefaultDataDir,
+                                 default=None,
                                  dest="datadir")
         
         create_parser = subparsers.add_parser("create",
@@ -95,29 +95,31 @@ class CommandLineInterface:
     
         
     def run_init(self, args):
-        self.backend.init_tracker(args.datadir)
+        config = {}
+        if args.datadir is not None:
+            config['datadir'] = args.datadir
+        
+        self.tracker.init(**config)
         args.info_output("initialised Deft tracker")
     
     
     def run_create(self, args):
-        tracker = self.backend.FeatureTracker()
-        feature = tracker.create(name=args.name, description=args.description, status=args.status)
+        self.tracker.create(name=args.name, description=args.description, status=args.status)
     
     
     def run_list(self, args):
-        tracker = self.backend.FeatureTracker()
-        for f in tracker.list_status(args.status):
+        for f in self.tracker.list_status(args.status):
             print f.name
     
     
     def run_close(self, args):
-        tracker = self.backend.FeatureTracker()
         for name in args.features:
-            tracker.close(name)
+            self.tracker.close(name)
+
 
 if __name__ == "__main__":
     try:
-        CommandLineInterface(deft.tracker).run(sys.argv)
+        CommandLineInterface(FeatureTracker()).run(sys.argv)
     except Exception as e:
         sys.stderr.write(str(e))
         sys.exit(1)

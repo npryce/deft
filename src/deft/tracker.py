@@ -91,7 +91,3 @@ class Feature(yaml.YAMLObject):
         self.priority = None # Will be set by the FeatureTracker
 
 
-def init_tracker(datadir):
-    tracker = FeatureTracker()
-    tracker.init(datadir=datadir)
-
