@@ -73,8 +73,8 @@ class CommandLineInterface:
         status_parser = subparsers.add_parser("status",
                                               help="query or change the status of a feature")
         status_parser.add_argument("feature",
-                                   help="feature id",
-                                   metavar="id",
+                                   help="feature name",
+                                   metavar="name",
                                    type=int)
         status_parser.add_argument("status",
                                    help="the new status of the feature, if changing the status",
@@ -84,35 +84,36 @@ class CommandLineInterface:
         close_parser = subparsers.add_parser("close",
                                              help="delete one or more features from the working copy")
         close_parser.add_argument("features",
-                                  help="feature id",
-                                  metavar="id",
+                                  help="feature name",
+                                  metavar="name",
                                   nargs="+")
     
         args = parser.parse_args(argv[1:])
         command = argv[1]
         
         getattr(self, "run_" + command)(args)
-
+    
         
     def run_init(self, args):
         self.backend.init_tracker(args.datadir)
         args.info_output("initialised Deft tracker")
-
+    
+    
     def run_create(self, args):
         tracker = self.backend.FeatureTracker()
         feature = tracker.create(name=args.name, description=args.description, status=args.status)
-        print feature.id
-
+    
     
     def run_list(self, args):
         tracker = self.backend.FeatureTracker()
         for f in tracker.list_status(args.status):
-            print f.id, f.name
-
+            print f.name
+    
+    
     def run_close(self, args):
         tracker = self.backend.FeatureTracker()
-        for id in args.features:
-            tracker.close(id)
+        for name in args.features:
+            tracker.close(name)
 
 if __name__ == "__main__":
     try:
