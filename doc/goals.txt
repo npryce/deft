@@ -12,3 +12,4 @@ Deliberately postponed
 
 * More readable identifiers for features (maybe just use their names or Tag URIs?)
 * Performance (efficient data structure for storing and querying feature priorities)
+* Integrate Deft into VCS tools themselves
