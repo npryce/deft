@@ -20,6 +20,16 @@ def load_yaml(path):
     with open(path, "r") as input:
         return yaml.safe_load(input)
 
+def save_text(path, text):
+    with open(path, "w") as output:
+        output.write(text)
+
+
+def load_text(path):
+    with open(path, "r") as input:
+        return input.read()
+
+
 
 class FeatureTracker:
     def __init__(self):
@@ -73,5 +83,5 @@ def init_tracker(datadir):
     
     os.mkdir(ConfigDir)
     os.makedirs(datadir)
-    save_yaml(ConfigFile, {'datadir': datadir, 'format': '1.0'})
+    save_yaml(ConfigFile, {'datadir': datadir, 'format': '0.1'})
 
