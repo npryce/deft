@@ -24,7 +24,16 @@ class SystestEnvironment:
                         close_fds=True, 
                         cwd=self.testdir)
         
-        (stdout, stderr) = process.communi
+        (stdout, stderr) = process.communicate()
+        
+        return ProcessResult(command, process.returncode, stdout, stderr)
+        
+
+class ProcessResult:
+    def __init__(self, command, status, stdout, stderr):
+        self.command = command
+        self.status = status
+        self.stdout = stdout
         self.stderr = stderr
     
     def succeeds(self):
