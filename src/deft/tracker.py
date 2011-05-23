@@ -33,12 +33,21 @@ def load_text(path):
 
 class FeatureTracker(object):
     def __init__(self):
+        self._dirty = []
+        
         if os.path.exists(ConfigFile):
             self.config = load_yaml(ConfigFile)
         else:
             self.config = {'datadir': DefaultDataDir, 'format': '0.1'}
     
-            
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        for feature in self._dirty:
+            self._save_feature(feature)
+        self.dirty = []
+    
     def init(self, **initial_config):
         if os.path.exists(ConfigDir):
             raise ValueError("tracker already initialised in directory " + ConfigDir)
@@ -70,6 +79,9 @@ class FeatureTracker(object):
     
     def purge(self, name):
         os.remove(self._name_to_path(name))
+    
+    def _mark_dirty(self, feature):
+        self._dirty.append(feature)
     
     def _save_feature(self, feature):
         save_yaml(self._name_to_path(feature.name), {
@@ -110,4 +122,4 @@ class Feature(object):
         
         if must_save:
             print "saving after setting attribute " + name + " to " + str(new_value)
-            self._tracker._save_feature(self)
+            self._tracker._mark_dirty(self)

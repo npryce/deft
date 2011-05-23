@@ -110,7 +110,6 @@ class CommandLineInterface(object):
         for f in self.tracker.list_status(args.status):
             print f.name
     
-    
     def run_status(self, args):
         feature = self.tracker.feature_named(args.feature)
         feature.status = args.status
@@ -121,5 +120,5 @@ class CommandLineInterface(object):
 
 
 if __name__ == "__main__":
-    CommandLineInterface(FeatureTracker()).run(sys.argv)
-        
+    with FeatureTracker() as tracker:
+        CommandLineInterface(tracker).run(sys.argv)
