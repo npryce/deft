@@ -7,6 +7,7 @@ ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
 DefaultDataDir = os.path.join(ConfigDir, "data")
 
+FeatureSuffix = ".feature"
 
 
 def save_yaml(path, obj):
@@ -30,7 +31,7 @@ def load_text(path):
 
 
 
-class FeatureTracker:
+class FeatureTracker(object):
     def __init__(self):
         if os.path.exists(ConfigFile):
             self.config = load_yaml(ConfigFile)
@@ -55,39 +56,58 @@ class FeatureTracker:
     
     def create(self, name, description, status):
         priority = len(self._load_features_with_status(status))
+        feature = Feature(tracker=self, name=name, status=status, description=description, priority=priority)
         
-        feature = Feature(name, status, description)
-        feature.priority = priority
-        
-        save_yaml(self._name_to_path(feature.name), feature)
-        
+        self._save_feature(feature)
         return feature
+    
+    def feature_named(self, name):
+        return self._load_feature(self._name_to_path(name))
     
     def list_status(self, status):
         l = [f for f in self._load_features_with_status(status)]
         return sorted(l, key = lambda f: f.priority)
     
-    def close(self, name):
+    def purge(self, name):
         os.remove(self._name_to_path(name))
+    
+    def _save_feature(self, feature):
+        save_yaml(self._name_to_path(feature.name), {
+                'status': feature.status,
+                'priority': feature.priority,
+                'description': feature.description
+                })
+    
+    def _load_feature(self, path):
+        return Feature(tracker=self, name=self._path_to_name(path), **load_yaml(path))
     
     def _load_features_with_status(self, status):
         return [f for f in self._load_features() if f.status == status]
     
     def _load_features(self):
-        return [load_yaml(f) for f in iglob(self._name_to_path("*"))]
+        return [self._load_feature(f) for f in iglob(self._name_to_path("*"))]
     
     def _name_to_path(self, name):
-        return os.path.join(os.path.join(self.config["datadir"], name + ".feature"))
-
-
-class Feature(yaml.YAMLObject):
-    yaml_tag="!deft/1.0/feature"
-    yaml_loader = yaml.SafeLoader
+        return os.path.join(os.path.join(self.config["datadir"], name + FeatureSuffix))
     
-    def __init__(self, name, status, description):
+    def _path_to_name(self, path):
+        return os.path.basename(path)[:-len(FeatureSuffix)]
+    
+        
+
+class Feature(object):
+    def __init__(self, tracker, name, status, priority, description):
         self.name = name
-        self.description = description
         self.status = status
-        self.priority = None # Will be set by the FeatureTracker
-
-
+        self.priority = priority
+        self.description = description
+        self._tracker = tracker
+    
+    def __setattr__(self, name, new_value):
+        must_save = hasattr(self, '_tracker')
+        
+        object.__setattr__(self, name, new_value)
+        
+        if must_save:
+            print "saving after setting attribute " + name + " to " + str(new_value)
+            self._tracker._save_feature(self)

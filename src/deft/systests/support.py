@@ -10,9 +10,23 @@ systest = attr('systest')
 Deft = os.path.abspath("deft")
 
 
+class ProcessError(Exception):
+    def __init__(self, result):
+        Exception.__init__(self, result.stderr)
+        self.result = result
+
+
+class ProcessResult:
+    def __init__(self, command, status, stdout, stderr):
+        self.command = command
+        self.status = status
+        self.stdout = stdout
+        self.stderr = stderr
+    
+
 class SystestEnvironment:
     def __init__(self):
-        self.testdir = testdir = os.path.join("output", "testing", "systest", tname())
+        self.testdir = os.path.join("output", "testing", "systest", tname())
         ensure_empty_dir_exists(self.testdir)
     
     def deft(self, *args):
@@ -26,37 +40,13 @@ class SystestEnvironment:
         
         (stdout, stderr) = process.communicate()
         
-        return ProcessResult(command, process.returncode, stdout, stderr)
+        result = ProcessResult(command, process.returncode, stdout, stderr)
         
+        if result.status != 0:
+            raise ProcessError(result)
+        else:
+            return result
 
-class ProcessResult:
-    def __init__(self, command, status, stdout, stderr):
-        self.command = command
-        self.status = status
-        self.stdout = stdout
-        self.stderr = stderr
-    
-    def succeeds(self):
-        if self.status != 0:
-            self._fail(str(self.command) + " failed")
-        else:
-            return self
-    
-    def fails(self):
-        if self.status == 0:
-            self._fail(str(self.command) + " succeeded, expected it to fail")
-        else:
-            return self
-    
-    def stdout0(self):
-        self.succeeds()
-        return self.stdout
-    
-    def _fail(self, message):
-        raise AssertionError(message + "\n" + \
-                             "status: " + str(self.status) + "\n" + \
-                             "stderr: " + self.stderr + "\n" + \
-                             "stdout: " + self.stdout + "\n")
 
 
 def ensure_dir_exists(dirpath):

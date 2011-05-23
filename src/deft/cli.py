@@ -13,7 +13,7 @@ def _ignore_output(s):
     pass
     
 
-class CommandLineInterface:
+class CommandLineInterface(object):
     def __init__(self, tracker):
         self.tracker = tracker
     
@@ -74,16 +74,15 @@ class CommandLineInterface:
                                               help="query or change the status of a feature")
         status_parser.add_argument("feature",
                                    help="feature name",
-                                   metavar="name",
-                                   type=int)
+                                   metavar="name")
         status_parser.add_argument("status",
                                    help="the new status of the feature, if changing the status",
                                    nargs="?",
                                    default=None)
     
-        close_parser = subparsers.add_parser("close",
+        purge_parser = subparsers.add_parser("purge",
                                              help="delete one or more features from the working copy")
-        close_parser.add_argument("features",
+        purge_parser.add_argument("features",
                                   help="feature name",
                                   metavar="name",
                                   nargs="+")
@@ -112,15 +111,15 @@ class CommandLineInterface:
             print f.name
     
     
-    def run_close(self, args):
+    def run_status(self, args):
+        feature = self.tracker.feature_named(args.feature)
+        feature.status = args.status
+        
+    def run_purge(self, args):
         for name in args.features:
-            self.tracker.close(name)
+            self.tracker.purge(name)
 
 
 if __name__ == "__main__":
-    try:
-        CommandLineInterface(FeatureTracker()).run(sys.argv)
-    except Exception as e:
-        sys.stderr.write(str(e))
-        sys.exit(1)
+    CommandLineInterface(FeatureTracker()).run(sys.argv)
         
