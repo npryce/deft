@@ -79,7 +79,7 @@ class CommandLineInterface(object):
                                    help="the new status of the feature, if changing the status",
                                    nargs="?",
                                    default=None)
-    
+        
         purge_parser = subparsers.add_parser("purge",
                                              help="delete one or more features from the working copy")
         purge_parser.add_argument("features",
@@ -112,8 +112,11 @@ class CommandLineInterface(object):
     
     def run_status(self, args):
         feature = self.tracker.feature_named(args.feature)
-        feature.status = args.status
-        
+        if args.status is not None:
+            feature.status = args.status
+        else:
+            print feature.status
+    
     def run_purge(self, args):
         for name in args.features:
             self.tracker.purge(name)
