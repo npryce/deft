@@ -117,9 +117,6 @@ class Feature(object):
     
     def __setattr__(self, name, new_value):
         must_save = hasattr(self, '_tracker')
-        
         object.__setattr__(self, name, new_value)
-        
         if must_save:
-            print "saving after setting attribute " + name + " to " + str(new_value)
             self._tracker._mark_dirty(self)
