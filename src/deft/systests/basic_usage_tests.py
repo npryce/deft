@@ -21,7 +21,7 @@ def test_basic_usage():
 
 
 @systest
-def test_recategorisation():
+def test_changing_status():
     env = SystestEnvironment()
     
     env.deft("init", "-d", "data")
@@ -34,19 +34,21 @@ def test_recategorisation():
     
     features = parse_feature_list(env.deft("list", "--status", "in-progress").stdout)
     assert features == ["x"]
-    
 
 @systest
-def test_cannot_initialise_tracker_multiple_times():
+def test_querying_status():
     env = SystestEnvironment()
     
     env.deft("init", "-d", "data")
+    env.deft("create", "a-feature")
     
-    try:
-        env.deft("init", "-d", "data")
-    except ProcessError as e:
-        assert "already initialised" in e.result.stderr
-
+    status = env.deft("status", "a-feature").stdout.strip()
+    assert status == "new"
+    
+    env.deft("status", "a-feature", "testing")
+    
+    status = env.deft("status", "a-feature").stdout.strip()
+    assert status == "testing"
 
 def parse_feature_list(s):
     return [line for line in s.split("\n")[:-1]]

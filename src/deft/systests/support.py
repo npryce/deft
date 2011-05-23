@@ -13,10 +13,13 @@ Deft = os.path.abspath("deft")
 class ProcessError(Exception):
     def __init__(self, result):
         Exception.__init__(self, result.stderr)
-        self.result = result
+        self.command = result.command
+        self.status = result.status
+        self.stdout = result.stdout
+        self.stderr = result.stderr
 
 
-class ProcessResult:
+class ProcessResult(object):
     def __init__(self, command, status, stdout, stderr):
         self.command = command
         self.status = status
@@ -24,7 +27,7 @@ class ProcessResult:
         self.stderr = stderr
     
 
-class SystestEnvironment:
+class SystestEnvironment(object):
     def __init__(self):
         self.testdir = os.path.join("output", "testing", "systest", tname())
         ensure_empty_dir_exists(self.testdir)
@@ -33,10 +36,13 @@ class SystestEnvironment:
         return self.run(Deft, *args)
     
     def run(self, *command):
+        dev_bin = os.path.abspath('deft-dev/bin')
+        
         process = Popen(command, 
                         stdin=PIPE, stdout=PIPE, stderr=PIPE, 
                         close_fds=True, 
-                        cwd=self.testdir)
+                        cwd=self.testdir,
+                        env={'PATH': search_path(dev_bin, os.defpath)})
         
         (stdout, stderr) = process.communicate()
         
@@ -48,6 +54,8 @@ class SystestEnvironment:
             return result
 
 
+def search_path(*paths):
+    return os.pathsep.join(paths)
 
 def ensure_dir_exists(dirpath):
     if not os.path.exists(dirpath):
