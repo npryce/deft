@@ -29,6 +29,11 @@ def test_changing_status():
     
     assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["y"]))
     assert_that(env.deft("list", "--status", "in-progress").stdout_lines, equal_to(["x"]))
+    
+    assert_that(env.deft("status", "x").stdout.strip(), equal_to("in-progress"))
+    
+    assert_that(env.deft("priority", "y").stdout.strip(), equal_to("1"),
+                "priority of y increased now x moved to new status bucket")
 
 
 @systest

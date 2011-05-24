@@ -66,9 +66,13 @@ class FeatureTracker(object):
         os.remove(self._name_to_path(name))
     
     def change_status(self, feature, new_status):
-        # Todo - remove from old status and update priorities of lower items
+        old_bucket = self.features_with_status(feature.status)
+        old_bucket.remove(feature)
+        
         feature.status = new_status
-        # Todo - set priority as bottom of bucket
+        
+        new_bucket = self.features_with_status(new_status)
+        new_bucket.append(feature)
     
     def change_priority(self, feature, new_priority):
         bucket = self.features_with_status(feature.status)
