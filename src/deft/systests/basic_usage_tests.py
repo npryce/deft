@@ -1,5 +1,6 @@
 
 from deft.systests.support import SystestEnvironment, ProcessError, systest
+from hamcrest import *
 
 
 @systest
@@ -10,14 +11,11 @@ def test_basic_usage():
     env.deft("create", "x", "--description", "description of x")
     env.deft("create", "y", "--description", "description of y")
     
-    features = parse_feature_list(env.deft("list", "--status", "new").stdout)
-    assert features == ["x", "y"]
+    assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["x", "y"]))
     
     env.deft("purge", "x")
     
-    features = parse_feature_list(env.deft("list", "--status", "new").stdout)
-    
-    assert features == ["y"]
+    assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["y"]))
 
 
 @systest
@@ -29,11 +27,25 @@ def test_changing_status():
     env.deft("create", "y")
     env.deft("status", "x", "in-progress")
     
-    features = parse_feature_list(env.deft("list", "--status", "new").stdout)
-    assert features == ["y"]
+    assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["y"]))
+    assert_that(env.deft("list", "--status", "in-progress").stdout_lines, equal_to(["x"]))
+
+
+@systest
+def test_querying_priority():
+    env = SystestEnvironment()
     
-    features = parse_feature_list(env.deft("list", "--status", "in-progress").stdout)
-    assert features == ["x"]
+    env.deft("init", "-d", "data")
+    env.deft("create", "x")
+    env.deft("create", "y")
+    env.deft("create", "z")
+    
+    assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["x", "y", "z"]))
+    
+    assert_that(env.deft("priority", "x").stdout.strip(), equal_to("1"))
+    assert_that(env.deft("priority", "y").stdout.strip(), equal_to("2"))
+    assert_that(env.deft("priority", "z").stdout.strip(), equal_to("3"))
+    
 
 @systest
 def test_querying_status():
@@ -49,7 +61,4 @@ def test_querying_status():
     
     status = env.deft("status", "a-feature").stdout.strip()
     assert status == "testing"
-
-def parse_feature_list(s):
-    return [line for line in s.split("\n")[:-1]]
 

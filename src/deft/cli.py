@@ -80,13 +80,23 @@ class CommandLineInterface(object):
                                    nargs="?",
                                    default=None)
         
+        priority_parser = subparsers.add_parser("priority",
+                                              help="query or change the priority of a feature")
+        priority_parser.add_argument("feature",
+                                     help="feature name",
+                                     metavar="name")
+        priority_parser.add_argument("priority",
+                                     help="the new priority of the feature, if changing the priority",
+                                     nargs="?",
+                                     default=None)
+        
         purge_parser = subparsers.add_parser("purge",
                                              help="delete one or more features from the working copy")
         purge_parser.add_argument("features",
                                   help="feature name",
                                   metavar="name",
                                   nargs="+")
-    
+        
         args = parser.parse_args(argv[1:])
         command = argv[1]
         
@@ -116,6 +126,13 @@ class CommandLineInterface(object):
             feature.status = args.status
         else:
             print feature.status
+    
+    def run_priority(self, args):
+        feature = self.tracker.feature_named(args.feature)
+        if args.priority is not None:
+            feature.priority = args.priority
+        else:
+            print feature.priority
     
     def run_purge(self, args):
         for name in args.features:

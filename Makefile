@@ -12,5 +12,12 @@ clean-deft-dev:
 
 deft-dev-again: clean-deft-dev deft-dev
 
-check:
-	deft-dev/bin/nosetests -d
+test: unit-test system-test
+
+unit-test:
+	deft-dev/bin/nosetests -A "not systest"
+
+system-test:
+	deft-dev/bin/nosetests -A "systest"
+
+.PHONY: deft-dev clean-deft-dev deft-dev-again test unit-test system-test

@@ -64,7 +64,7 @@ class FeatureTracker(object):
     
     
     def create(self, name, description, status):
-        priority = len(self._load_features_with_status(status))
+        priority = len(self._load_features_with_status(status)) + 1
         feature = Feature(tracker=self, name=name, status=status, description=description, priority=priority)
         
         self._save_feature(feature)

@@ -10,7 +10,17 @@ systest = attr('systest')
 Deft = os.path.abspath("deft")
 
 
-class ProcessError(Exception):
+class ProcessResultParsing(object):
+    @property
+    def stdout_lines(self):
+        return self.stdout.splitlines()
+    
+    @property
+    def stderr_lines(self):
+        return self.stderr.splitlines()
+
+
+class ProcessError(Exception, ProcessResultParsing):
     def __init__(self, result):
         Exception.__init__(self, result.stderr)
         self.command = result.command
@@ -19,7 +29,7 @@ class ProcessError(Exception):
         self.stderr = result.stderr
 
 
-class ProcessResult(object):
+class ProcessResult(ProcessResultParsing):
     def __init__(self, command, status, stdout, stderr):
         self.command = command
         self.status = status
