@@ -2,145 +2,134 @@
 import inspect
 import os
 import shutil
-from .indexing import Ordering
+from deft.indexing import Bucket
+from deft.tracker import Feature
+from hamcrest import *
+
+class FakeTracker:
+    def _mark_dirty(self, feature):
+        pass
+
+tracker = FakeTracker()
+
+def make_features(n):
+    return [make_feature(i) for i in xrange(0,n)]
+
+def make_feature(i):
+    return Feature(tracker=tracker, 
+                   name=chr(ord('a')+i), 
+                   priority=i+1, 
+                   status="testing", 
+                   description="")
 
 
-class Ordering_Test:
-    @classmethod
-    def outdir(c):
-        return "output/testing/" + c.__name__
-    
-    @classmethod
-    def setup_class(c):
-        ensure_dir_not_exists(c.outdir())
-    
-    
-    def test_ordering_is_created_empty(self):
-        o = new_ordering()
+class Bucket_Test:
+    def test_stores_features_in_priority_order(self):
+        feature_a, feature_b, feature_c, feature_d = make_features(4)
         
-        assert o.is_empty()
-
-
-    def test_stores_elements_in_order_of_addition(self):
-        o = new_ordering()
-        o.add(10)
-        o.add(20)
-        o.add(30)
-        o.add(40)
+        bucket = Bucket([feature_b, feature_d, feature_c, feature_a])
         
-        assert not o.is_empty()
-        assert o[0] == 10
-        assert o[1] == 20
-        assert o[2] == 30
-        assert o[3] == 40
+        assert_that(bucket[0], same_instance(feature_a))
+        assert_that(bucket[1], same_instance(feature_b))
+        assert_that(bucket[2], same_instance(feature_c))
+        assert_that(bucket[3], same_instance(feature_d))
     
-    def test_can_index_from_end(self):
-        o = new_ordering(9, 10, 11, 12, 13)
-        
-        assert o[-1] == 13
-        assert o[-2] == 12
-        assert o[-3] == 11
-        assert o[-4] == 10
-        assert o[-5] == 9
-
+    def test_reports_number_of_elements(self):
+        assert_that(len(Bucket(make_features(0))), equal_to(0))
+        assert_that(len(Bucket(make_features(1))), equal_to(1))
+        assert_that(len(Bucket(make_features(4))), equal_to(4))
+        assert_that(len(Bucket(make_features(10))), equal_to(10))
     
-    def test_can_be_sliced(self):
-        o = new_ordering(*[i*10 for i in range(1,11)])
+    def test_is_iterable(self):
+        features = make_features(3)
+        bucket = Bucket(features)
         
-        assert o[0:2] == [10,20]
-        assert o[1:5] == [20,30,40,50]
-        assert o[-3:-1] == [80,90]
-        assert o[8:] == [90,100]
-        assert o[:] == [10,20,30,40,50,60,70,80,90,100]
-        assert o[:100] == o[:]
-        assert o[-100:] == o[:]
-    
-
-    def test_reports_if_positive_index_out_of_bounds(self):
-        o = new_ordering(1, 2)
-        
-        try:
-            o[2]
-        except IndexError:
-            return
-        
-        assert False, "should have thrown IndexError"
-    
-    
-    def test_reports_if_negative_index_out_of_bounds(self):
-        o = new_ordering(1, 2)
-        
-        try:
-            o[-3]
-        except IndexError:
-            return
-        
-        raise AssertionError, "should have thrown IndexError"
+        iterated = []
+        for f in bucket:
+            iterated.append(f)
             
-
-    def test_changes_are_persisted_to_mapped_file(self):
-        o = new_ordering()
-        o.add(101)
-        o.add(100)
-        o.add(99)
-        
-        o2 = new_ordering()
-        assert not o2.is_empty()
-        assert o2[0] == 101
-        assert o2[1] == 100
-        assert o2[2] == 99
+        assert_that(iterated, equal_to(features))
+            
     
-    
-    def test_reports_length(self):
-        o = new_ordering()
-        assert len(o) == 0
+    def test_appending_a_feature_sets_its_priority_to_lowest_in_bucket(self):
+        a, b, c = make_features(3)
+        bucket = Bucket([a,b,c])
         
-        o.add(1)
-        assert len(o) == 1
+        d, e = make_features(2)
         
-        o.add(2)
-        assert len(o) == 2
+        bucket.append(d)
+        assert_that(d.priority, equal_to(4))
+        assert_that(bucket[3], same_instance(d))
         
-        o.add(3)
-        assert len(o) == 3
+        bucket.append(e)
+        assert_that(e.priority, equal_to(5))
+        assert_that(bucket[4], same_instance(e))
     
         
-    def test_can_move_items_up_in_ordering(self):
-        o = new_ordering(11, 22, 33, 44, 55)
+    def test_inserting_a_feature_respects_its_current_priority_and_inserts_above_existing_feature_with_same_priority(self):
+        a, b, c = make_features(3)
+        bucket = Bucket([a,b,c])
         
-        o.move(src=3, dst=1)
+        x = make_feature(0)
+        x.priority = 2
         
-        new_order = new_ordering()[:]
-        assert new_order == [11, 44, 22, 33, 55]
-
-    
-    def test_can_move_items_down_in_ordering(self):
-        o = new_ordering(0, 1, 2, 3, 4)
+        bucket.insert(x)
         
-        o.move(src=1, dst=3)
+        assert_that(bucket[0], same_instance(a))
+        assert_that(bucket[1], same_instance(x))
+        assert_that(bucket[2], same_instance(b))
+        assert_that(bucket[3], same_instance(c))
         
-        new_order = new_ordering()[:]
-        assert new_order == [0, 2, 3, 1, 4]
+        assert_that(a.priority, equal_to(1))
+        assert_that(x.priority, equal_to(2))
+        assert_that(b.priority, equal_to(3))
+        assert_that(c.priority, equal_to(4))
 
 
-
-def new_ordering(*contents):
-    test_name = inspect.stack()[1][3]
+    def test_removing_a_feature_increases_priority_of_those_below_it(self):
+        a, b, c, d, e  = make_features(5)
+        bucket = Bucket([a, b, c, d, e])
+        
+        bucket.remove(c)
+        
+        assert_that(bucket[0], same_instance(a))
+        assert_that(a.priority, equal_to(1))
+        
+        assert_that(bucket[1], same_instance(b))
+        assert_that(b.priority, equal_to(2))
+        
+        assert_that(bucket[2], same_instance(d))
+        assert_that(d.priority, equal_to(3))
+        
+        assert_that(bucket[3], same_instance(e))
+        assert_that(e.priority, equal_to(4))
     
-    ensure_dir_exists(Ordering_Test.outdir())
-    o = Ordering(Ordering_Test.outdir() + "/" + test_name)
+
+    def test_can_raise_the_priority_of_a_feature(self):
+        a, b, c, d, e = make_features(5)
+        bucket = Bucket([a, b, c, d, e])
+        
+        bucket.change_priority(d, 2)
+        
+        assert_that(list(bucket), equal_to([a,d,b,c,e]))
+        
+        assert_that(a.priority, equal_to(1))
+        assert_that(d.priority, equal_to(2))
+        assert_that(b.priority, equal_to(3))
+        assert_that(c.priority, equal_to(4))
+        assert_that(e.priority, equal_to(5))
+        
     
-    for i in contents:
-        o.add(i)
-    
-    return o
-
-def ensure_dir_exists(dirpath):
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-
-def ensure_dir_not_exists(dirpath):
-    if os.path.exists(dirpath):
-        shutil.rmtree(dirpath)
-
+    def test_can_lower_the_priority_of_a_feature(self):
+        a, b, c, d, e = make_features(5)
+        bucket = Bucket([a, b, c, d, e])
+        
+        bucket.change_priority(b, 4)
+        
+        assert_that(list(bucket), equal_to([a,c,d,b,e]))
+        
+        assert_that(a.priority, equal_to(1))
+        assert_that(c.priority, equal_to(2))
+        assert_that(d.priority, equal_to(3))
+        assert_that(b.priority, equal_to(4))
+        assert_that(e.priority, equal_to(5))

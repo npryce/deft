@@ -5,6 +5,7 @@ import shutil
 from subprocess import Popen, PIPE, CalledProcessError
 from nose.tools import nottest
 from nose.plugins.attrib import attr
+from deft.fileops import *
 
 systest = attr('systest')
 Deft = os.path.abspath("deft")
@@ -66,19 +67,6 @@ class SystestEnvironment(object):
 
 def search_path(*paths):
     return os.pathsep.join(paths)
-
-def ensure_dir_exists(dirpath):
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-
-def ensure_dir_not_exists(dirpath):
-    if os.path.exists(dirpath):
-        shutil.rmtree(dirpath)
-
-def ensure_empty_dir_exists(dirpath):
-    ensure_dir_not_exists(dirpath)
-    ensure_dir_exists(dirpath)
 
 
 def tname():

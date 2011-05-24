@@ -88,6 +88,7 @@ class CommandLineInterface(object):
         priority_parser.add_argument("priority",
                                      help="the new priority of the feature, if changing the priority",
                                      nargs="?",
+                                     type=int,
                                      default=None)
         
         purge_parser = subparsers.add_parser("purge",
@@ -111,28 +112,32 @@ class CommandLineInterface(object):
         self.tracker.init(**config)
         args.info_output("initialised Deft tracker")
     
-    
+
     def run_create(self, args):
         self.tracker.create(name=args.name, description=args.description, status=args.status)
     
     
     def run_list(self, args):
-        for f in self.tracker.list_status(args.status):
+        for f in self.tracker.features_with_status(args.status):
             print f.name
+    
     
     def run_status(self, args):
         feature = self.tracker.feature_named(args.feature)
         if args.status is not None:
+            self.tracker.change_status(feature, args.status)
             feature.status = args.status
         else:
             print feature.status
     
+    
     def run_priority(self, args):
         feature = self.tracker.feature_named(args.feature)
         if args.priority is not None:
-            feature.priority = args.priority
+            self.tracker.change_priority(feature, args.priority)
         else:
             print feature.priority
+    
     
     def run_purge(self, args):
         for name in args.features:

@@ -32,6 +32,20 @@ def test_changing_status():
 
 
 @systest
+def test_querying_status():
+    env = SystestEnvironment()
+    
+    env.deft("init", "-d", "data")
+    env.deft("create", "a-feature")
+    
+    assert_that(env.deft("status", "a-feature").stdout.strip(), equal_to("new"))
+    
+    env.deft("status", "a-feature", "testing")
+    
+    assert_that(env.deft("status", "a-feature").stdout.strip(), equal_to("testing"))
+
+
+@systest
 def test_querying_priority():
     env = SystestEnvironment()
     
@@ -48,17 +62,22 @@ def test_querying_priority():
     
 
 @systest
-def test_querying_status():
+def test_changing_priority():
     env = SystestEnvironment()
     
     env.deft("init", "-d", "data")
-    env.deft("create", "a-feature")
+    env.deft("create", "a")
+    env.deft("create", "b")
+    env.deft("create", "c")
+    env.deft("create", "d")
     
-    status = env.deft("status", "a-feature").stdout.strip()
-    assert status == "new"
+    env.deft("priority", "d", "2")
     
-    env.deft("status", "a-feature", "testing")
+    assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["a", "d", "b", "c"]))
+    assert_that(env.deft("priority", "a").stdout.strip(), equal_to("1"))
+    assert_that(env.deft("priority", "b").stdout.strip(), equal_to("3"))
+    assert_that(env.deft("priority", "c").stdout.strip(), equal_to("4"))
+    assert_that(env.deft("priority", "d").stdout.strip(), equal_to("2"))
+
     
-    status = env.deft("status", "a-feature").stdout.strip()
-    assert status == "testing"
 

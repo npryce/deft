@@ -1,7 +1,8 @@
 
 import os
 from glob import iglob
-import yaml
+from .fileops import *
+from deft.indexing import Bucket
 
 ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
@@ -10,31 +11,11 @@ DefaultDataDir = os.path.join(ConfigDir, "data")
 FeatureSuffix = ".feature"
 
 
-def save_yaml(path, obj):
-    with open(path, "w") as output:
-        yaml.dump(obj, output, default_flow_style=False)
-
-
-def load_yaml(path):
-    with open(path, "r") as input:
-        return yaml.safe_load(input)
-
-
-def save_text(path, text):
-    with open(path, "w") as output:
-        output.write(text)
-
-
-def load_text(path):
-    with open(path, "r") as input:
-        return input.read()
-
 
 
 class FeatureTracker(object):
     def __init__(self):
-        self._dirty = []
-        
+        self._clear_cache()
         if os.path.exists(ConfigFile):
             self.config = load_yaml(ConfigFile)
         else:
@@ -46,7 +27,11 @@ class FeatureTracker(object):
     def __exit__(self, type, value, traceback):
         for feature in self._dirty:
             self._save_feature(feature)
-        self.dirty = []
+        self._clear_cache()
+    
+    def _clear_cache(self):
+        self._dirty = set()
+        self._loaded = {}
     
     def init(self, **initial_config):
         if os.path.exists(ConfigDir):
@@ -73,15 +58,38 @@ class FeatureTracker(object):
     def feature_named(self, name):
         return self._load_feature(self._name_to_path(name))
     
-    def list_status(self, status):
-        l = [f for f in self._load_features_with_status(status)]
-        return sorted(l, key = lambda f: f.priority)
+    def features_with_status(self, status):
+        return Bucket(self._load_features_with_status(status))
     
     def purge(self, name):
+        # Todo - remove from old status and update priorities of lower items
         os.remove(self._name_to_path(name))
     
+    def change_status(self, feature, new_status):
+        # Todo - remove from old status and update priorities of lower items
+        feature.status = new_status
+        # Todo - set priority as bottom of bucket
+    
+    def change_priority(self, feature, new_priority):
+        bucket = self.features_with_status(feature.status)
+        bucket.change_priority(feature, new_priority)
+        
+    def _load_features_with_status(self, status):
+        return [f for f in self._load_features() if f.status == status]
+    
+    def _load_features(self):
+        return [self._load_feature(f) for f in iglob(self._name_to_path("*"))]
+    
+    def _load_feature(self, path):
+        if path in self._loaded:
+            return self._loaded[path]
+        else:
+            feature = Feature(tracker=self, name=self._path_to_name(path), **load_yaml(path))
+            self._loaded[path] = feature
+            return feature
+    
     def _mark_dirty(self, feature):
-        self._dirty.append(feature)
+        self._dirty.add(feature)
     
     def _save_feature(self, feature):
         save_yaml(self._name_to_path(feature.name), {
@@ -90,22 +98,13 @@ class FeatureTracker(object):
                 'description': feature.description
                 })
     
-    def _load_feature(self, path):
-        return Feature(tracker=self, name=self._path_to_name(path), **load_yaml(path))
-    
-    def _load_features_with_status(self, status):
-        return [f for f in self._load_features() if f.status == status]
-    
-    def _load_features(self):
-        return [self._load_feature(f) for f in iglob(self._name_to_path("*"))]
-    
     def _name_to_path(self, name):
         return os.path.join(os.path.join(self.config["datadir"], name + FeatureSuffix))
     
     def _path_to_name(self, path):
         return os.path.basename(path)[:-len(FeatureSuffix)]
     
-        
+
 
 class Feature(object):
     def __init__(self, tracker, name, status, priority, description):
@@ -120,3 +119,4 @@ class Feature(object):
         object.__setattr__(self, name, new_value)
         if must_save:
             self._tracker._mark_dirty(self)
+    
