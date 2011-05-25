@@ -10,7 +10,7 @@ DefaultDataDir = os.path.join(ConfigDir, "data")
 
 FeatureSuffix = ".feature"
 
-# Used to report user errors that have been explicitly caught
+# Used to report user errors that have been explicitly detected
 class UserError(Exception):
     pass
 
@@ -63,8 +63,16 @@ class FeatureTracker(object):
         return Bucket(self._load_features_with_status(status))
     
     def purge(self, name):
-        # Todo - remove from old status and update priorities of lower items
-        os.remove(self._name_to_path(name))
+        feature_path = self._name_to_path(name)
+        feature = self._load_feature(feature_path)
+        
+        bucket = self.features_with_status(feature.status)
+        bucket.remove(feature)
+        
+        del self._loaded[feature_path]
+        self._dirty.discard(feature)
+        
+        os.remove(feature_path)
     
     def change_status(self, feature, new_status):
         old_bucket = self.features_with_status(feature.status)

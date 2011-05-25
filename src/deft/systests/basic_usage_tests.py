@@ -99,5 +99,19 @@ def test_changing_priority():
     assert_that(env.deft("priority", "c").stdout.strip(), equal_to("4"))
     assert_that(env.deft("priority", "d").stdout.strip(), equal_to("2"))
 
-    
 
+@systest    
+def test_purging_unwanted_features():
+    env = SystestEnvironment()
+    
+    env.deft("init", "-d", "data")
+    env.deft("create", "a")
+    env.deft("create", "b")
+    env.deft("create", "c")
+    env.deft("create", "d")
+    
+    env.deft("purge", "b")
+    
+    assert_that(env.deft("list", "--status", "new").stdout_lines, equal_to(["a", "c", "d"]))
+    assert_that(env.deft("priority", "c").stdout.strip(), equal_to("2"))
+    assert_that(env.deft("priority", "d").stdout.strip(), equal_to("3"))
