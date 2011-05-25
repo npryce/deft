@@ -39,14 +39,23 @@ class CommandLineInterface(object):
                                const=_ignore_output,
                                default=_print_output)
         
+        tracker_configuration = ArgumentParser(add_help=False)
+        tracker_configuration.add_argument("-i", "--initial-status",
+                                           help="the default initial status for new features",
+                                           dest="initial_status",
+                                           default=None)
+        
         subparsers = parser.add_subparsers()
         
-        init_parser = subparsers.add_parser("init", parents=[verbosity],
+        init_parser = subparsers.add_parser("init", parents=[tracker_configuration, verbosity],
                                             help="initialise an empty Deft tracker within the current directory")
         init_parser.add_argument("-d", "--data-dir",
                                  help="the directory in which features are stored",
                                  default=None,
                                  dest="datadir")
+        
+        configure_parser = subparsers.add_parser("configure", parents=[tracker_configuration, verbosity],
+                                                 help="configure the behaviour of the tracker")
         
         create_parser = subparsers.add_parser("create",
                                               help="create a new feature and output its id")
@@ -57,7 +66,7 @@ class CommandLineInterface(object):
                                    default="")
         create_parser.add_argument("-s", "--status",
                                    help="the initial status of the feature",
-                                   default="new")
+                                   default=None)
         
         list_parser = subparsers.add_parser("list",
                                             help="list tracked features in order of priority")
@@ -103,18 +112,30 @@ class CommandLineInterface(object):
         
         getattr(self, "run_" + command)(args)
     
-        
+    
     def run_init(self, args):
         config = {}
+        
         if args.datadir is not None:
             config['datadir'] = args.datadir
+        if args.initial_status is not None:
+            config['initial_status'] = args.initial_status
         
         self.tracker.init(**config)
         args.info_output("initialised Deft tracker")
     
-
+    def run_configure(self, args):
+        config = {}
+        
+        if args.initial_status is not None:
+            config['initial_status'] = args.initial_status
+        
+        self.tracker.configure(**config)
+    
     def run_create(self, args):
-        self.tracker.create(name=args.name, description=args.description, status=args.status)
+        self.tracker.create(name=args.name, 
+                            status=args.status or self.tracker.initial_status,
+                            description=args.description)
     
     
     def run_list(self, args):

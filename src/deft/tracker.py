@@ -21,7 +21,10 @@ class FeatureTracker(object):
         if os.path.exists(ConfigFile):
             self.config = load_yaml(ConfigFile)
         else:
-            self.config = {'datadir': DefaultDataDir, 'format': '0.1'}
+            self.config = {
+                'format': '0.1',
+                'datadir': DefaultDataDir,
+                'initial_status': "new"}
     
     def save(self):
         for feature in self._dirty:
@@ -41,10 +44,17 @@ class FeatureTracker(object):
         os.mkdir(ConfigDir)
         os.makedirs(self.config['datadir'])
         self.save_config()
-        
+    
+    def configure(self, **config):
+        self.config.update(config)
+        self.save_config()
     
     def save_config(self):
         save_yaml(ConfigFile, self.config)
+    
+    @property
+    def initial_status(self):
+        return self.config['initial_status']
     
     def create(self, name, description, status):
         if self._feature_exists_named(name):
