@@ -2,7 +2,7 @@
 import sys
 import os
 from argparse import ArgumentParser
-from deft.tracker import FeatureTracker
+from deft.tracker import FeatureTracker, UserError
 
 
 
@@ -145,5 +145,11 @@ class CommandLineInterface(object):
 
 
 if __name__ == "__main__":
-    with FeatureTracker() as tracker:
+    tracker = FeatureTracker()
+    try:
         CommandLineInterface(tracker).run(sys.argv)
+        tracker.save()
+    except UserError as e:
+        sys.stderr.write(e.message + "\n")
+        sys.exit(1)
+    # Unexpected exceptions pass through and Python interpreter will print the stacktrace

@@ -19,6 +19,21 @@ def test_basic_usage():
 
 
 @systest
+def test_can_create_with_initial_status():
+    env = SystestEnvironment()
+    
+    env.deft("init", "-d", "data")
+    env.deft("create", "x", "--status", "initial-for-x")
+    env.deft("create", "y", "--status", "initial-for-y")
+    
+    assert_that(env.deft("list", "--status", "initial-for-x").stdout_lines, equal_to(["x"]))
+    assert_that(env.deft("status", "x").stdout.strip(), equal_to("initial-for-x"))
+
+    assert_that(env.deft("list", "--status", "initial-for-y").stdout_lines, equal_to(["y"]))
+    assert_that(env.deft("status", "y").stdout.strip(), equal_to("initial-for-y"))
+
+
+@systest
 def test_changing_status():
     env = SystestEnvironment()
     

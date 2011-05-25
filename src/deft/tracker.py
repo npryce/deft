@@ -10,7 +10,9 @@ DefaultDataDir = os.path.join(ConfigDir, "data")
 
 FeatureSuffix = ".feature"
 
-
+# Used to report user errors that have been explicitly caught
+class UserError(Exception):
+    pass
 
 
 class FeatureTracker(object):
@@ -21,10 +23,7 @@ class FeatureTracker(object):
         else:
             self.config = {'datadir': DefaultDataDir, 'format': '0.1'}
     
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
+    def save(self):
         for feature in self._dirty:
             self._save_feature(feature)
         self._clear_cache()
@@ -43,12 +42,14 @@ class FeatureTracker(object):
         os.makedirs(self.config['datadir'])
         self.save_config()
         
-        
+    
     def save_config(self):
         save_yaml(ConfigFile, self.config)
     
-    
     def create(self, name, description, status):
+        if self._feature_exists_named(name):
+            raise UserError("a feature already exists with name: " + name)
+        
         priority = len(self._load_features_with_status(status)) + 1
         feature = Feature(tracker=self, name=name, status=status, description=description, priority=priority)
         
@@ -77,7 +78,10 @@ class FeatureTracker(object):
     def change_priority(self, feature, new_priority):
         bucket = self.features_with_status(feature.status)
         bucket.change_priority(feature, new_priority)
-        
+    
+    def _feature_exists_named(self, name):
+        return os.path.exists(self._name_to_path(name))
+    
     def _load_features_with_status(self, status):
         return [f for f in self._load_features() if f.status == status]
     

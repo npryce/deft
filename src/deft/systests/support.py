@@ -11,6 +11,7 @@ systest = attr('systest')
 Deft = os.path.abspath("deft")
 
 
+
 class ProcessResultParsing(object):
     @property
     def stdout_lines(self):
@@ -36,7 +37,7 @@ class ProcessResult(ProcessResultParsing):
         self.status = status
         self.stdout = stdout
         self.stderr = stderr
-    
+
 
 class SystestEnvironment(object):
     def __init__(self):
@@ -78,3 +79,5 @@ def tname():
     raise ValueError, "no test method in call stack"
 
 
+def fail(message):
+    raise AssertionError(message)
