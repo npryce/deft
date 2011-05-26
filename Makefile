@@ -1,23 +1,27 @@
 
+ENV=python-dev
 
-deft-dev:
-	virtualenv --no-site-packages deft-dev
-	deft-dev/bin/pip install argparse
-	deft-dev/bin/pip install pyYAML
-	deft-dev/bin/pip install nose
-	deft-dev/bin/pip install PyHamcrest
+all: test
 
-clean-deft-dev:
-	rm -rf deft-dev/
+env:
+	virtualenv --no-site-packages $(ENV)
+	$(ENV)/bin/pip install argparse
+	$(ENV)/bin/pip install pyYAML
+	$(ENV)/bin/pip install functional
+	$(ENV)/bin/pip install nose
+	$(ENV)/bin/pip install PyHamcrest
 
-deft-dev-again: clean-deft-dev deft-dev
+clean-env:
+	rm -rf $(ENV)/
+
+env-again: clean-env env
 
 test: unit-test system-test
 
 unit-test:
-	deft-dev/bin/nosetests -A "not systest"
+	$(ENV)/bin/nosetests -A "not systest"
 
 system-test:
-	deft-dev/bin/nosetests -A "systest"
+	$(ENV)/bin/nosetests -A "systest"
 
-.PHONY: deft-dev clean-deft-dev deft-dev-again test unit-test system-test
+.PHONY: all env clean-env env-again test unit-test system-test
