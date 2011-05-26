@@ -15,39 +15,41 @@ class UserError(Exception):
     pass
 
 
+def init(**initial_config):
+    if os.path.exists(ConfigDir):
+        raise UserError("tracker already initialised in directory " + ConfigDir)
+    
+    config = {
+        'format': '0.1',
+        'datadir': DefaultDataDir,
+        'initial_status': "new"}
+    config.update(initial_config)
+    
+    os.mkdir(ConfigDir)
+    os.makedirs(config['datadir'])
+    save_config(config)
+    
+    return load()
+
+
+def save_config(config):
+    save_yaml(ConfigFile, config)
+
+
+def load():
+    return FeatureTracker()
+
+
 class FeatureTracker(object):
     def __init__(self):
-        self._clear_cache()
-        if os.path.exists(ConfigFile):
-            self.config = load_yaml(ConfigFile)
-        else:
-            self.config = {
-                'format': '0.1',
-                'datadir': DefaultDataDir,
-                'initial_status': "new"}
-    
-    def init(self, **initial_config):
-        if os.path.exists(ConfigDir):
-            raise UserError("tracker already initialised in directory " + ConfigDir)
-        
-        self.config.update(initial_config)
-        
-        os.mkdir(ConfigDir)
-        os.makedirs(self.config['datadir'])
-        self.save_config()
-    
-    def _check_initialised(self):
         if not os.path.exists(ConfigDir):
             raise UserError("tracker not initialised")
+        self._clear_cache()
+        self.config = load_yaml(ConfigFile)
     
     def configure(self, **config):
-        self._check_initialised()
-        
         self.config.update(config)
-        self.save_config()
-    
-    def save_config(self):
-        save_yaml(ConfigFile, self.config)
+        save_config(self.config)
     
     @property
     def initial_status(self):

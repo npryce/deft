@@ -2,7 +2,7 @@
 import sys
 import os
 from argparse import ArgumentParser
-from deft.tracker import FeatureTracker, UserError
+import deft.tracker
 
 
 
@@ -13,9 +13,19 @@ def _ignore_output(s):
     pass
     
 
+def with_tracker(function):
+    def wrapper(self, args):
+        tracker = self.backend.load()
+        function(self, tracker, args)
+        tracker.save()
+    
+    return wrapper
+
+
+
 class CommandLineInterface(object):
-    def __init__(self, tracker):
-        self.tracker = tracker
+    def __init__(self, backend):
+        self.backend = backend
     
     def run(self, argv):
         parser = ArgumentParser(
@@ -121,56 +131,62 @@ class CommandLineInterface(object):
         if args.initial_status is not None:
             config['initial_status'] = args.initial_status
         
-        self.tracker.init(**config)
+        self.backend.init(**config)
         args.info_output("initialised Deft tracker")
     
-    def run_configure(self, args):
+    
+    @with_tracker
+    def run_configure(self, tracker, args):
         config = {}
         
         if args.initial_status is not None:
             config['initial_status'] = args.initial_status
         
-        self.tracker.configure(**config)
-    
-    def run_create(self, args):
-        self.tracker.create(name=args.name, 
-                            status=args.status or self.tracker.initial_status,
-                            description=args.description)
+        tracker.configure(**config)
     
     
-    def run_list(self, args):
-        for f in self.tracker.features_with_status(args.status):
+    @with_tracker
+    def run_create(self, tracker, args):
+        tracker.create(name=args.name, 
+                       status=args.status or tracker.initial_status,
+                       description=args.description)
+    
+    
+    @with_tracker
+    def run_list(self, tracker, args):
+        for f in tracker.features_with_status(args.status):
             print f.name
     
     
-    def run_status(self, args):
-        feature = self.tracker.feature_named(args.feature)
+    @with_tracker
+    def run_status(self, tracker, args):
+        feature = tracker.feature_named(args.feature)
         if args.status is not None:
-            self.tracker.change_status(feature, args.status)
+            tracker.change_status(feature, args.status)
             feature.status = args.status
         else:
             print feature.status
     
     
-    def run_priority(self, args):
-        feature = self.tracker.feature_named(args.feature)
+    @with_tracker
+    def run_priority(self, tracker, args):
+        feature = tracker.feature_named(args.feature)
         if args.priority is not None:
-            self.tracker.change_priority(feature, args.priority)
+            tracker.change_priority(feature, args.priority)
         else:
             print feature.priority
     
     
-    def run_purge(self, args):
+    @with_tracker
+    def run_purge(self, tracker, args):
         for name in args.features:
-            self.tracker.purge(name)
+            tracker.purge(name)
 
 
 if __name__ == "__main__":
-    tracker = FeatureTracker()
     try:
-        CommandLineInterface(tracker).run(sys.argv)
-        tracker.save()
-    except UserError as e:
+        CommandLineInterface(deft.tracker).run(sys.argv)
+    except deft.tracker.UserError as e:
         sys.stderr.write(e.message + "\n")
         sys.exit(1)
     # Unexpected exceptions pass through and Python interpreter will print the stacktrace
