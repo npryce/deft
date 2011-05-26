@@ -3,11 +3,13 @@ import inspect
 import os
 import shutil
 from subprocess import Popen, PIPE, CalledProcessError
-from nose.tools import nottest
+from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from deft.fileops import *
+from functional import compose
 
-systest = attr('systest')
+systest = compose(istest, attr('systest'))
+
 Deft = os.path.abspath("deft")
 
 

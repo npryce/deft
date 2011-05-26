@@ -26,18 +26,9 @@ class FeatureTracker(object):
                 'datadir': DefaultDataDir,
                 'initial_status': "new"}
     
-    def save(self):
-        for feature in self._dirty:
-            self._save_feature(feature)
-        self._clear_cache()
-    
-    def _clear_cache(self):
-        self._dirty = set()
-        self._loaded = {}
-    
     def init(self, **initial_config):
         if os.path.exists(ConfigDir):
-            raise ValueError("tracker already initialised in directory " + ConfigDir)
+            raise UserError("tracker already initialised in directory " + ConfigDir)
         
         self.config.update(initial_config)
         
@@ -45,7 +36,13 @@ class FeatureTracker(object):
         os.makedirs(self.config['datadir'])
         self.save_config()
     
+    def _check_initialised(self):
+        if not os.path.exists(ConfigDir):
+            raise UserError("tracker not initialised")
+    
     def configure(self, **config):
+        self._check_initialised()
+        
         self.config.update(config)
         self.save_config()
     
@@ -55,6 +52,15 @@ class FeatureTracker(object):
     @property
     def initial_status(self):
         return self.config['initial_status']
+    
+    def save(self):
+        for feature in self._dirty:
+            self._save_feature(feature)
+        self._clear_cache()
+    
+    def _clear_cache(self):
+        self._dirty = set()
+        self._loaded = {}
     
     def create(self, name, description, status):
         if self._feature_exists_named(name):

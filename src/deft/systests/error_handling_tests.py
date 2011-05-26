@@ -16,6 +16,17 @@ def test_cannot_initialise_tracker_multiple_times():
         assert_that(e.stderr, contains_string("already initialised"))
 
 @systest
+def test_cannot_configure_an_uninitialised_tracker():
+    env = SystestEnvironment()
+    
+    try:
+        env.deft("configure", "--initial-status", "foo")
+        fail("deft should have failed when configuring an uninitialised tracker")
+    except ProcessError as e:
+        assert_that(e.stderr, contains_string("not initialised"))
+
+
+@systest
 def test_cannot_create_feature_with_same_name_as_existing_feature():
     env = SystestEnvironment()
     
