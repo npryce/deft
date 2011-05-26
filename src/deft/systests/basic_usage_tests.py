@@ -4,9 +4,7 @@ from hamcrest import *
 
 
 @systest
-def test_basic_usage():
-    env = SystestEnvironment()
-    
+def test_basic_usage(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x", "--description", "description of x")
     env.deft("create", "y", "--description", "description of y")
@@ -19,9 +17,7 @@ def test_basic_usage():
 
 
 @systest
-def test_can_create_with_initial_status():
-    env = SystestEnvironment()
-    
+def test_can_create_with_initial_status(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x", "--status", "initial-for-x")
     env.deft("create", "y", "--status", "initial-for-y")
@@ -34,9 +30,7 @@ def test_can_create_with_initial_status():
 
 
 @systest
-def test_changing_status():
-    env = SystestEnvironment()
-    
+def test_changing_status(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x")
     env.deft("create", "y")
@@ -52,9 +46,7 @@ def test_changing_status():
 
 
 @systest
-def test_querying_status():
-    env = SystestEnvironment()
-    
+def test_querying_status(env):
     env.deft("init", "-d", "data")
     env.deft("create", "a-feature")
     
@@ -66,9 +58,7 @@ def test_querying_status():
 
 
 @systest
-def test_querying_priority():
-    env = SystestEnvironment()
-    
+def test_querying_priority(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x")
     env.deft("create", "y")
@@ -82,9 +72,7 @@ def test_querying_priority():
     
 
 @systest
-def test_changing_priority():
-    env = SystestEnvironment()
-    
+def test_changing_priority(env):
     env.deft("init", "-d", "data")
     env.deft("create", "a")
     env.deft("create", "b")
@@ -101,9 +89,7 @@ def test_changing_priority():
 
 
 @systest    
-def test_purging_unwanted_features():
-    env = SystestEnvironment()
-    
+def test_purging_unwanted_features(env):
     env.deft("init", "-d", "data")
     env.deft("create", "a")
     env.deft("create", "b")

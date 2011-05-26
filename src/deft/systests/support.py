@@ -8,10 +8,7 @@ from nose.plugins.attrib import attr
 from deft.fileops import *
 from functional import compose
 
-systest = compose(istest, attr('systest'))
-
 Deft = os.path.abspath("deft")
-
 
 
 class ProcessResultParsing(object):
@@ -42,9 +39,8 @@ class ProcessResult(ProcessResultParsing):
 
 
 class SystestEnvironment(object):
-    def __init__(self):
-        self.testdir = os.path.join("output", "testing", "systest", tname())
-        ensure_empty_dir_exists(self.testdir)
+    def __init__(self, testdir):
+        self.testdir = testdir
     
     def deft(self, *args):
         return self.run(Deft, *args)
@@ -83,3 +79,16 @@ def tname():
 
 def fail(message):
     raise AssertionError(message)
+
+
+def systest(f):
+    testdir = os.path.join("output", "testing", "systest", f.__module__ + "." + f.func_name)
+    ensure_empty_dir_exists(testdir)
+    env = SystestEnvironment(testdir)
+    
+    def run_test():
+        f(env)
+    
+    return compose(istest, attr('systest'))(run_test)
+
+
