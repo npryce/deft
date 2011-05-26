@@ -65,6 +65,14 @@ class Bucket_Test:
         assert_that(e.priority, equal_to(5))
         assert_that(bucket[4], same_instance(e))
     
+    def test_appending_a_feature_to_empty_bucket_sets_its_priority_to_1(self):
+        bucket = Bucket([])
+        
+        d = make_feature(99)
+        
+        bucket.append(d)
+        assert_that(d.priority, equal_to(1))
+    
         
     def test_inserting_a_feature_respects_its_current_priority_and_inserts_above_existing_feature_with_same_priority(self):
         a, b, c = make_features(3)

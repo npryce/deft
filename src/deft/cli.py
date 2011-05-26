@@ -80,14 +80,16 @@ class CommandLineInterface(object):
         
         list_parser = subparsers.add_parser("list",
                                             help="list tracked features in order of priority")
+        list_parser.add_argument("-s", "--status",
+                                 help="status of features to list",
+                                 dest="statuses",
+                                 nargs="*",
+                                 default=[])
         list_parser.add_argument("-n", "--count",
                                  type=int,
                                  metavar="N",
                                  default=None,
                                  help="number of features to list (negative = list N lowest priority features)")
-        list_parser.add_argument("-s", "--status",
-                                 help="status of features to list",
-                                 required=True)
         
         status_parser = subparsers.add_parser("status",
                                               help="query or change the status of a feature")
@@ -154,8 +156,12 @@ class CommandLineInterface(object):
     
     @with_tracker
     def run_list(self, tracker, args):
-        for f in tracker.features_with_status(args.status):
-            print f.name
+        statuses = args.statuses or tracker.statuses()
+        max_status_len = max([len(s) for s in statuses])
+        
+        for status in statuses:
+            for f in tracker.features_with_status(status):
+                print status + " " + str(f.priority) + " " + f.name
     
     
     @with_tracker

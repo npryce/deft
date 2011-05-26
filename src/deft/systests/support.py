@@ -3,18 +3,50 @@ import inspect
 import os
 import shutil
 from subprocess import Popen, PIPE, CalledProcessError
+from functools import wraps
+from functional import compose
 from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from deft.fileops import *
-from functional import compose
 
 Deft = os.path.abspath("deft")
 
 
+class Rows:
+    def __init__(self, rows):
+        self.rows = rows
+    
+    def __len__(self):
+        return len(self.rows)
+    
+    def __getitem__(self, i):
+        return self.rows[i]
+    
+    def __iter__(self):
+        return iter(self.rows)
+    
+    def cols(self, *col_indices):
+        return Rows([[row[c] for c in col_indices] for row in self.rows])
+    
+    def __eq__(self, other):
+        return list(self) == list(other)
+    
+    def __str__(self):
+        return str(self.rows)
+    
+
 class ProcessResultParsing(object):
     @property
-    def stdout_lines(self):
+    def lines(self):
         return self.stdout.splitlines()
+    
+    @property
+    def rows(self):
+        return Rows([line.split(" ") for line in self.lines])
+    
+    @property
+    def value(self):
+        return self.stdout.strip()
     
     @property
     def stderr_lines(self):
@@ -86,6 +118,7 @@ def systest(f):
     ensure_empty_dir_exists(testdir)
     env = SystestEnvironment(testdir)
     
+    @wraps(f)
     def run_test():
         f(env)
     

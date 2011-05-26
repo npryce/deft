@@ -21,7 +21,7 @@ class Bucket:
         new_feature.priority = len(self.features)
     
     def insert(self, new_feature):
-        index = new_feature.priority-1
+        index = new_feature.priority - 1
         self.features.insert(index, new_feature)
         for f in self.features[index+1:]:
             f.priority = f.priority + 1
@@ -42,3 +42,6 @@ class Bucket:
         self.remove(feature)
         feature.priority = new_priority
         self.insert(feature)
+    
+    def __str__(self):
+        return str([f.name for f in self.features])

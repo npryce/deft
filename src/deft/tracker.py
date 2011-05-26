@@ -55,6 +55,9 @@ class FeatureTracker(object):
     def initial_status(self):
         return self.config['initial_status']
     
+    def statuses(self):
+        return sorted(set(f.status for f in self._load_features()))
+    
     def save(self):
         for feature in self._dirty:
             self._save_feature(feature)
@@ -92,14 +95,15 @@ class FeatureTracker(object):
         
         os.remove(feature_path)
     
+    
     def change_status(self, feature, new_status):
         old_bucket = self.features_with_status(feature.status)
-        old_bucket.remove(feature)
-        
-        feature.status = new_status
-        
         new_bucket = self.features_with_status(new_status)
+        
+        old_bucket.remove(feature)
         new_bucket.append(feature)
+        feature.status = new_status
+    
     
     def change_priority(self, feature, new_priority):
         bucket = self.features_with_status(feature.status)
