@@ -1,10 +1,10 @@
 
-from deft.systests.support import SystestEnvironment, ProcessError, systest
+from deft.systests.support import SystestEnvironment, ProcessError, systest, wip
 from hamcrest import *
 
 
 @systest
-def test_basic_usage(env):
+def can_create_new_features(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x", "--description", "description of x")
     env.deft("create", "y", "--description", "description of y")
@@ -12,15 +12,10 @@ def test_basic_usage(env):
     assert_that(env.deft("list", "--status", "new").rows, equal_to([
                 ["new", "1", "x"],
                 ["new", "2", "y"]]))
-    
-    env.deft("purge", "x")
-    
-    assert_that(env.deft("list", "--status", "new").rows, equal_to([
-                ["new", "1", "y"]]))
 
 
 @systest
-def test_can_create_with_initial_status(env):
+def can_create_with_initial_status(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x", "--status", "initial-for-x")
     env.deft("create", "y", "--status", "initial-for-y")
@@ -33,6 +28,24 @@ def test_can_create_with_initial_status(env):
                 ["initial-for-y", "1", "y"]]))
     assert_that(env.deft("status", "y").value, equal_to("initial-for-y"))
 
+
+@systest
+def can_list_all_issues_ordered_by_status_then_priority(env):
+    env.deft("init")
+    env.deft("create", "feature-1", "--status", "pending")
+    env.deft("create", "feature-2", "--status", "pending")
+    env.deft("create", "feature-3", "--status", "working")
+    env.deft("create", "feature-4", "--status", "working")
+    env.deft("create", "feature-5", "--status", "complete")
+    env.deft("create", "feature-6", "--status", "complete")
+    
+    assert_that(env.deft("list").rows, equal_to([
+                ["complete", "1", "feature-5"],
+                ["complete", "2", "feature-6"],
+                ["pending", "1", "feature-1"],
+                ["pending", "2", "feature-2"],
+                ["working", "1", "feature-3"],
+                ["working", "2", "feature-4"]]))
 
 @systest
 def test_changing_status(env):
