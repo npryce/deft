@@ -7,6 +7,7 @@ from functools import wraps
 from functional import compose
 from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 from deft.fileops import *
 
 Deft = os.path.abspath("deft")
@@ -125,3 +126,14 @@ def systest(f):
     return compose(istest, attr('systest'))(run_test)
 
 
+
+def wip(f):
+    @wraps(f)
+    def run_test(*args, **kwargs):
+        try:
+            f(*args, **kwargs)
+        except Exception as e:
+            raise SkipTest("WIP test failed: " + str(e))
+        fail("test passed but marked as work in progress")
+    
+    return attr('wip')(run_test)
