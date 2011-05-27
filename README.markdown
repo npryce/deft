@@ -15,8 +15,8 @@ Goals / Principles
 Postponed for now 
 -----------------
 
-* Performance (efficient data structure for storing and querying feature priorities)
 * Integrate Deft with VCS tools themselves
+* Scaling (efficient data structure for indexing features by priority to handle large feature databases)
 
 "Make it work. Make it clean. Make it fast." -- Ward Cunningham
 
