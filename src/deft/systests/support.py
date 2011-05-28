@@ -109,12 +109,11 @@ def fail(message):
 
 
 def systest(f):
-    testdir = os.path.join("output", "testing", "systest", f.__module__ + "." + f.func_name)
-    ensure_empty_dir_exists(testdir)
-    env = SystestEnvironment(testdir)
-    
     @wraps(f)
     def run_test():
+        testdir = os.path.join("output", "testing", "systest", f.__module__ + "." + f.func_name)
+        ensure_empty_dir_exists(testdir)
+        env = SystestEnvironment(testdir)
         f(env)
     
     return compose(istest, attr('systest'))(run_test)
