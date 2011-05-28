@@ -81,15 +81,15 @@ class CommandLineInterface(object):
         list_parser = subparsers.add_parser("list",
                                             help="list tracked features in order of priority")
         list_parser.add_argument("-s", "--status",
-                                 help="status of features to list",
+                                 help="statuses to list (lists all features if no statuses specified)",
                                  dest="statuses",
-                                 nargs="*",
+                                 nargs="+",
                                  default=[])
-        list_parser.add_argument("-n", "--count",
-                                 type=int,
-                                 metavar="N",
-                                 default=None,
-                                 help="number of features to list (negative = list N lowest priority features)")
+        #list_parser.add_argument("-n", "--count",
+        #                         type=int,
+        #                         metavar="N",
+        #                         default=None,
+        #                         help="number of features to list (negative = list N lowest priority features)")
         
         status_parser = subparsers.add_parser("status",
                                               help="query or change the status of a feature")
@@ -156,13 +156,16 @@ class CommandLineInterface(object):
     
     @with_tracker
     def run_list(self, tracker, args):
-        statuses = args.statuses or tracker.statuses()
-        max_status_len = max([len(s) for s in statuses])
+        def print_feature(f):
+            print f.status + " " + str(f.priority) + " " + f.name
         
-        for status in statuses:
-            for f in tracker.features_with_status(status):
-                print status + " " + str(f.priority) + " " + f.name
-    
+        if args.statuses:
+            for status in args.statuses:
+                for f in tracker.features_with_status(status):
+                    print_feature(f)
+        else:
+            for f in tracker.all_features():
+                print_feature(f)
     
     @with_tracker
     def run_status(self, tracker, args):

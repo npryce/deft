@@ -48,6 +48,30 @@ def can_list_all_issues_ordered_by_status_then_priority(env):
                 ["working", "2", "feature-4"]]))
 
 @systest
+def can_list_issues_in_multiple_statuses_in_order_that_statuses_are_given_then_by_priority(env):
+    env.deft("init")
+    env.deft("create", "feature-1", "--status", "pending")
+    env.deft("create", "feature-2", "--status", "pending")
+    env.deft("create", "feature-3", "--status", "working")
+    env.deft("create", "feature-4", "--status", "working")
+    env.deft("create", "feature-5", "--status", "complete")
+    env.deft("create", "feature-6", "--status", "complete")
+    
+    assert_that(env.deft("list", "--status", "pending", "working", "complete").rows, equal_to([
+                ["pending", "1", "feature-1"],
+                ["pending", "2", "feature-2"],
+                ["working", "1", "feature-3"],
+                ["working", "2", "feature-4"],
+                ["complete", "1", "feature-5"],
+                ["complete", "2", "feature-6"]]))
+    
+    assert_that(env.deft("list", "-s", "working", "pending").rows, equal_to([
+                ["working", "1", "feature-3"],
+                ["working", "2", "feature-4"],
+                ["pending", "1", "feature-1"],
+                ["pending", "2", "feature-2"]]))
+
+@systest
 def test_changing_status(env):
     env.deft("init")
     env.deft("create", "x")

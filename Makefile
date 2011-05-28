@@ -19,13 +19,13 @@ env-again: clean-env env
 test: unit-tests system-tests
 
 unit-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "not systest"
+	$(ENV)/bin/nosetests -A "not systest" $(TEST)
 
 system-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "systest"
+	$(ENV)/bin/nosetests -A "systest" $(TEST)
 
 wip-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "wip" --no-skip || true
+	$(ENV)/bin/nosetests -A "wip" --no-skip $(TEST) || true
 
 clean-output-dir:
 	rm -rf output/

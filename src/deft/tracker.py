@@ -55,9 +55,6 @@ class FeatureTracker(object):
     def initial_status(self):
         return self.config['initial_status']
     
-    def statuses(self):
-        return sorted(set(f.status for f in self._load_features()))
-    
     def save(self):
         for feature in self._dirty:
             self._save_feature(feature)
@@ -82,6 +79,9 @@ class FeatureTracker(object):
     
     def features_with_status(self, status):
         return Bucket(self._load_features_with_status(status))
+    
+    def all_features(self):
+        return sorted(self._load_features(), key=lambda f: (f.status, f.priority))
     
     def purge(self, name):
         feature_path = self._name_to_path(name)
@@ -113,7 +113,7 @@ class FeatureTracker(object):
         return os.path.exists(self._name_to_path(name))
     
     def _load_features_with_status(self, status):
-        return [f for f in self._load_features() if f.status == status]
+        return [f for f in self.all_features() if f.status == status]
     
     def _load_features(self):
         return [self._load_feature(f) for f in iglob(self._name_to_path("*"))]
