@@ -36,7 +36,14 @@ class Rows:
         return str(self.rows)
     
 
-class ProcessResultParsing(object):
+
+class ProcessResult(object):
+    def __init__(self, command, status, stdout, stderr):
+        self.command = command
+        self.status = status
+        self.stdout = stdout
+        self.stderr = stderr
+
     @property
     def lines(self):
         return self.stdout.splitlines()
@@ -54,21 +61,10 @@ class ProcessResultParsing(object):
         return self.stderr.splitlines()
 
 
-class ProcessError(Exception, ProcessResultParsing):
-    def __init__(self, result):
-        Exception.__init__(self, result.stderr)
-        self.command = result.command
-        self.status = result.status
-        self.stdout = result.stdout
-        self.stderr = result.stderr
-
-
-class ProcessResult(ProcessResultParsing):
+class ProcessError(Exception, ProcessResult):
     def __init__(self, command, status, stdout, stderr):
-        self.command = command
-        self.status = status
-        self.stdout = stdout
-        self.stderr = stderr
+        Exception.__init__(self, stderr)
+        ProcessResult.__init__(self, command, status, stdout, stderr)
 
 
 class SystestEnvironment(object):
@@ -89,13 +85,11 @@ class SystestEnvironment(object):
         
         (stdout, stderr) = process.communicate()
         
-        result = ProcessResult(command, process.returncode, stdout, stderr)
-        
-        if result.status != 0:
-            raise ProcessError(result)
+        if process.returncode == 0:
+            return ProcessResult(command, process.returncode, stdout, stderr)
         else:
-            return result
-
+            raise ProcessError(command, process.returncode, stdout, stderr)
+        
 
 def search_path(*paths):
     return os.pathsep.join(paths)
