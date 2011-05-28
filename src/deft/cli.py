@@ -193,6 +193,6 @@ if __name__ == "__main__":
     try:
         CommandLineInterface(deft.tracker).run(sys.argv)
     except deft.tracker.UserError as e:
-        sys.stderr.write(e.message + "\n")
+        sys.stderr.write(str(e) + "\n")
         sys.exit(1)
     # Unexpected exceptions pass through and Python interpreter will print the stacktrace
