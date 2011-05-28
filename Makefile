@@ -19,15 +19,30 @@ env-again: clean-env env
 test: unit-tests system-tests
 
 unit-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "not systest" $(TEST)
+	$(ENV)/bin/nosetests -A "not systest" $(test)
 
 system-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "systest" $(TEST)
+	$(ENV)/bin/nosetests -A "systest" $(test)
 
 wip-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "wip" --no-skip $(TEST) || true
+	$(ENV)/bin/nosetests -A "wip" --no-skip $(test) || true
 
 clean-output-dir:
 	rm -rf output/
 
-.PHONY: all env clean-env env-again test unit-test system-test clean-output-dir
+
+# Use like 'make continually' to run all tests or like 'make continually scope=system-tests' to run some
+
+SCANNED_FILES=src testing-tools deft Makefile
+
+continually:
+	@while true; do \
+	  if not make $(scope); \
+	  then \
+	      notify-send --icon=error --category=blog --expire-time=1000 "Deft build broken" ; \
+	  fi ; \
+	  inotifywait -r -qq -e modify -e delete $(SCANNED_FILES); \
+	done
+
+
+.PHONY: all env clean-env env-again test unit-test system-test clean-output-dir continually
