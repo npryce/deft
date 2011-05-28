@@ -8,7 +8,8 @@ ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
 DefaultDataDir = os.path.join(ConfigDir, "data")
 
-FeatureSuffix = ".feature"
+PropertiesSuffix = ".yaml"
+DescriptionSuffix = ".description"
 
 # Used to report user errors that have been explicitly detected
 class UserError(Exception):
@@ -64,14 +65,14 @@ class FeatureTracker(object):
         self._dirty = set()
         self._loaded = {}
     
-    def create(self, name, description, status):
+    def create(self, name, status, description=""):
         if self._feature_exists_named(name):
             raise UserError("a feature already exists with name: " + name)
         
         priority = len(self._load_features_with_status(status)) + 1
-        feature = Feature(tracker=self, name=name, status=status, description=description, priority=priority)
-        
+        feature = Feature(tracker=self, name=name, status=status, priority=priority)
         self._save_feature(feature)
+        feature.write_description(description)
         return feature
     
     def feature_named(self, name):
@@ -130,26 +131,25 @@ class FeatureTracker(object):
         self._dirty.add(feature)
     
     def _save_feature(self, feature):
-        save_yaml(self._name_to_path(feature.name), {
-                'status': feature.status,
-                'priority': feature.priority,
-                'description': feature.description
-                })
+        save_yaml(self._name_to_path(feature.name),
+                  {'status': feature.status, 'priority': feature.priority})
     
-    def _name_to_path(self, name):
-        return os.path.join(os.path.join(self.config["datadir"], name + FeatureSuffix))
+    def _write_description(self, feature, description):
+        save_text(self._name_to_path(feature.name, DescriptionSuffix), description)
+
+    def _name_to_path(self, name, suffix=PropertiesSuffix):
+        return os.path.join(os.path.join(self.config["datadir"], name + suffix))
     
-    def _path_to_name(self, path):
-        return os.path.basename(path)[:-len(FeatureSuffix)]
+    def _path_to_name(self, path, suffix=PropertiesSuffix):
+        return os.path.basename(path)[:-len(suffix)]
     
 
 
 class Feature(object):
-    def __init__(self, tracker, name, status, priority, description):
+    def __init__(self, tracker, name, status, priority):
         self.name = name
         self.status = status
         self.priority = priority
-        self.description = description
         self._tracker = tracker
     
     def __setattr__(self, name, new_value):
@@ -157,4 +157,7 @@ class Feature(object):
         object.__setattr__(self, name, new_value)
         if must_save:
             self._tracker._mark_dirty(self)
+    
+    def write_description(self, description):
+        self._tracker._write_description(self, description)
     

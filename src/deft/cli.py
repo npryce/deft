@@ -28,21 +28,19 @@ class CommandLineInterface(object):
         self.backend = backend
     
     def run(self, argv):
+        command = argv[0]
+        
         parser = ArgumentParser(
             prog="deft",
             description="Deft: the Distributed, Easy Feature Tracker")
-
-        # Subparsers should inherit options defined by the parent parser, 
-        # but don't seem to in argparse 1.1, so I've defined common options
-        # in a separate parser
-        verbosity = ArgumentParser(add_help=False)
-        verbosity.add_argument("-v", "--verbose",
+        
+        parser.add_argument("-v", "--verbose",
                                help="verbose output",
                                action="store_const",
                                dest="verbose_output",
                                const=_print_output,
                                default=_ignore_output)
-        verbosity.add_argument("-q", "--quiet",
+        parser.add_argument("-q", "--quiet",
                                help="suppress all but the most important output",
                                action="store_const",
                                dest="info_output",
@@ -55,19 +53,20 @@ class CommandLineInterface(object):
                                            dest="initial_status",
                                            default=None)
         
-        subparsers = parser.add_subparsers()
+        subparsers = parser.add_subparsers(title="subcommands", 
+                                           dest="subcommand")
         
-        init_parser = subparsers.add_parser("init", parents=[tracker_configuration, verbosity],
+        init_parser = subparsers.add_parser("init", parents=[tracker_configuration],
                                             help="initialise an empty Deft tracker within the current directory")
         init_parser.add_argument("-d", "--data-dir",
                                  help="the directory in which features are stored",
                                  default=None,
                                  dest="datadir")
         
-        configure_parser = subparsers.add_parser("configure", parents=[tracker_configuration, verbosity],
+        configure_parser = subparsers.add_parser("configure", parents=[tracker_configuration],
                                                  help="configure the behaviour of the tracker")
         
-        create_parser = subparsers.add_parser("create",
+        create_parser = subparsers.add_parser("create", 
                                               help="create a new feature and output its id")
         create_parser.add_argument("name",
                                    help="a short name for the feature")
@@ -78,20 +77,15 @@ class CommandLineInterface(object):
                                    help="the initial status of the feature",
                                    default=None)
         
-        list_parser = subparsers.add_parser("list",
+        list_parser = subparsers.add_parser("list", 
                                             help="list tracked features in order of priority")
         list_parser.add_argument("-s", "--status",
                                  help="statuses to list (lists all features if no statuses specified)",
                                  dest="statuses",
                                  nargs="+",
                                  default=[])
-        #list_parser.add_argument("-n", "--count",
-        #                         type=int,
-        #                         metavar="N",
-        #                         default=None,
-        #                         help="number of features to list (negative = list N lowest priority features)")
         
-        status_parser = subparsers.add_parser("status",
+        status_parser = subparsers.add_parser("status", 
                                               help="query or change the status of a feature")
         status_parser.add_argument("feature",
                                    help="feature name",
@@ -101,7 +95,7 @@ class CommandLineInterface(object):
                                    nargs="?",
                                    default=None)
         
-        priority_parser = subparsers.add_parser("priority",
+        priority_parser = subparsers.add_parser("priority", 
                                               help="query or change the priority of a feature")
         priority_parser.add_argument("feature",
                                      help="feature name",
@@ -112,7 +106,7 @@ class CommandLineInterface(object):
                                      type=int,
                                      default=None)
         
-        purge_parser = subparsers.add_parser("purge",
+        purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
         purge_parser.add_argument("features",
                                   help="feature name",
@@ -120,9 +114,7 @@ class CommandLineInterface(object):
                                   nargs="+")
         
         args = parser.parse_args(argv[1:])
-        command = argv[1]
-        
-        getattr(self, "run_" + command)(args)
+        getattr(self, "run_" + args.subcommand)(args)
     
     
     def run_init(self, args):

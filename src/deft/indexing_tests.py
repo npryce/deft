@@ -19,8 +19,7 @@ def make_feature(i):
     return Feature(tracker=tracker, 
                    name=chr(ord('a')+i), 
                    priority=i+1, 
-                   status="testing", 
-                   description="")
+                   status="testing")
 
 
 class Bucket_Test:
