@@ -113,7 +113,7 @@ class FeatureTracker(object):
         return os.path.exists(self._name_to_path(name))
     
     def _load_features_with_status(self, status):
-        return [f for f in self.all_features() if f.status == status]
+        return [f for f in self._load_features() if f.status == status]
     
     def _load_features(self):
         return [self._load_feature(f) for f in iglob(self._name_to_path("*"))]
