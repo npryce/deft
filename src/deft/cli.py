@@ -42,6 +42,10 @@ def run_editor_process(path):
         raise deft.tracker.UserError("editor command failed with status " + str(retcode) + ": " + command)
 
 
+def print_path(path):
+    print path
+
+
 class CommandLineInterface(object):
     def __init__(self, backend, editor=run_editor_process):
         self.backend = backend
@@ -55,17 +59,17 @@ class CommandLineInterface(object):
             description="Deft: the Distributed, Easy Feature Tracker")
         
         parser.add_argument("-v", "--verbose",
-                               help="verbose output",
-                               action="store_const",
-                               dest="verbose_output",
-                               const=_print_output,
-                               default=_ignore_output)
+                            help="verbose output",
+                            action="store_const",
+                            dest="verbose_output",
+                            const=_print_output,
+                            default=_ignore_output)
         parser.add_argument("-q", "--quiet",
-                               help="suppress all but the most important output",
-                               action="store_const",
-                               dest="info_output",
-                               const=_ignore_output,
-                               default=_print_output)
+                            help="suppress all but the most important output",
+                            action="store_const",
+                            dest="info_output",
+                            const=_ignore_output,
+                            default=_print_output)
         
         tracker_configuration = ArgumentParser(add_help=False)
         tracker_configuration.add_argument("-i", "--initial-status",
@@ -126,20 +130,27 @@ class CommandLineInterface(object):
                                      type=int,
                                      default=None)
 
-        priority_parser = subparsers.add_parser("description", 
-                                              help="query, change or edit the long description of a feature")
-        priority_parser.add_argument("feature",
-                                     help="feature name",
-                                     metavar="name")
-        #priority_parser.add_argument("-e", "--edit",
-        #                             help="edit the description",
-        #                             nargs="?",
-        #                             default=False,
-        #                             const=True)
-        priority_parser.add_argument("description",
-                                     help="the new description of the feature, if changing the description",
-                                     nargs="?",
-                                     default=None)
+        description_parser = subparsers.add_parser("description", 
+                                                   help="query, change or edit the long description of a feature")
+        description_parser.add_argument("feature",
+                                        help="feature name",
+                                        metavar="name")
+        description_parser.add_argument("-e", "--edit",
+                                        help="edit the description",
+                                        action="store_const",
+                                        dest="edit",
+                                        const=True,
+                                        default=False)
+        description_parser.add_argument("-f", "--file",
+                                        help="print the file of the description",
+                                        action="store_const",
+                                        dest="file",
+                                        const=True,
+                                        default=False)
+        description_parser.add_argument("description",
+                                        help="the new description of the feature, if changing the description",
+                                        nargs="?",
+                                        default=None)
         
         purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
@@ -215,17 +226,21 @@ class CommandLineInterface(object):
         else:
             print feature.priority
     
-
+    
     @with_tracker
     def run_description(self, tracker, args):
         feature = tracker.feature_named(args.feature)
         
         if args.description is not None:
             feature.write_description(args.description)
+            if args.edit:
+                self.editor(feature.description_file)
+        elif args.edit:
+            self.editor(feature.description_file)
         else:
             with open(feature.description_file) as input:
                 shutil.copyfileobj(input, sys.stdout)
-                
+    
     
     @with_tracker
     def run_purge(self, tracker, args):

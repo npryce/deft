@@ -1,6 +1,7 @@
 
-from deft.systests.support import SystestEnvironment, ProcessError, systest, fail, wip
+import os
 from hamcrest import *
+from deft.systests.support import SystestEnvironment, ProcessError, systest, fail, wip
 
 
 @systest
@@ -13,7 +14,6 @@ def can_set_the_description_of_a_feature(env):
     assert_that(env.deft("description", "feature-x").value, equal_to("new-description"))
 
 
-@wip
 @systest
 def can_edit_the_description_of_a_feature(env):
     env.deft("init")
