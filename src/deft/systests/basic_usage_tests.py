@@ -29,7 +29,7 @@ def if_description_not_specified_description_file_is_opened_in_an_editor(env):
 
 @systest
 def can_create_with_initial_status(env):
-    env.deft("init", "-d", "data")
+    env.deft("init")
     env.deft("create", "x", "--status", "initial-for-x")
     env.deft("create", "y", "--status", "initial-for-y")
     
@@ -104,7 +104,7 @@ def can_change_status_of_feature(env):
 
 @systest
 def can_query_status_of_feature(env):
-    env.deft("init", "-d", "data")
+    env.deft("init")
     env.deft("create", "a-feature")
     
     assert_that(env.deft("status", "a-feature").value, equal_to("new"))
@@ -116,7 +116,7 @@ def can_query_status_of_feature(env):
 
 @systest
 def can_query_priority_of_feature(env):
-    env.deft("init", "-d", "data")
+    env.deft("init")
     env.deft("create", "x")
     env.deft("create", "y")
     env.deft("create", "z")

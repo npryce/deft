@@ -4,7 +4,7 @@ from hamcrest import *
 
 
 @systest
-def test_cannot_initialise_tracker_multiple_times(env):
+def cannot_initialise_tracker_multiple_times(env):
     env.deft("init")
     
     try:
@@ -14,7 +14,7 @@ def test_cannot_initialise_tracker_multiple_times(env):
         assert_that(e.stderr, contains_string("already initialised"))
 
 @systest
-def test_cannot_configure_an_uninitialised_tracker(env):
+def cannot_configure_an_uninitialised_tracker(env):
     try:
         env.deft("configure", "--initial-status", "foo")
         fail("deft should have failed when configuring an uninitialised tracker")
@@ -23,7 +23,7 @@ def test_cannot_configure_an_uninitialised_tracker(env):
 
 
 @systest
-def test_cannot_create_feature_with_same_name_as_existing_feature(env):
+def cannot_create_a_feature_with_same_name_as_existing_feature(env):
     env.deft("init")
     
     env.deft("create", "new-feature-name")
@@ -34,4 +34,14 @@ def test_cannot_create_feature_with_same_name_as_existing_feature(env):
     except ProcessError as e:
         assert_that(e.stderr, contains_string("new-feature-name"))
         assert_that(e.stderr, contains_string("already exists"))
+    
+
+@systest
+def cannot_manipulate_a_feature_that_does_not_exist(env):
+    env.deft("init")
+    
+    try:
+        env.deft("priority", "nonexistent-feature")
+    except ProcessError as e:
+        assert_that(e.stderr, contains_string("no feature named nonexistent-feature"))
 

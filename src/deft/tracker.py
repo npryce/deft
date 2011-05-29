@@ -79,7 +79,10 @@ class FeatureTracker(object):
         return feature
     
     def feature_named(self, name):
-        return self._load_feature(self._name_to_path(name))
+        if self._feature_exists_named(name):
+            return self._load_feature(self._name_to_path(name))
+        else:
+            raise UserError("no feature named " + name)
     
     def features_with_status(self, status):
         return Bucket(self._load_features_with_status(status))
