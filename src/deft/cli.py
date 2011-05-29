@@ -233,11 +233,12 @@ class CommandLineInterface(object):
         
         if args.description is not None:
             feature.write_description(args.description)
-            if args.edit:
-                self.editor(feature.description_file)
-        elif args.edit:
+        
+        if args.edit:
             self.editor(feature.description_file)
-        else:
+        elif args.file:
+                print feature.description_file
+        elif args.description is None:
             with open(feature.description_file) as input:
                 shutil.copyfileobj(input, sys.stdout)
     
