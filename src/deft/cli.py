@@ -136,11 +136,10 @@ class CommandLineInterface(object):
         #                             nargs="?",
         #                             default=False,
         #                             const=True)
-        #priority_parser.add_argument("description",
-        #                             help="the new description of the feature, if changing the description",
-        #                             nargs="?",
-        #                             type=int,
-        #                             default=None)
+        priority_parser.add_argument("description",
+                                     help="the new description of the feature, if changing the description",
+                                     nargs="?",
+                                     default=None)
         
         purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
@@ -220,8 +219,13 @@ class CommandLineInterface(object):
     @with_tracker
     def run_description(self, tracker, args):
         feature = tracker.feature_named(args.feature)
-        with open(feature.description_file) as input:
-            shutil.copyfileobj(input, sys.stdout)
+        
+        if args.description is not None:
+            feature.write_description(args.description)
+        else:
+            with open(feature.description_file) as input:
+                shutil.copyfileobj(input, sys.stdout)
+                
     
     @with_tracker
     def run_purge(self, tracker, args):
