@@ -7,17 +7,19 @@ Goals / Principles
 ------------------
 
 * store tracked features in VCS, not another tool
-* absolute prioritisation of all features (per status)
-* store features per-branch
+* all features have status (e.g. new, in-development, ready-for-testing, ready-for-deployment)
+* absolute prioritisation of features that have the same status
+* store feature database alongside the code
 * store the feature database in plain-text files that play well with VCS and diff/merge tools
 * don't re-implement functionality that is already in the VCS
 
-Postponed for now 
------------------
+Future Plans
+------------
 
 Following the maxim "Make it work. Make it clean. Make it fast.", the following issues are postponed for now until the tool does what I want and is useful for small projects
 
-* Integrate Deft with VCS tools themselves
+* Integrate Deft with specific VCS tools more seamlessly
+* Visualisation and estimation of history, such as Cumulative Flow Diagrams and velocity estimation
 * Scaling (efficient data structure for indexing features by priority to handle large feature databases)
 
 
