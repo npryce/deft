@@ -19,7 +19,8 @@ Future Plans
 Following the maxim "Make it work. Make it clean. Make it fast.", the following issues are postponed for now until the tool does what I want and is useful for small projects
 
 * Integrate Deft with specific VCS tools more seamlessly
-* Visualisation and estimation of history, such as Cumulative Flow Diagrams and velocity estimation
+* Visualisation of history, such as Cumulative Flow Diagrams
+* Analysis of history, such as velocity estimation
 * Scaling (efficient data structure for indexing features by priority to handle large feature databases)
 
 
