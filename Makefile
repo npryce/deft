@@ -1,6 +1,9 @@
 
 ENV=python-dev
 
+# Set this on the command-line to optimise systest runtime
+SYSTEST_PROCESSES=4
+
 all: test
 
 env:
@@ -22,7 +25,7 @@ unit-tests: clean-output-dir
 	$(ENV)/bin/nosetests -A "not systest" $(test)
 
 system-tests: clean-output-dir
-	$(ENV)/bin/nosetests -A "systest" $(test)
+	$(ENV)/bin/nosetests -A "systest" --processes 4 $(test)
 
 wip-tests: clean-output-dir
 	$(ENV)/bin/nosetests -A "wip" --no-skip $(test) || true
@@ -31,13 +34,11 @@ clean-output-dir:
 	rm -rf output/
 
 
-# Use like 'make continually' to run all tests or like 'make continually scope=system-tests' to run some
-
 SCANNED_FILES=src testing-tools deft Makefile
 
 continually:
 	@while true; do \
-	  if not make $(scope); \
+	  if not make; \
 	  then \
 	      notify-send --icon=error --category=blog --expire-time=1000 "Deft build broken" ; \
 	  fi ; \

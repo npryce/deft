@@ -65,14 +65,17 @@ class FeatureTracker(object):
         self._dirty = set()
         self._loaded = {}
     
-    def create(self, name, status, description=""):
+    def create(self, name, status, initial_description=""):
         if self._feature_exists_named(name):
             raise UserError("a feature already exists with name: " + name)
         
         priority = len(self._load_features_with_status(status)) + 1
+        
         feature = Feature(tracker=self, name=name, status=status, priority=priority)
+        
         self._save_feature(feature)
-        feature.write_description(description)
+        feature.write_description(initial_description)
+        
         return feature
     
     def feature_named(self, name):
@@ -85,16 +88,19 @@ class FeatureTracker(object):
         return sorted(self._load_features(), key=lambda f: (f.status, f.priority))
     
     def purge(self, name):
-        feature_path = self._name_to_path(name)
-        feature = self._load_feature(feature_path)
+        properties_path = self._name_to_path(name, PropertiesSuffix)
+        description_path = self._name_to_path(name, DescriptionSuffix)
         
+        feature = self._load_feature(properties_path)
         bucket = self.features_with_status(feature.status)
+        
         bucket.remove(feature)
         
-        del self._loaded[feature_path]
+        del self._loaded[properties_path]
         self._dirty.discard(feature)
         
-        os.remove(feature_path)
+        os.remove(properties_path)
+        os.remove(description_path)
     
     
     def change_status(self, feature, new_status):
@@ -157,6 +163,10 @@ class Feature(object):
         object.__setattr__(self, name, new_value)
         if must_save:
             self._tracker._mark_dirty(self)
+    
+    @property
+    def description_file(self):
+        return self._tracker._name_to_path(self.name, DescriptionSuffix)
     
     def write_description(self, description):
         self._tracker._write_description(self, description)

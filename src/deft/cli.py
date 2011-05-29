@@ -1,6 +1,8 @@
 
 import sys
 import os
+import shutil
+import subprocess
 from argparse import ArgumentParser
 import deft.tracker
 
@@ -23,9 +25,27 @@ def with_tracker(function):
 
 
 
+EditorEnvironmentVariables = ["DEFT_EDITOR", "VISUAL", "EDITOR"]
+
+def find_editor_command():
+    for v in EditorEnvironmentVariables:
+        if v in os.environ:
+            return os.environ[v]
+    else:
+        raise deft.tracker.UserError("no editor specified: one of the environment variables " + 
+                                     (", ".join(EditorEnvironmentVariables)) + " must be set")
+
+def run_editor_process(path):
+    command = find_editor_command() + " " + "\"" + path + "\""
+    retcode = subprocess.call(command, shell=True)
+    if retcode != 0:
+        raise deft.tracker.UserError("editor command failed with status " + str(retcode) + ": " + command)
+
+
 class CommandLineInterface(object):
-    def __init__(self, backend):
+    def __init__(self, backend, editor=run_editor_process):
         self.backend = backend
+        self.editor = editor
     
     def run(self, argv):
         command = argv[0]
@@ -72,7 +92,7 @@ class CommandLineInterface(object):
                                    help="a short name for the feature")
         create_parser.add_argument("-d", "--description",
                                    help="a longer description of the feature",
-                                   default="")
+                                   default=None)
         create_parser.add_argument("-s", "--status",
                                    help="the initial status of the feature",
                                    default=None)
@@ -105,6 +125,22 @@ class CommandLineInterface(object):
                                      nargs="?",
                                      type=int,
                                      default=None)
+
+        priority_parser = subparsers.add_parser("description", 
+                                              help="query, change or edit the long description of a feature")
+        priority_parser.add_argument("feature",
+                                     help="feature name",
+                                     metavar="name")
+        #priority_parser.add_argument("-e", "--edit",
+        #                             help="edit the description",
+        #                             nargs="?",
+        #                             default=False,
+        #                             const=True)
+        #priority_parser.add_argument("description",
+        #                             help="the new description of the feature, if changing the description",
+        #                             nargs="?",
+        #                             type=int,
+        #                             default=None)
         
         purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
@@ -141,9 +177,12 @@ class CommandLineInterface(object):
     
     @with_tracker
     def run_create(self, tracker, args):
-        tracker.create(name=args.name, 
-                       status=args.status or tracker.initial_status,
-                       description=args.description)
+        feature = tracker.create(name=args.name,
+                                 status=args.status or tracker.initial_status,
+                                 initial_description=(args.description or ""))
+        
+        if args.description is None:
+            self.editor(feature.description_file)
     
     
     @with_tracker
@@ -177,6 +216,12 @@ class CommandLineInterface(object):
         else:
             print feature.priority
     
+
+    @with_tracker
+    def run_description(self, tracker, args):
+        feature = tracker.feature_named(args.feature)
+        with open(feature.description_file) as input:
+            shutil.copyfileobj(input, sys.stdout)
     
     @with_tracker
     def run_purge(self, tracker, args):

@@ -1,4 +1,5 @@
 
+import os
 from deft.systests.support import SystestEnvironment, ProcessError, systest, wip
 from hamcrest import *
 
@@ -12,6 +13,18 @@ def can_create_new_features(env):
     assert_that(env.deft("list", "--status", "new").rows, equal_to([
                 ["new", "1", "x"],
                 ["new", "2", "y"]]))
+
+
+@systest
+def if_description_not_specified_description_file_is_opened_in_an_editor(env):
+    env.deft("init")
+
+    description = "FEATURE-X-DESCRIPTION"
+    
+    env.deft("create", "feature-x", 
+             editor_input=description)
+    
+    assert_that(env.deft("description", "feature-x").stdout, equal_to(description + os.linesep))
 
 
 @systest
@@ -72,7 +85,7 @@ def can_list_issues_in_multiple_statuses_in_order_that_statuses_are_given_then_b
                 ["pending", "2", "feature-2"]]))
 
 @systest
-def test_changing_status(env):
+def can_change_status_of_feature(env):
     env.deft("init")
     env.deft("create", "x")
     env.deft("create", "y")
@@ -90,7 +103,7 @@ def test_changing_status(env):
 
 
 @systest
-def test_querying_status(env):
+def can_query_status_of_feature(env):
     env.deft("init", "-d", "data")
     env.deft("create", "a-feature")
     
@@ -102,7 +115,7 @@ def test_querying_status(env):
 
 
 @systest
-def test_querying_priority(env):
+def can_query_priority_of_feature(env):
     env.deft("init", "-d", "data")
     env.deft("create", "x")
     env.deft("create", "y")
@@ -119,7 +132,7 @@ def test_querying_priority(env):
 
 
 @systest
-def test_changing_priority(env):
+def can_change_priority_of_feature(env):
     env.deft("init")
     env.deft("create", "a")
     env.deft("create", "b")
@@ -140,7 +153,7 @@ def test_changing_priority(env):
 
 
 @systest    
-def test_purging_unwanted_features(env):
+def can_purge_unwanted_features_from_working_copy(env):
     env.deft("init")
     env.deft("create", "a")
     env.deft("create", "b")

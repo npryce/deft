@@ -67,21 +67,34 @@ class ProcessError(Exception, ProcessResult):
         ProcessResult.__init__(self, command, status, stdout, stderr)
 
 
+def fake_editor_command(input):
+    return os.path.abspath("testing-tools/fake-editor") + " " + repr(input)
+
+
 class SystestEnvironment(object):
     def __init__(self, testdir):
         self.testdir = testdir
+        
+    def deft(self, *args, **kwargs):
+        env = {}
+        if "editor_input" in kwargs:
+            env['EDITOR'] = fake_editor_command(kwargs['editor_input'])
+        
+        return self.run(command=[Deft]+list(args), env=env)
     
-    def deft(self, *args):
-        return self.run(Deft, *args)
-    
-    def run(self, *command):
-        dev_bin = os.path.abspath('deft-dev/bin')
+    def run(self, command, env={}):
+        path = search_path(os.path.abspath('python-dev/bin'),
+                           os.defpath)
+        
+        full_env = {'PATH': path,
+                    'EDITOR': fake_editor_command("description-not-important")}
+        full_env.update(env)
         
         process = Popen(command, 
                         stdin=PIPE, stdout=PIPE, stderr=PIPE, 
                         close_fds=True, 
                         cwd=self.testdir,
-                        env={'PATH': search_path(dev_bin, os.defpath)})
+                        env=full_env)
         
         (stdout, stderr) = process.communicate()
         
