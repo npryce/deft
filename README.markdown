@@ -16,7 +16,7 @@ Goals / Principles
 Future Plans
 ------------
 
-Following the maxim "Make it work. Make it clean. Make it fast.", the following issues are postponed for now until the tool does what I want and is useful for small projects
+When the tool does what I want for small projects, I plan to add the following features: 
 
 * Integrate Deft with specific VCS tools more seamlessly
 * Visualisation of history, such as Cumulative Flow Diagrams
