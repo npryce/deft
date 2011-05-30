@@ -77,24 +77,22 @@ class SystestEnvironment(object):
         
     def deft(self, *args, **kwargs):
         env = {}
-        if "editor_input" in kwargs:
-            env['EDITOR'] = fake_editor_command(kwargs['editor_input'])
-        
-        return self.run(command=[Deft]+list(args), env=env)
+        env['DEFT_EDITOR'] = fake_editor_command(kwargs.get('editor_input', 'description-not-important'))
+        return self.run(command=["deft"]+list(args), env_override=env)
     
-    def run(self, command, env={}):
+    def run(self, command, env_override={}):
         path = search_path(os.path.abspath('python-dev/bin'),
+                           os.path.abspath(os.getcwd()),
                            os.defpath)
         
-        full_env = {'PATH': path,
-                    'EDITOR': fake_editor_command("description-not-important")}
-        full_env.update(env)
+        env = {'PATH': path}
+        env.update(env_override)
         
         process = Popen(command, 
                         stdin=PIPE, stdout=PIPE, stderr=PIPE, 
                         close_fds=True, 
                         cwd=self.testdir,
-                        env=full_env)
+                        env=env)
         
         (stdout, stderr) = process.communicate()
         

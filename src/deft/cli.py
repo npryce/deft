@@ -27,16 +27,16 @@ def with_tracker(function):
 
 EditorEnvironmentVariables = ["DEFT_EDITOR", "VISUAL", "EDITOR"]
 
-def find_editor_command():
+def find_editor_command(env):
     for v in EditorEnvironmentVariables:
-        if v in os.environ:
-            return os.environ[v]
+        if v in env:
+            return env[v]
     else:
         raise deft.tracker.UserError("no editor specified: one of the environment variables " + 
                                      (", ".join(EditorEnvironmentVariables)) + " must be set")
 
 def run_editor_process(path):
-    command = find_editor_command() + " " + "\"" + path + "\""
+    command = find_editor_command(os.environ) + " " + "\"" + path + "\""
     retcode = subprocess.call(command, shell=True)
     if retcode != 0:
         raise deft.tracker.UserError("editor command failed with status " + str(retcode) + ": " + command)
