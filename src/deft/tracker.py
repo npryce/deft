@@ -44,7 +44,7 @@ def load():
 class FeatureTracker(object):
     def __init__(self, config):
         self.config = config
-        self._clear_cache()
+        self._init_empty_cache()
     
     def configure(self, **config):
         self.config.update(config)
@@ -60,9 +60,9 @@ class FeatureTracker(object):
     def save(self):
         for feature in self._dirty:
             self._save_feature(feature)
-        self._clear_cache()
+        self._init_empty_cache()
     
-    def _clear_cache(self):
+    def _init_empty_cache(self):
         self._dirty = set()
         self._loaded = {}
     
