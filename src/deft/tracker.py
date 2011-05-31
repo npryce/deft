@@ -28,33 +28,34 @@ def init(**initial_config):
     
     os.mkdir(ConfigDir)
     os.makedirs(config['datadir'])
-    save_config(config)
     
-    return load()
-
-
-def save_config(config):
-    save_yaml(ConfigFile, config)
+    tracker = FeatureTracker(config)
+    tracker.save_config()
+    
+    return tracker
 
 
 def load():
-    return FeatureTracker()
+    if not os.path.exists(ConfigDir):
+        raise UserError("tracker not initialised")
+    return FeatureTracker(load_yaml(ConfigFile))
 
 
 class FeatureTracker(object):
-    def __init__(self):
-        if not os.path.exists(ConfigDir):
-            raise UserError("tracker not initialised")
+    def __init__(self, config):
+        self.config = config
         self._clear_cache()
-        self.config = load_yaml(ConfigFile)
     
     def configure(self, **config):
         self.config.update(config)
-        save_config(self.config)
+        self.save_config()
     
     @property
     def initial_status(self):
         return self.config['initial_status']
+    
+    def save_config(self):
+        save_yaml(ConfigFile, self.config)
     
     def save(self):
         for feature in self._dirty:
