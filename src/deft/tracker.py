@@ -148,7 +148,7 @@ class FeatureTracker(object):
         save_text(self._name_to_path(feature.name, DescriptionSuffix), description)
 
     def _name_to_path(self, name, suffix=PropertiesSuffix):
-        return os.path.join(os.path.join(self.config["datadir"], name + suffix))
+        return os.path.abspath(os.path.join(self.config["datadir"], name + suffix))
     
     def _path_to_name(self, path, suffix=PropertiesSuffix):
         return os.path.basename(path)[:-len(suffix)]

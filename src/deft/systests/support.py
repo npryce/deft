@@ -74,6 +74,9 @@ def fake_editor_command(input):
 class SystestEnvironment(object):
     def __init__(self, testdir):
         self.testdir = testdir
+    
+    def abspath(self, subpath):
+        return os.path.abspath(os.path.join(self.testdir, subpath))
         
     def deft(self, *args, **kwargs):
         env = {
