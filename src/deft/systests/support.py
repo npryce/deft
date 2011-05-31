@@ -76,8 +76,11 @@ class SystestEnvironment(object):
         self.testdir = testdir
         
     def deft(self, *args, **kwargs):
-        env = {}
-        env['DEFT_EDITOR'] = fake_editor_command(kwargs.get('editor_input', 'description-not-important'))
+        env = {
+            'PYTHONPATH': os.path.abspath("src"),
+            'DEFT_EDITOR': fake_editor_command(kwargs.get('editor_input', 'description-not-important'))
+        }
+        
         return self.run(command=["deft"]+list(args), env_override=env)
     
     def run(self, command, env_override={}):

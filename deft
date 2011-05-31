@@ -1,3 +1,3 @@
 #!/bin/sh
 
-PYTHONPATH=$(dirname $0)/src python -m deft.cli "$@"
+python -m deft.cli "$@"
