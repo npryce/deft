@@ -98,6 +98,12 @@ class StorageContract:
         assert_that(list(self.storage.list("zzz/*")), equal_to([]))
         
         
+    def test_can_report_normalised_path(self):
+        assert_that(self.create_storage("/foo/bar").abspath("x/y"), equal_to("/foo/bar/x/y"))
+        assert_that(self.create_storage("foo/bar").abspath("x/y"), equal_to("foo/bar/x/y"))
+        assert_that(self.create_storage("foo/bar/../baz/.").abspath("x/y"), equal_to("foo/baz/x/y"))
+        
+
     def _create_example_file(self, relpath, content="testing"):
         with self.storage.open_write(relpath) as output:
             output.write(content)
@@ -108,8 +114,11 @@ class FileStorage_Test(StorageContract):
     def setup(self):
         self.testdir = path("output/testing/"+self.__class__.__name__.lower())
         ensure_empty_dir_exists(self.testdir)
-        self.storage = FileStorage(self.testdir)
+        self.storage = self.create_storage(self.testdir)
     
+    def create_storage(self, basedir):
+        return FileStorage(basedir)
+
     def abspath(self, p):
         return os.path.abspath(os.path.join(self.testdir, path(p)))
     

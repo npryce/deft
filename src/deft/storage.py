@@ -27,33 +27,33 @@ class FileStorage(StorageFormats):
     def __init__(self, basedir):
         self.basedir = basedir
     
+    def abspath(self, relpath):
+        return os.path.normpath(os.path.join(self.basedir, relpath))
+    
     def exists(self, relpath):
-        return os.path.exists(self._to_path(relpath))
+        return os.path.exists(self.abspath(relpath))
     
     def open_read(self, relpath):
-        return open(self._to_path(relpath), "r")
+        return open(self.abspath(relpath), "r")
     
     def open_write(self, relpath):
         self.makedirs(os.path.dirname(relpath))
-        return open(self._to_path(relpath), "w")
+        return open(self.abspath(relpath), "w")
     
     def remove(self, relpath):
-        path = self._to_path(relpath)
+        path = self.abspath(relpath)
         if os.path.isdir(path):
             shutil.rmtree(path)
         elif os.path.exists(path):
             os.remove(path)
     
     def list(self, relpattern):
-        pattern = self._to_path(relpattern)
+        pattern = self.abspath(relpattern)
         return (os.path.relpath(match, start=self.basedir) for match in iglob(pattern))
     
     def makedirs(self, relpath):
         if relpath != "":
-            dirpath = self._to_path(relpath)
+            dirpath = self.abspath(relpath)
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
-    
-    def _to_path(self, relpath):
-        return os.path.join(self.basedir, relpath)
 
