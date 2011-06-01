@@ -110,6 +110,7 @@ class StorageContract:
 
 
 
+# FileStorage-specific behaviour
 class FileStorage_Test(StorageContract):
     def setup(self):
         self.testdir = path("output/testing/"+self.__class__.__name__.lower())
@@ -121,8 +122,6 @@ class FileStorage_Test(StorageContract):
 
     def abspath(self, p):
         return os.path.abspath(os.path.join(self.testdir, path(p)))
-    
-    # FileStorage-specific behaviour
     
     def test_files_are_created_on_disk_in_basedir(self):
         self._create_example_file("foo/bar", content="example-content")
