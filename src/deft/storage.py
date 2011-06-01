@@ -27,35 +27,33 @@ class FileStorage(StorageFormats):
     def __init__(self, basedir):
         self.basedir = basedir
     
-    def exists(self, dirlist):
-        return os.path.exists(self._to_path(dirlist))
+    def exists(self, relpath):
+        return os.path.exists(self._to_path(relpath))
     
-    def open_read(self, dirlist):
-        return open(self._to_path(dirlist), "r")
+    def open_read(self, relpath):
+        return open(self._to_path(relpath), "r")
     
-    def open_write(self, dirlist):
-        self.makedirs(dirlist[:-1])
-        return open(self._to_path(dirlist), "w")
+    def open_write(self, relpath):
+        self.makedirs(os.path.dirname(relpath))
+        return open(self._to_path(relpath), "w")
     
-    def remove(self, dirlist):
-        path = self._to_path(dirlist)
+    def remove(self, relpath):
+        path = self._to_path(relpath)
         if os.path.isdir(path):
             shutil.rmtree(path)
         elif os.path.exists(path):
             os.remove(path)
     
-    def list(self, patternlist):
-        path_pattern = self._to_path(patternlist)
-        for match in iglob(path_pattern):
-            relmatch = os.path.relpath(match, start=self.basedir)
-            yield relmatch.split(os.path.sep)
+    def list(self, relpattern):
+        pattern = self._to_path(relpattern)
+        return (os.path.relpath(match, start=self.basedir) for match in iglob(pattern))
     
-    def makedirs(self, dirlist):
-        if dirlist:
-            dirpath = self._to_path(dirlist)
+    def makedirs(self, relpath):
+        if relpath != "":
+            dirpath = self._to_path(relpath)
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
-
-    def _to_path(self, dirlist):
-        return os.path.join(self.basedir, *dirlist)
+    
+    def _to_path(self, relpath):
+        return os.path.join(self.basedir, relpath)
 
