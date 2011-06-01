@@ -19,6 +19,7 @@ Future Plans
 When the tool does what I want for small projects, I plan to add the following features: 
 
 * Integrate Deft with specific VCS tools more seamlessly
+* Graphical user interface
 * Visualisation of history, such as Cumulative Flow Diagrams
 * Analysis of history, such as velocity estimation
 * Scaling (efficient data structure for indexing features by priority to handle large feature databases)
