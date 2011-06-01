@@ -1,8 +1,8 @@
 
 import os
 from glob import iglob
-from .fileops import *
 from deft.indexing import Bucket
+from deft.storage import FileStorage
 
 ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
@@ -17,6 +17,8 @@ class UserError(Exception):
 
 
 def init(**initial_config):
+    storage = FileStorage(os.getcwd())
+    
     if os.path.exists(ConfigDir):
         raise UserError("tracker already initialised in directory " + ConfigDir)
     
@@ -29,7 +31,7 @@ def init(**initial_config):
     os.mkdir(ConfigDir)
     os.makedirs(config['datadir'])
     
-    tracker = FeatureTracker(config)
+    tracker = FeatureTracker(config, storage)
     tracker.save_config()
     
     return tracker
@@ -38,12 +40,16 @@ def init(**initial_config):
 def load():
     if not os.path.exists(ConfigDir):
         raise UserError("tracker not initialised")
-    return FeatureTracker(load_yaml(ConfigFile))
+    
+    storage = FileStorage(os.getcwd())
+    
+    return FeatureTracker(storage.load_yaml(ConfigFile), storage)
 
 
 class FeatureTracker(object):
-    def __init__(self, config):
+    def __init__(self, config, storage):
         self.config = config
+        self.storage = storage
         self._init_empty_cache()
     
     def configure(self, **config):
@@ -55,7 +61,7 @@ class FeatureTracker(object):
         return self.config['initial_status']
     
     def save_config(self):
-        save_yaml(ConfigFile, self.config)
+        self.storage.save_yaml(ConfigFile, self.config)
     
     def save(self):
         for feature in self._dirty:
@@ -103,8 +109,8 @@ class FeatureTracker(object):
         del self._loaded[properties_path]
         self._dirty.discard(feature)
         
-        os.remove(properties_path)
-        os.remove(description_path)
+        self.storage.remove(properties_path)
+        self.storage.remove(description_path)
     
     
     def change_status(self, feature, new_status):
@@ -121,7 +127,7 @@ class FeatureTracker(object):
         bucket.change_priority(feature, new_priority)
     
     def _feature_exists_named(self, name):
-        return os.path.exists(self._name_to_path(name))
+        return self.storage.exists(self._name_to_path(name))
     
     def _load_features_with_status(self, status):
         return [f for f in self._load_features() if f.status == status]
@@ -133,7 +139,7 @@ class FeatureTracker(object):
         if path in self._loaded:
             return self._loaded[path]
         else:
-            feature = Feature(tracker=self, name=self._path_to_name(path), **load_yaml(path))
+            feature = Feature(tracker=self, name=self._path_to_name(path), **self.storage.load_yaml(path))
             self._loaded[path] = feature
             return feature
     
@@ -141,14 +147,14 @@ class FeatureTracker(object):
         self._dirty.add(feature)
     
     def _save_feature(self, feature):
-        save_yaml(self._name_to_path(feature.name),
+        self.storage.save_yaml(self._name_to_path(feature.name),
                   {'status': feature.status, 'priority': feature.priority})
     
     def _write_description(self, feature, description):
-        save_text(self._name_to_path(feature.name, DescriptionSuffix), description)
-
+        self.storage.save_text(self._name_to_path(feature.name, DescriptionSuffix), description)
+    
     def _name_to_path(self, name, suffix=PropertiesSuffix):
-        return os.path.abspath(os.path.join(self.config["datadir"], name + suffix))
+        return self.storage.abspath(os.path.join(self.config["datadir"], name + suffix))
     
     def _path_to_name(self, path, suffix=PropertiesSuffix):
         return os.path.basename(path)[:-len(suffix)]

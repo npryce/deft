@@ -103,7 +103,7 @@ class StorageContract:
         assert_that(self.create_storage("foo/bar").abspath("x/y"), equal_to("foo/bar/x/y"))
         assert_that(self.create_storage("foo/bar/../baz/.").abspath("x/y"), equal_to("foo/baz/x/y"))
         
-
+    
     def _create_example_file(self, relpath, content="testing"):
         with self.storage.open_write(relpath) as output:
             output.write(content)
