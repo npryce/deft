@@ -194,17 +194,13 @@ class CommandLineInterface(object):
         def print_feature(f):
             self.println(f.status + " " + str(f.priority) + " " + f.name)
         
-        found_one = False
-        
         if args.statuses:
             for status in args.statuses:
                 for f in tracker.features_with_status(status):
                     print_feature(f)
-                    found_one = True
         else:
             for f in tracker.all_features():
                 print_feature(f)
-                found_one = True
     
     
     @with_tracker

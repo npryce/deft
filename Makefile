@@ -7,9 +7,6 @@ PYTHON_ENV=python-dev
 #   real - runs tests using disk storage (slow but accurate)
 env=real
 
-# Set this on the command-line to optimise systest runtime
-SYSTEST_PROCESSES=4
-
 all: test
 
 env:
@@ -32,7 +29,7 @@ unit-tests: clean-output-dir
 
 system-tests:
 system-tests: clean-output-dir
-	DEFT_SYSTEST_PYTHON_ENV=$(env) $(PYTHON_ENV)/bin/nosetests -A "systest" --processes 4 $(test)
+	DEFT_SYSTEST_ENV=$(env) $(PYTHON_ENV)/bin/nosetests -A "systest" $(test)
 
 wip-tests: clean-output-dir
 	$(PYTHON_ENV)/bin/nosetests -A "wip" --no-skip $(test) || true
