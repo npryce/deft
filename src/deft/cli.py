@@ -232,7 +232,7 @@ class CommandLineInterface(object):
         if args.edit:
             self.editor(feature.description_file)
         elif args.file:
-                self.println(feature.description_file)
+            self.println(feature.description_file)
         elif args.description is None:
             with feature.open_description() as input:
                 shutil.copyfileobj(input, self.out)
