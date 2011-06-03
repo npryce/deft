@@ -1,4 +1,5 @@
 
+import sys
 from StringIO import StringIO
 import os
 from fnmatch import fnmatch
@@ -14,7 +15,7 @@ class MemStorageIO(StringIO):
     def close(self):
         self.storage.files[self.relpath] = self.getvalue()
         StringIO.close(self)
-        
+    
     def __enter__(self):
         return self
     
@@ -30,15 +31,31 @@ class MemStorage(StorageFormats):
     def abspath(self, relpath):
         return os.path.normpath(os.path.join(self.basedir, relpath))
     
+    def relpath(self, abspath):
+        norm_abspath = os.path.normpath(abspath)
+        norm_basedir = os.path.normpath(self.basedir)
+        return os.path.relpath(norm_abspath, norm_basedir)
+    
     def exists(self, relpath):
         return relpath in self.files 
     
-    def open_read(self, relpath):
+    def open(self, relpath, mode="r"):
+        if relpath in self.files and self.files[relpath] is None:
+            raise IOError(relpath + " is a directory")
+        
+        if mode == "r":
+            return self._open_read(relpath)
+        elif mode == "w":
+            return self._open_write(relpath)
+        else:
+            raise ValueError("mode must be 'r' or 'w', was: " + mode)
+    
+    def _open_read(self, relpath):
         if not self.exists(relpath):
             raise IOError(relpath + " does not exist")
         return MemStorageIO(self, relpath, self.files[relpath])
     
-    def open_write(self, relpath):
+    def _open_write(self, relpath):
         self.makedirs(os.path.dirname(relpath))
         return MemStorageIO(self, relpath)
     

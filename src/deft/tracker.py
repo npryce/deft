@@ -16,34 +16,35 @@ class UserError(Exception):
     pass
 
 
-def init(**initial_config):
-    storage = FileStorage(os.getcwd())
-    
-    if os.path.exists(ConfigDir):
+def initial_config(datadir=DefaultDataDir, initial_status="new"):
+    return {
+        'format': '0.1',
+        'datadir': datadir,
+        'initial_status': initial_status}
+
+
+def init_tracker(**config_overrides):
+    return init_with_storage(FileStorage(os.getcwd()), config_overrides)
+
+def load_tracker():
+    return load_with_storage(FileStorage(os.getcwd()))
+
+def init_with_storage(storage, config_overrides):
+    if storage.exists(ConfigDir):
         raise UserError("tracker already initialised in directory " + ConfigDir)
     
-    config = {
-        'format': '0.1',
-        'datadir': DefaultDataDir,
-        'initial_status': "new"}
-    config.update(initial_config)
-    
-    os.mkdir(ConfigDir)
-    os.makedirs(config['datadir'])
-    
-    tracker = FeatureTracker(config, storage)
+    tracker = FeatureTracker(initial_config(**config_overrides), storage)
     tracker.save_config()
     
     return tracker
 
 
-def load():
-    if not os.path.exists(ConfigDir):
+def load_with_storage(storage):
+    if not storage.exists(ConfigDir):
         raise UserError("tracker not initialised")
     
-    storage = FileStorage(os.getcwd())
-    
     return FeatureTracker(storage.load_yaml(ConfigFile), storage)
+
 
 
 class FeatureTracker(object):
@@ -133,7 +134,7 @@ class FeatureTracker(object):
         return [f for f in self._load_features() if f.status == status]
     
     def _load_features(self):
-        return [self._load_feature(f) for f in iglob(self._name_to_path("*"))]
+        return [self._load_feature(f) for f in self.storage.list(self._name_to_path("*"))]
     
     def _load_feature(self, path):
         if path in self._loaded:
@@ -150,14 +151,14 @@ class FeatureTracker(object):
         self.storage.save_yaml(self._name_to_path(feature.name),
                   {'status': feature.status, 'priority': feature.priority})
     
-    def _write_description(self, feature, description):
-        self.storage.save_text(self._name_to_path(feature.name, DescriptionSuffix), description)
-    
     def _name_to_path(self, name, suffix=PropertiesSuffix):
-        return self.storage.abspath(os.path.join(self.config["datadir"], name + suffix))
+        return os.path.join(self.config["datadir"], name + suffix)
     
     def _path_to_name(self, path, suffix=PropertiesSuffix):
         return os.path.basename(path)[:-len(suffix)]
+    
+    def _name_to_real_path(self, name, suffix=PropertiesSuffix):
+        return self.storage.abspath(self._name_to_path(name, suffix))
     
 
 
@@ -176,8 +177,12 @@ class Feature(object):
     
     @property
     def description_file(self):
-        return self._tracker._name_to_path(self.name, DescriptionSuffix)
+        return self._tracker._name_to_real_path(self.name, DescriptionSuffix)
     
-    def write_description(self, description):
-        self._tracker._write_description(self, description)
+    def open_description(self, mode="r"):
+        return self._tracker.storage.open(self._tracker._name_to_path(self.name, DescriptionSuffix), mode)
+    
+    def write_description(self, new_description):
+        with self.open_description("w") as output:
+            output.write(new_description)
     

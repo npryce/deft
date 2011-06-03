@@ -1,5 +1,6 @@
 
-import inspect
+import traceback
+from StringIO import StringIO
 import os
 import shutil
 from subprocess import Popen, PIPE, CalledProcessError
@@ -9,6 +10,9 @@ from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
 from deft.fileops import *
+from deft.memstorage import MemStorage
+from deft.cli import CommandLineInterface
+from deft.tracker import FeatureTracker, UserError, init_with_storage, load_with_storage
 
 Deft = os.path.abspath("deft")
 
@@ -67,13 +71,11 @@ class ProcessError(Exception, ProcessResult):
         ProcessResult.__init__(self, command, status, stdout, stderr)
 
 
-def fake_editor_command(input):
-    return os.path.abspath("testing-tools/fake-editor") + " " + repr(input)
-
 
 class SystestEnvironment(object):
-    def __init__(self, testdir):
-        self.testdir = testdir
+    def __init__(self, name):
+        self.testdir = os.path.join("output", "testing", "systest", name)
+        ensure_empty_dir_exists(self.testdir)
     
     def abspath(self, subpath):
         return os.path.abspath(os.path.join(self.testdir, subpath))
@@ -81,15 +83,15 @@ class SystestEnvironment(object):
     def deft(self, *args, **kwargs):
         env = {
             'PYTHONPATH': os.path.abspath("src"),
-            'DEFT_EDITOR': fake_editor_command(kwargs.get('editor_input', 'description-not-important'))
+            'DEFT_EDITOR': self.fake_editor_command(kwargs.get('editor_input', 'description-not-important'))
         }
         
         return self.run(command=["deft"]+list(args), env_override=env)
     
     def run(self, command, env_override={}):
-        path = search_path(os.path.abspath('python-dev/bin'),
-                           os.path.abspath(os.getcwd()),
-                           os.defpath)
+        path = os.pathsep.join([os.path.abspath('python-dev/bin'),
+                                os.path.abspath(os.getcwd()),
+                                os.defpath])
         
         env = {'PATH': path}
         env.update(env_override)
@@ -106,34 +108,76 @@ class SystestEnvironment(object):
             return ProcessResult(command, process.returncode, stdout, stderr)
         else:
             raise ProcessError(command, process.returncode, stdout, stderr)
+    
+    def fake_editor_command(self, input):
+        return os.path.abspath("testing-tools/fake-editor") + " " + repr(input)
+
+
+def log_writes(name, stream):
+    class Logger:
+        def write(self, text):
+            print "written to " + name + ": " +repr(text)
+            stream.write(text)
+    
+        def __getattr__(self, name):
+            return getattr(stream, name)
+    
+    return Logger()
+
+
+class InMemoryEnvironment(object):
+    def __init__(self, name):
+        self.name = name
+        self.storage = MemStorage("testing")
+        self.editor_content = ""
         
-
-def search_path(*paths):
-    return os.pathsep.join(paths)
-
-
-def tname():
-    for frame in inspect.stack():
-        methodname = frame[3]
-        if methodname.startswith("test_"):
-            return methodname
+    def deft(self, *args, **kwargs):
+        command = ["deft"] + list(args)
+        
+        editor_content = kwargs.get('editor_input', 'description-not-important')
+        stdout = log_writes("stdout", StringIO())
+        stderr = log_writes("stderr", StringIO())
+        
+        def fake_editor(path):
+            self.storage.save_text(self.storage.relpath(path), editor_content)
+        
+        cli = CommandLineInterface(self, out=stdout, err=stderr, editor=fake_editor)
+        try:
+            cli.run(command)
+            print "after", " ".join(command), ":", self.storage.files
+            return ProcessResult(command, 0, stdout.getvalue(), stderr.getvalue())
+        except UserError:
+            raise ProcessError(command, 1, stdout.getvalue(), 
+                               traceback.format_exc() + "\n\nstderr:\n\n" + stderr.getvalue())
     
-    raise ValueError, "no test method in call stack"
-
-
-def fail(message):
-    raise AssertionError(message)
-
-
-def systest(f):
-    @wraps(f)
-    def run_test():
-        testdir = os.path.join("output", "testing", "systest", f.__module__ + "." + f.func_name)
-        ensure_empty_dir_exists(testdir)
-        env = SystestEnvironment(testdir)
-        f(env)
+    def init_tracker(self, **config_overrides):
+        return init_with_storage(self.storage, config_overrides)
     
-    return compose(istest, attr('systest'))(run_test)
+    def load_tracker(self):
+        return load_with_storage(self.storage)
+
+    def abspath(self, subpath):
+        return self.storage.abspath(subpath)
+    
+    
+
+def dynamically_selected_environment(name):
+    env_name = os.getenv("DEFT_SYSTEST_ENV")
+    
+    if env_name is None or env_name == "real":
+        return SystestEnvironment(name)
+    if env_name == "mem":
+        return InMemoryEnvironment(name)
+    else:
+        raise ValueError("unknown environment %s, must be one of 'mem', 'real'"%(env_name,))
+
+
+def systest(test_func, env=dynamically_selected_environment):
+    @wraps(test_func)
+    def run_with_environment():
+        test_func(env(test_func.__module__ + "." + test_func.func_name))
+    
+    return compose(istest, attr('systest'))(run_with_environment)
 
 
 
@@ -147,3 +191,8 @@ def wip(f):
         fail("test passed but marked as work in progress")
     
     return attr('wip')(run_test)
+
+
+
+def fail(message):
+    raise AssertionError(message)

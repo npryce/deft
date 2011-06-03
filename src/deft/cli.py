@@ -8,23 +8,6 @@ import deft.tracker
 
 
 
-def _print_output(s):
-    print s
-
-def _ignore_output(s):
-    pass
-    
-
-def with_tracker(function):
-    def wrapper(self, args):
-        tracker = self.backend.load()
-        function(self, tracker, args)
-        tracker.save()
-    
-    return wrapper
-
-
-
 EditorEnvironmentVariables = ["DEFT_EDITOR", "VISUAL", "EDITOR"]
 
 def find_editor_command(env):
@@ -42,15 +25,26 @@ def run_editor_process(path):
         raise deft.tracker.UserError("editor command failed with status " + str(retcode) + ": " + command)
 
 
-def print_path(path):
-    print path
+def with_tracker(function):
+    def wrapper(self, args):
+        tracker = self.backend.load_tracker()
+        function(self, tracker, args)
+        tracker.save()
+    
+    return wrapper
 
+
+def _ignore_output(s):
+    pass
+    
 
 class CommandLineInterface(object):
-    def __init__(self, backend, editor=run_editor_process):
+    def __init__(self, backend, out, err, editor=run_editor_process):
         self.backend = backend
         self.editor = editor
-    
+        self.out = out
+        self.err = err
+        
     def run(self, argv):
         command = argv[0]
         
@@ -62,14 +56,14 @@ class CommandLineInterface(object):
                             help="verbose output",
                             action="store_const",
                             dest="verbose_output",
-                            const=_print_output,
+                            const=self.println,
                             default=_ignore_output)
         parser.add_argument("-q", "--quiet",
                             help="suppress all but the most important output",
                             action="store_const",
                             dest="info_output",
                             const=_ignore_output,
-                            default=_print_output)
+                            default=self.println)
         
         tracker_configuration = ArgumentParser(add_help=False)
         tracker_configuration.add_argument("-i", "--initial-status",
@@ -171,7 +165,7 @@ class CommandLineInterface(object):
         if args.initial_status is not None:
             config['initial_status'] = args.initial_status
         
-        self.backend.init(**config)
+        self.backend.init_tracker(**config)
         args.info_output("initialised Deft tracker")
     
     
@@ -198,15 +192,20 @@ class CommandLineInterface(object):
     @with_tracker
     def run_list(self, tracker, args):
         def print_feature(f):
-            print f.status + " " + str(f.priority) + " " + f.name
+            self.println(f.status + " " + str(f.priority) + " " + f.name)
+        
+        found_one = False
         
         if args.statuses:
             for status in args.statuses:
                 for f in tracker.features_with_status(status):
                     print_feature(f)
+                    found_one = True
         else:
             for f in tracker.all_features():
                 print_feature(f)
+                found_one = True
+    
     
     @with_tracker
     def run_status(self, tracker, args):
@@ -215,7 +214,7 @@ class CommandLineInterface(object):
             tracker.change_status(feature, args.status)
             feature.status = args.status
         else:
-            print feature.status
+            self.println(feature.status)
     
     
     @with_tracker
@@ -224,7 +223,7 @@ class CommandLineInterface(object):
         if args.priority is not None:
             tracker.change_priority(feature, args.priority)
         else:
-            print feature.priority
+            self.println(str(feature.priority))
     
     
     @with_tracker
@@ -237,21 +236,25 @@ class CommandLineInterface(object):
         if args.edit:
             self.editor(feature.description_file)
         elif args.file:
-                print feature.description_file
+                self.println(feature.description_file)
         elif args.description is None:
-            with open(feature.description_file) as input:
-                shutil.copyfileobj(input, sys.stdout)
+            with feature.open_description() as input:
+                shutil.copyfileobj(input, self.out)
     
     
     @with_tracker
     def run_purge(self, tracker, args):
         for name in args.features:
             tracker.purge(name)
+    
+    def println(self, text):
+        self.out.write(text)
+        self.out.write(os.linesep)
 
 
 if __name__ == "__main__":
     try:
-        CommandLineInterface(deft.tracker).run(sys.argv)
+        CommandLineInterface(deft.tracker, sys.stdout, sys.stderr).run(sys.argv)
     except deft.tracker.UserError as e:
         sys.stderr.write(str(e) + "\n")
         sys.exit(1)

@@ -6,20 +6,20 @@ import yaml
 
 
 class StorageFormats(object):
-    def save_yaml(self, dirlist, obj):
-        with self.open_write(dirlist) as output:
+    def save_yaml(self, relpath, obj):
+        with self.open(relpath, "w") as output:
             yaml.dump(obj, output, default_flow_style=False)
     
-    def load_yaml(self, dirlist):
-        with self.open_read(dirlist) as input:
+    def load_yaml(self, relpath):
+        with self.open(relpath) as input:
             return yaml.safe_load(input)
     
-    def save_text(self, dirlist, text):
-        with self.open_write(dirlist) as output:
+    def save_text(self, relpath, text):
+        with self.open(relpath, "w") as output:
             output.write(text)
             
-    def load_text(self, dirlist):
-        with self.open_read(dirlist) as input:
+    def load_text(self, relpath):
+        with self.open(relpath) as input:
             return input.read()
 
 
@@ -33,12 +33,11 @@ class FileStorage(StorageFormats):
     def exists(self, relpath):
         return os.path.exists(self.abspath(relpath))
     
-    def open_read(self, relpath):
-        return open(self.abspath(relpath), "r")
-    
-    def open_write(self, relpath):
-        self.makedirs(os.path.dirname(relpath))
-        return open(self.abspath(relpath), "w")
+    def open(self, relpath, mode="r"):
+        if mode == "w":
+            self.makedirs(os.path.dirname(relpath))
+        
+        return open(self.abspath(relpath), mode)
     
     def remove(self, relpath):
         path = self.abspath(relpath)
