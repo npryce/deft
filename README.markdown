@@ -16,7 +16,7 @@ Goals / Principles
 Issue Tracking
 --------------
 
-Issues are tracked with [Deft itself](tracker).  If you want to raise issues:
+Issues are tracked with [Deft itself](https://github.com/npryce/deft/tree/master/tracker).  If you want to raise issues:
 
 * Fork the repo & check it out locally
 * 'make env' to build the Python development environment
