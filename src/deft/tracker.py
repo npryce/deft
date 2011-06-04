@@ -10,7 +10,7 @@ ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
 DefaultDataDir = os.path.join(ConfigDir, "data")
 
-PropertiesSuffix = ".yaml"
+PropertiesSuffix = ".status"
 DescriptionSuffix = ".description"
 
 # Used to report user errors that have been explicitly detected
