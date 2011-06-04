@@ -1,4 +1,5 @@
 
+import deft.tracker
 from deft.systests.support import SystestEnvironment, ProcessError, systest, fail
 from hamcrest import *
 
@@ -42,6 +43,21 @@ def cannot_manipulate_a_feature_that_does_not_exist(env):
     
     try:
         env.deft("priority", "nonexistent-feature")
+        fail("deft should have failed")
     except ProcessError as e:
         assert_that(e.stderr, contains_string("no feature named nonexistent-feature"))
 
+
+@systest
+def refuses_to_work_with_tracker_that_has_incompatible_format_version(env):
+    env.storage.save_yaml(".deft/config", {
+            'format': '9999.9999',
+            'datadir': '.deft/data'})
+    
+    try:
+        env.deft("list")
+        fail("deft should have failed when run against an incompatible tracker")
+    except ProcessError as e:
+        assert_that(e.stderr, contains_string("incompatible tracker"))
+        assert_that(e.stderr, contains_string("found data in format version 9999.9999"))
+        assert_that(e.stderr, contains_string("requires data in format version " + deft.tracker.FormatVersion))

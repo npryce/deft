@@ -51,6 +51,11 @@ def load_with_storage(storage):
 
 class FeatureTracker(object):
     def __init__(self, config, storage):
+        repo_format = config['format']
+        if repo_format != FormatVersion:
+            raise UserError("incompatible tracker: found data in format version %s, " \
+                            "requires data in format version %s"%(repo_format, FormatVersion))
+        
         self.config = config
         self.storage = storage
         self._init_empty_cache()

@@ -10,6 +10,7 @@ from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
 from deft.fileops import *
+from deft.storage import FileStorage
 from deft.memstorage import MemStorage
 from deft.cli import CommandLineInterface
 from deft.tracker import FeatureTracker, UserError, init_with_storage, load_with_storage
@@ -77,6 +78,7 @@ class SystestEnvironment(object):
     
     def __init__(self, name):
         self.testdir = os.path.join("output", "testing", "systest", name)
+        self.storage = FileStorage(self.testdir)
         ensure_empty_dir_exists(self.testdir)
     
     def abspath(self, subpath):
@@ -166,9 +168,7 @@ def dynamically_selected_environment(test_name):
 def systest(test_func, env=dynamically_selected_environment):
     @wraps(test_func)
     def run_with_environment():
-        env_inst = env(test_func.__module__ + "." + test_func.func_name)
-        print "running system tests in a " + env_inst.description
-        test_func(env_inst)
+        test_func(env(test_func.__module__ + "." + test_func.func_name))
     
     return compose(istest, attr('systest'))(run_with_environment)
 
