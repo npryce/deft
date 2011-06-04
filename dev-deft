@@ -1,0 +1,2 @@
+#!/bin/sh
+PATH=python-dev/bin:$PATH PYTHONPATH=src `dirname $0`/deft "$@"
