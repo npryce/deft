@@ -13,15 +13,14 @@ Goals / Principles
 * store the feature database in plain-text files that play well with VCS and diff/merge tools
 * don't re-implement functionality that is already in the VCS
 
-Future Plans
-------------
+Issue Tracking
+--------------
 
-When the tool does what I want for small projects, I plan to add the following features: 
+Issues are tracked with Deft itself.  If you want to raise issues:
+* Fork the repo & check it out locally
+* 'make env' to build the Python development environment
+* use the './dev-deft' command to create a new issue
+* commit the new issue
+* send a pull request
 
-* Integrate Deft with specific VCS tools more seamlessly
-* Graphical user interface
-* Visualisation of history, such as Cumulative Flow Diagrams
-* Analysis of history, such as velocity estimation
-* Scaling (efficient data structure for indexing features by priority to handle large feature databases)
-
-
+Yes... there should be a tool to make this process simple.
