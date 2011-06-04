@@ -17,6 +17,7 @@ Issue Tracking
 --------------
 
 Issues are tracked with Deft itself.  If you want to raise issues:
+
 * Fork the repo & check it out locally
 * 'make env' to build the Python development environment
 * use the './dev-deft' command to create a new issue
