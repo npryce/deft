@@ -4,6 +4,8 @@ from glob import iglob
 from deft.indexing import Bucket
 from deft.storage import FileStorage
 
+FormatVersion = '1.0'
+
 ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
 DefaultDataDir = os.path.join(ConfigDir, "data")
@@ -18,7 +20,7 @@ class UserError(Exception):
 
 def initial_config(datadir=DefaultDataDir, initial_status="new"):
     return {
-        'format': '0.1',
+        'format': FormatVersion,
         'datadir': datadir,
         'initial_status': initial_status}
 
