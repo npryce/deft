@@ -6,10 +6,9 @@ Deft is a simple distributed feature tracker (aka issue tracker, task tracker) d
 Goals / Principles
 ------------------
 
-* store tracked features in VCS, not another tool
 * all features have status (e.g. new, in-development, ready-for-testing, ready-for-deployment)
 * absolute prioritisation of features that have the same status
-* store feature database alongside the code
+* store feature database alongside the code in VCS, not in another tool
 * store the feature database in plain-text files that play well with VCS and diff/merge tools
 * don't re-implement functionality that is already in the VCS
 
