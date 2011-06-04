@@ -1,0 +1,1 @@
+Allow the user to associate arbitrary properties (except status and priority) with a feature, set them, query them, delete them.  This allows teams to define their own workflow around the central concept of prioritised tasks progressing through different status 'buckets'
