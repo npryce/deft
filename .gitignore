@@ -1,4 +1,4 @@
 *.pyc
 *~
 output
-python-dev
+python*-dev

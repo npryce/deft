@@ -7,7 +7,7 @@ PYTHON=2.7
 #   real - runs tests using disk storage (slow but accurate)
 env=real
 
-PYTHON_ENV=python-dev
+PYTHON_ENV=python$(PYTHON)-dev
 
 all: test
 
