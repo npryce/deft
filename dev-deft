@@ -1,2 +1,3 @@
 #!/bin/sh
-PATH=python-dev/bin:$PATH PYTHONPATH=src `dirname $0`/deft "$@"
+DEVDIR=`dirname $0`
+PATH=$DEVDIR/python-dev/bin:$PATH PYTHONPATH=$DEVDIR/src $DEVDIR/deft "$@"
