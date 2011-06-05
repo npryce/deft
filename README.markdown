@@ -18,7 +18,7 @@ Getting Started
 
 Deft is in an early stage of development so there's no convenient installer yet.  To get it up and running:
 
-* Make sure you have Python 2.7 and virtualenv installed
+* Make sure you have [Python 2.7](http://www.python.org) and [virtualenv](http://www.virtualenv.org) installed
 * Fork and check out the repo
 * Run `make env` to create a python environment for development
 * Run `make` to run all the tests.
