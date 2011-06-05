@@ -13,6 +13,18 @@ Goals / Principles
 * store the feature database in plain-text files that play well with VCS and diff/merge tools
 * don't re-implement functionality that is already in the VCS
 
+Getting Started
+---------------
+
+Deft is in an early stage of development so there's no convenient installer yet.  To get it up and running:
+
+* Make sure you have Python 2.7 and virtualenv installed
+* Fork and check out the repo
+* Run `make env` to create a python environment for development
+* Run `make` to run all the tests.
+* The `dev-deft` script will run deft from the development environment, so you don't need to install it by hand.
+
+
 Issue Tracking
 --------------
 
