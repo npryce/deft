@@ -1,5 +1,6 @@
 
 import sys
+from functools import partial
 import os
 import shutil
 import subprocess
@@ -198,16 +199,12 @@ class CommandLineInterface(object):
     
     @with_tracker
     def run_list(self, tracker, args):
-        def print_feature(f):
-            self.println(f.status + " " + str(f.priority) + " " + f.name)
-        
         if args.statuses:
-            for status in args.statuses:
-                for f in tracker.features_with_status(status):
-                    print_feature(f)
+            features = (f for s in args.statuses for f in tracker.features_with_status(s))
         else:
-            for f in tracker.all_features():
-                print_feature(f)
+            features = tracker.all_features()
+        
+        format_feature_table(features, self.out)
     
     
     @with_tracker
@@ -253,6 +250,25 @@ class CommandLineInterface(object):
     def println(self, text):
         self.out.write(text)
         self.out.write(os.linesep)
+
+
+def format_feature_table(features, out):
+    max_elts = lambda t1, t2: map(max, t1, t2)
+    alignl = "{1:<{0}}".format
+    alignr = "{1:>{0}}".format
+    jagged = lambda w, t: t    
+    
+    table = [map(str,t) for t in [(f.status, f.priority, f.name) for f in features]]
+    col_widths = reduce(max_elts, [map(len,t) for t in table])
+    col_formatters = map(partial, (alignl, alignr, jagged), col_widths)
+    formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
+    lines = [" ".join(row) for row in formatted_table]
+    
+    for line in lines:
+        out.write(line)
+        out.write(os.linesep)
+    
+    
 
 
 if __name__ == "__main__":

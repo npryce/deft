@@ -4,22 +4,8 @@ import os
 import shutil
 from deft.indexing import Bucket
 from deft.tracker import Feature
+from deft.fake_tracker import make_features, fake_feature
 from hamcrest import *
-
-class FakeTracker:
-    def _mark_dirty(self, feature):
-        pass
-
-tracker = FakeTracker()
-
-def make_features(n):
-    return [make_feature(i) for i in xrange(0,n)]
-
-def make_feature(i):
-    return Feature(tracker=tracker, 
-                   name=chr(ord('a')+i), 
-                   priority=i+1, 
-                   status="testing")
 
 
 class Bucket_Test:
@@ -67,7 +53,7 @@ class Bucket_Test:
     def test_appending_a_feature_to_empty_bucket_sets_its_priority_to_1(self):
         bucket = Bucket([])
         
-        d = make_feature(99)
+        d = fake_feature(priority=99)
         
         bucket.append(d)
         assert_that(d.priority, equal_to(1))
@@ -77,8 +63,7 @@ class Bucket_Test:
         a, b, c = make_features(3)
         bucket = Bucket([a,b,c])
         
-        x = make_feature(0)
-        x.priority = 2
+        x = fake_feature(priority=2)
         
         bucket.insert(x)
         

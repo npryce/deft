@@ -55,7 +55,7 @@ class ProcessResult(object):
     
     @property
     def rows(self):
-        return Rows([line.split(" ") for line in self.lines])
+        return Rows([line.split() for line in self.lines])
     
     @property
     def value(self):
