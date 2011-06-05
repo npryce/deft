@@ -253,13 +253,13 @@ class CommandLineInterface(object):
 
 
 def format_feature_table(features, out):
-    max_elts = lambda t1, t2: map(max, t1, t2)
+    max_elts = partial(map, max)
     alignl = "{1:<{0}}".format
     alignr = "{1:>{0}}".format
     jagged = lambda w, t: t    
     
     table = [map(str,t) for t in [(f.status, f.priority, f.name) for f in features]]
-    col_widths = reduce(max_elts, [map(len,t) for t in table])
+    col_widths = reduce(max_elts, [map(len,t) for t in table], (0,0,0))
     col_formatters = map(partial, (alignl, alignr, jagged), col_widths)
     formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
     lines = [" ".join(row) for row in formatted_table]

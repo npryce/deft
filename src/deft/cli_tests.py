@@ -48,4 +48,10 @@ class FormatFeatureTable_Test:
                     "active   9 dave",
                     "active  10 eve"]))
         
+    def test_formats_empty_list_as_empty_string(self):
+        output = StringIO()
+        
+        cli.format_feature_table([], output)
+        
+        assert_that(output.getvalue(), equal_to(""))
         
