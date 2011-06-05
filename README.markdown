@@ -18,7 +18,7 @@ Getting Started
 Deft is in an early stage of development so there's no convenient installer yet.  To get it up and running:
 
 * Make sure you have [Python 2.7](http://www.python.org) and [virtualenv](http://www.virtualenv.org) installed
-* Fork and check out the repo
+* Check out the repo
 * Run `make env` to create a python environment for development
 * Run `make` to run all the tests.
 * The `dev-deft` script will run deft from the development environment, so you don't need to install it by hand.
@@ -30,9 +30,9 @@ Issue Tracking
 Issues are tracked with [Deft itself](https://github.com/npryce/deft/tree/master/tracker).  If you want to raise issues:
 
 * Fork the repo & check it out locally
-* 'make env' to build the Python development environment
-* use the './dev-deft' command to create a new issue
+* Follow the 'Getting Started' steps
+* use the `./dev-deft` command to create a new issue
 * commit the new issue
 * send a pull request
 
-Yes... there should be a tool to make this process simple.
+Yes... there should be a tool to make this process simpler and easy for a project's users to do.
