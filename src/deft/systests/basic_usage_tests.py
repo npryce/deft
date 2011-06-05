@@ -43,6 +43,27 @@ def can_create_with_initial_status(env):
 
 
 @systest
+def can_create_with_initial_priority(env):
+    env.deft("init")
+    env.deft("create", "x")
+    env.deft("create", "y")
+    env.deft("create", "z")
+    
+    env.deft("create", "a", "--priority", "1")
+    assert_that(env.deft("priority", "a").value, equal_to("1"))
+    assert_that(env.deft("priority", "x").value, equal_to("2"))
+    assert_that(env.deft("priority", "y").value, equal_to("3"))
+    assert_that(env.deft("priority", "z").value, equal_to("4"))
+
+    env.deft("create", "b", "--priority", "3")
+    assert_that(env.deft("priority", "a").value, equal_to("1"))
+    assert_that(env.deft("priority", "x").value, equal_to("2"))
+    assert_that(env.deft("priority", "b").value, equal_to("3"))
+    assert_that(env.deft("priority", "y").value, equal_to("4"))
+    assert_that(env.deft("priority", "z").value, equal_to("5"))
+
+
+@systest
 def can_list_all_issues_ordered_by_status_then_priority(env):
     env.deft("init")
     env.deft("create", "feature-1", "--status", "pending")

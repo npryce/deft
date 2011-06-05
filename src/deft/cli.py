@@ -88,11 +88,15 @@ class CommandLineInterface(object):
                                               help="create a new feature and output its id")
         create_parser.add_argument("name",
                                    help="a short name for the feature")
-        create_parser.add_argument("-d", "--description",
-                                   help="a longer description of the feature",
-                                   default=None)
         create_parser.add_argument("-s", "--status",
                                    help="the initial status of the feature",
+                                   default=None)
+        create_parser.add_argument("-p", "--priority",
+                                   help="the initial priority of the feature",
+                                   type=int,
+                                   default=None)
+        create_parser.add_argument("-d", "--description",
+                                   help="a longer description of the feature",
                                    default=None)
         
         list_parser = subparsers.add_parser("list", 
@@ -184,6 +188,9 @@ class CommandLineInterface(object):
         feature = tracker.create(name=args.name,
                                  status=args.status or tracker.initial_status,
                                  initial_description=(args.description or ""))
+        
+        if args.priority is not None:
+            tracker.change_priority(feature, args.priority)
         
         if args.description is None:
             self.editor(feature.description_file)
