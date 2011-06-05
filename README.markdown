@@ -21,7 +21,7 @@ Deft is in an early stage of development so there's no convenient installer yet.
 * Check out the repo
 * Run `make env` to create a python environment for development
 * Run `make` to run all the tests.
-* The `dev-deft` script will run deft from the development environment, so you don't need to install it by hand.
+* The `dev-deft` script will run deft from the development environment, so you don't need to install anything by hand.  Run `./dev-deft --help` for help.
 
 
 Issue Tracking
