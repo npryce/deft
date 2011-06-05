@@ -1,0 +1,12 @@
+Currently the storage format creates large changesets when reprioritising features.  Ideally only a single file would change when the user changes the priority of a feature.
+
+Any storage format needs to find a good balance between:
+
+* the size of changesets created by manipulating features (changing status and reprioritising)
+* how easy it is to manually resolve merge conflicts
+* how likely it is to get conflicts when distributed users create new issues
+* how easy and efficient it is to detect and repair merge conflicts
+* run-time efficiency
+
+The current storage format (v1.0) just brute-forces everything, and so there is plenty of room for improvement on all those points.
+
