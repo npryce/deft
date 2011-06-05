@@ -1,16 +1,18 @@
 
-
-PYTHON_ENV=python-dev
+# Which version of python are we using?
+PYTHON=2.7
 
 # Set this on the command-line to select a system-test environment. One of:
 #   mem - runs tests using in-memory storage (fast but slight risk of inaccuracy)
 #   real - runs tests using disk storage (slow but accurate)
 env=real
 
+PYTHON_ENV=python-dev
+
 all: test
 
 env:
-	virtualenv --python=python2.7 --no-site-packages $(PYTHON_ENV)
+	virtualenv --python=python$(PYTHON) --no-site-packages $(PYTHON_ENV)
 	$(PYTHON_ENV)/bin/pip install argparse
 	$(PYTHON_ENV)/bin/pip install pyYAML
 	$(PYTHON_ENV)/bin/pip install functional
