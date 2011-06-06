@@ -53,12 +53,12 @@ class FeatureTracker_Test:
         
         assert_that(self.tracker.all_features(), equal_to([alice, eve, carol, dave, bob]))
     
-    # def test_lists_names_of_features_with_given_status_in_priority_order(self):
-    #     alice = self.tracker.create(name="alice", status="same")
-    #     bob = self.tracker.create(name="bob", status="same")
-    #     carol = self.tracker.create(name="carol", status="same")
-    #     dave = self.tracker.create(name="dave", status="same")
-    #     eve = self.tracker.create(name="eve", status="different")
-    #
-    #     assert_that(self.tracker.features_with_status("same"), equal_to(["alice", "bob", "carol", "dave"]))
+    def test_lists_names_of_features_with_given_status_in_priority_order(self):
+        alice = self.tracker.create(name="alice", status="same")
+        bob = self.tracker.create(name="bob", status="same")
+        carol = self.tracker.create(name="carol", status="same")
+        dave = self.tracker.create(name="dave", status="same")
+        eve = self.tracker.create(name="eve", status="different")
         
+        assert_that(list(self.tracker.features_with_status("same")), equal_to([alice, bob, carol, dave]))
+

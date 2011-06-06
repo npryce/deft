@@ -36,7 +36,7 @@ class Bucket:
         """
         not efficient, but categorisation and prioritisation is all done by brute force 
         at the moment anyway, and disk access needs to be optimised, so this indexing
-        class will be removed at some point anyway.
+        class will be removed at some point.
         """
         
         self.remove(feature)
@@ -44,4 +44,4 @@ class Bucket:
         self.insert(feature)
     
     def __str__(self):
-        return str([f.name for f in self.features])
+        return self.__class__.__name__ + "(" + str([f for f in self.features]) + ")"
