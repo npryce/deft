@@ -53,4 +53,4 @@ continually:
 	done
 
 
-.PHONY: all env clean-env env-again test unit-test system-test clean-output-dir continually
+.PHONY: all env clean-env env-again test unit-tests system-tests clean-output-dir continually
