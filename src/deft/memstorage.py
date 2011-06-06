@@ -24,7 +24,7 @@ class MemStorageIO(StringIO):
 
 
 class MemStorage(StorageFormats):
-    def __init__(self, basedir):
+    def __init__(self, basedir="basedir"):
         self.basedir = basedir
         self.files = {}
     

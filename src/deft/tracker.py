@@ -18,7 +18,7 @@ class UserError(Exception):
     pass
 
 
-def initial_config(datadir=DefaultDataDir, initial_status="new"):
+def default_config(datadir=DefaultDataDir, initial_status="new"):
     return {
         'format': FormatVersion,
         'datadir': datadir,
@@ -35,7 +35,7 @@ def init_with_storage(storage, config_overrides):
     if storage.exists(ConfigDir):
         raise UserError("tracker already initialised in directory " + ConfigDir)
     
-    tracker = FeatureTracker(initial_config(**config_overrides), storage)
+    tracker = FeatureTracker(default_config(**config_overrides), storage)
     tracker.save_config()
     
     return tracker
@@ -80,14 +80,18 @@ class FeatureTracker(object):
         self._dirty = set()
         self._loaded = {}
     
-    def create(self, name, status, initial_description=""):
+    def create(self, name, status=None, initial_description=""):
         if self._feature_exists_named(name):
             raise UserError("a feature already exists with name: " + name)
+        
+        if status is None:
+            status = self.initial_status
         
         priority = len(self._load_features_with_status(status)) + 1
         
         feature = Feature(tracker=self, name=name, status=status, priority=priority)
         
+        self._loaded[self._name_to_path(name)] = feature
         self._save_feature(feature)
         feature.write_description(initial_description)
         
@@ -193,3 +197,8 @@ class Feature(object):
         with self.open_description("w") as output:
             output.write(new_description)
     
+    def __str__(self):
+        return self.__str__()
+    
+    def __repr__(self):
+        return self.__class__.__name__ + "(name=" + self.name + ")"
