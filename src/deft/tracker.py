@@ -80,7 +80,7 @@ class FeatureTracker(object):
         self._dirty = set()
         self._loaded = {}
     
-    def create(self, name, status=None, initial_description=""):
+    def create(self, name, status=None, description=""):
         if self._feature_exists_named(name):
             raise UserError("a feature already exists with name: " + name)
         
@@ -93,7 +93,7 @@ class FeatureTracker(object):
         
         self._loaded[self._name_to_path(name)] = feature
         self._save_feature(feature)
-        feature.write_description(initial_description)
+        feature.write_description(description)
         
         return feature
     

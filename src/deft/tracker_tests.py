@@ -62,3 +62,23 @@ class FeatureTracker_Test:
         
         assert_that(list(self.tracker.features_with_status("same")), equal_to([alice, bob, carol, dave]))
 
+    def test_can_initialise_feature_with_a_description(self):
+        new_feature = self.tracker.create(name="new-feature", description="the description text")
+        
+        assert_that(new_feature.open_description().read(), equal_to("the description text"))
+    
+    def test_if_not_given_a_new_feature_has_an_empty_description(self):
+        new_feature = self.tracker.create(name="new-feature")
+        
+        assert_that(new_feature.open_description().read(), equal_to(""))
+        
+        
+    def test_can_overwrite_the_description(self):
+        new_feature = self.tracker.create(name="new-feature", description="the initial description")
+        
+        with new_feature.open_description("w") as out:
+            out.write("a new description")
+        
+        assert_that(new_feature.open_description().read(), equal_to("a new description"))
+        
+        

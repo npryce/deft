@@ -188,7 +188,7 @@ class CommandLineInterface(object):
     def run_create(self, tracker, args):
         feature = tracker.create(name=args.name,
                                  status=args.status or None,
-                                 initial_description=(args.description or ""))
+                                 description=(args.description or ""))
         
         if args.priority is not None:
             tracker.change_priority(feature, args.priority)
