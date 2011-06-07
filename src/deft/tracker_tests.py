@@ -118,7 +118,11 @@ class FeatureTracker_Test:
                       odd = [],
                       even = [])
     
-
+    def test_an_unused_status_is_reported_as_empty(self):
+        assert_status = self.assert_status
+        
+        assert_status("never used status", unused_status = [])
+                      
     
     def test_lists_names_of_all_features_in_order_of_status_then_priority(self):
         alice = self.tracker.create(name="alice", status="S")
@@ -137,7 +141,7 @@ class FeatureTracker_Test:
         eve = self.tracker.create(name="eve", status="different")
         
         assert_that(list(self.tracker.features_with_status("same")), equal_to([alice, bob, carol, dave]))
-
+    
     def test_can_initialise_feature_with_a_description(self):
         new_feature = self.tracker.create(name="new-feature", description="the description text")
         
