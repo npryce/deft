@@ -6,7 +6,7 @@ from hamcrest import *
 
 class FeatureTracker_Test:
     def setup(self):
-        self.storage = MemStorage()
+        self.storage = MemStorage("basedir")
         self.tracker = FeatureTracker(default_config(datadir="tracker"), self.storage)
         
     def test_initially_contains_no_features(self):
@@ -159,7 +159,31 @@ class FeatureTracker_Test:
         
         assert_that(new_feature.open_description().read(), equal_to("a new description"))
         
+    def test_can_report_filename_of_description(self):
+        feature = self.tracker.create(name="bob")
+        assert_that(feature.description_file, equal_to("basedir/tracker/bob.description"))
+    
+    def test_saves_new_features_immediately(self):
+        alice = self.tracker.create(name="alice", description="springs")
         
+        assert_that(self.storage.exists("tracker/alice.status"))
+        assert_that(self.storage.exists("tracker/alice.description"))
+        assert_that(self.storage.open("tracker/alice.status").read(), contains_string("1"))
+        assert_that(self.storage.open("tracker/alice.status").read(), contains_string(alice.status))
+        assert_that(self.storage.open("tracker/alice.description").read(), equal_to("springs"))
+    
+    def test_saves_changes_only_when_explicitly_told_to(self):
+        alice = self.tracker.create(name="alice", status="first")
+        
+        self.tracker.change_status(alice, "second")
+        
+        assert_that(self.storage.open("tracker/alice.status").read(), contains_string("first"))
+        
+        self.tracker.save()
+        
+        assert_that(self.storage.open("tracker/alice.status").read(), contains_string("second"))
+        
+
     def assert_status(self, description, **kwargs):
         for status in kwargs:
             self.assert_priority_order(description, *kwargs[status], status=status)
