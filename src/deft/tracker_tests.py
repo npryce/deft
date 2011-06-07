@@ -44,6 +44,82 @@ class FeatureTracker_Test:
         assert_that(pending_a.priority, equal_to(1))
         assert_that(pending_b.priority, equal_to(2))
     
+    def test_can_change_the_priority_of_a_feature(self):
+        assert_priority_order = self.assert_priority_order
+        
+        alice = self.tracker.create(name="alice")
+        bob = self.tracker.create(name="bob")
+        carol = self.tracker.create(name="carol")
+        dave = self.tracker.create(name="dave")
+        eve = self.tracker.create(name="eve")
+        
+        self.tracker.change_priority(alice, 3)
+        assert_priority_order("moved first to middle", bob, carol, alice, dave, eve)
+        
+        self.tracker.change_priority(carol, 1)
+        assert_priority_order("moved middle to first", carol, bob, alice, dave, eve)
+        
+        self.tracker.change_priority(eve, 1)
+        assert_priority_order("moved last to first", eve, carol, bob, alice, dave)
+        
+        self.tracker.change_priority(bob, 5)
+        assert_priority_order("moved middle to last", eve, carol, alice, dave, bob)
+        
+        self.tracker.change_priority(eve, 5)
+        assert_priority_order("moved first to last", carol, alice, dave, bob, eve)
+        
+        self.tracker.change_priority(eve, 3)
+        assert_priority_order("moved last to middle", carol, alice, eve, dave, bob)
+        
+        self.tracker.change_priority(dave, 2)
+        assert_priority_order("moved middle to middle", carol, dave, alice, eve, bob)
+    
+        
+    def test_can_change_status(self):
+        assert_status = self.assert_status
+        
+        alice = self.tracker.create(name="alice", status="odd")
+        bob = self.tracker.create(name="bob", status="odd")
+        carol = self.tracker.create(name="carol", status="odd")
+        dave = self.tracker.create(name="dave", status="even")
+        eve = self.tracker.create(name="eve", status="odd")
+        
+        self.tracker.change_status(alice, "female")
+        assert_status("alice -> female",
+                      female = [alice],
+                      odd = [bob, carol, eve],
+                      even = [dave])
+        
+        self.tracker.change_status(bob, "male")
+        assert_status("bob -> male",
+                      female = [alice],
+                      male = [bob],
+                      odd = [carol, eve],
+                      even = [dave])
+        
+        self.tracker.change_status(carol, "female")
+        assert_status("carol -> female",
+                      female = [alice, carol],
+                      male = [bob],
+                      odd = [eve],
+                      even = [dave])
+        
+        self.tracker.change_status(dave, "male")
+        assert_status("dave -> male",
+                      female = [alice, carol],
+                      male = [bob, dave],
+                      odd = [eve],
+                      even = [])
+        
+        self.tracker.change_status(eve, "female")
+        assert_status("eve -> female",
+                      female = [alice, carol, eve],
+                      male = [bob, dave],
+                      odd = [],
+                      even = [])
+    
+
+    
     def test_lists_names_of_all_features_in_order_of_status_then_priority(self):
         alice = self.tracker.create(name="alice", status="S")
         bob = self.tracker.create(name="bob", status="U")
@@ -72,7 +148,6 @@ class FeatureTracker_Test:
         
         assert_that(new_feature.open_description().read(), equal_to(""))
         
-        
     def test_can_overwrite_the_description(self):
         new_feature = self.tracker.create(name="new-feature", description="the initial description")
         
@@ -80,5 +155,21 @@ class FeatureTracker_Test:
             out.write("a new description")
         
         assert_that(new_feature.open_description().read(), equal_to("a new description"))
+    
+    
+    def assert_status(self, description, **kwargs):
+        for status in kwargs:
+            self.assert_priority_order(description, *kwargs[status], status=status)
+    
+    def assert_priority_order(self, description, *features, **kwargs):
+        status = kwargs.get("status", self.tracker.initial_status)
+        
+        assert_that(list(self.tracker.features_with_status(status)), equal_to(list(features)), 
+                    "order after " + description)
+        
+        for i in range(len(features)):
+            expected_priority = i+1
+            assert_that(features[i].priority, equal_to(expected_priority), 
+                        "priority " + str(expected_priority) + " after " + description)
         
         
