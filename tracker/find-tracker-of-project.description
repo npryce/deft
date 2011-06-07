@@ -1,0 +1,4 @@
+You should be able to manage features no matter where you are currently working within the project tree.
+
+The CLI should look for an ancestor of the current working directory that contains the .deft directory and use that as its base directory, not use the current working directory as its base directory.
+
