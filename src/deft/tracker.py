@@ -4,7 +4,7 @@ from glob import iglob
 from deft.indexing import Bucket
 from deft.storage import FileStorage
 
-FormatVersion = '1.0'
+FormatVersion = '2.0'
 
 ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
@@ -151,7 +151,10 @@ class FeatureTracker(object):
         if path in self._loaded:
             return self._loaded[path]
         else:
-            feature = Feature(tracker=self, name=self._path_to_name(path), **self.storage.load_yaml(path))
+            text = self.storage.load_text(path)
+            priority = int(text[0:8])
+            status = text[9:]
+            feature = Feature(tracker=self, name=self._path_to_name(path), status=status, priority=priority)
             self._loaded[path] = feature
             return feature
     
@@ -159,8 +162,8 @@ class FeatureTracker(object):
         self._dirty.add(feature)
     
     def _save_feature(self, feature):
-        self.storage.save_yaml(self._name_to_path(feature.name),
-                  {'status': feature.status, 'priority': feature.priority})
+        self.storage.save_text(self._name_to_path(feature.name),
+                               "{0:>8} {1}".format(feature.priority, feature.status))
     
     def _name_to_path(self, name, suffix=PropertiesSuffix):
         return os.path.join(self.config["datadir"], name + suffix)
@@ -202,3 +205,6 @@ class Feature(object):
     
     def __repr__(self):
         return self.__class__.__name__ + "(name=" + self.name + ")"
+
+
+

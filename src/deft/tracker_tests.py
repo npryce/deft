@@ -122,7 +122,6 @@ class FeatureTracker_Test:
         assert_status = self.assert_status
         
         assert_status("never used status", unused_status = [])
-                      
     
     def test_lists_names_of_all_features_in_order_of_status_then_priority(self):
         alice = self.tracker.create(name="alice", status="S")
@@ -159,8 +158,8 @@ class FeatureTracker_Test:
             out.write("a new description")
         
         assert_that(new_feature.open_description().read(), equal_to("a new description"))
-    
-    
+        
+        
     def assert_status(self, description, **kwargs):
         for status in kwargs:
             self.assert_priority_order(description, *kwargs[status], status=status)
