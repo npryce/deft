@@ -158,8 +158,12 @@ class CommandLineInterface(object):
                                   metavar="name",
                                   nargs="+")
         
+        upgrade_parser = subparsers.add_parser("upgrade-format",
+                                               help="upgrade the tracker database to the format "
+                                                    "supported by this version of the software")
+        
         args = parser.parse_args(argv[1:])
-        getattr(self, "run_" + args.subcommand)(args)
+        getattr(self, "run_" + args.subcommand.replace("-", "_"))(args)
     
     
     def run_init(self, args):
@@ -246,6 +250,11 @@ class CommandLineInterface(object):
     def run_purge(self, tracker, args):
         for name in args.features:
             tracker.purge(name)
+    
+    def run_upgrade_format(self, args):
+        from deft.upgrade import upgrade
+        upgrade(self.backend.tracker_storage())
+        
     
     def println(self, text):
         self.out.write(text)

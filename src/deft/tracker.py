@@ -24,12 +24,16 @@ def default_config(datadir=DefaultDataDir, initial_status="new"):
         'datadir': datadir,
         'initial_status': initial_status}
 
-
 def init_tracker(**config_overrides):
     return init_with_storage(FileStorage(os.getcwd()), config_overrides)
 
+
+def tracker_storage():
+    #TODO: find a tracker in the ancestor directories
+    return FileStorage(os.getcwd())
+
 def load_tracker():
-    return load_with_storage(FileStorage(os.getcwd()))
+    return load_with_storage(tracker_storage())
 
 def init_with_storage(storage, config_overrides):
     if storage.exists(ConfigDir):
@@ -40,13 +44,15 @@ def init_with_storage(storage, config_overrides):
     
     return tracker
 
-
 def load_with_storage(storage):
+    return FeatureTracker(load_config_with_storage(storage), storage)
+
+def load_config_with_storage(storage):
     if not storage.exists(ConfigDir):
         raise UserError("tracker not initialised")
     
-    return FeatureTracker(storage.load_yaml(ConfigFile), storage)
-
+    return storage.load_yaml(ConfigFile)
+    
 
 
 class FeatureTracker(object):
@@ -162,8 +168,8 @@ class FeatureTracker(object):
         self._dirty.add(feature)
     
     def _save_feature(self, feature):
-        self.storage.save_text(self._name_to_path(feature.name),
-                               "{0:>8} {1}".format(feature.priority, feature.status))
+        self.storage.save_text(self._name_to_path(feature.name), 
+                               _format_status(feature.priority, feature.status))
     
     def _name_to_path(self, name, suffix=PropertiesSuffix):
         return os.path.join(self.config["datadir"], name + suffix)
@@ -173,7 +179,9 @@ class FeatureTracker(object):
     
     def _name_to_real_path(self, name, suffix=PropertiesSuffix):
         return self.storage.abspath(self._name_to_path(name, suffix))
-    
+
+
+_format_status = "{1:>8} {0}".format
 
 
 class Feature(object):
