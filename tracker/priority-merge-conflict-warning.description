@@ -1,1 +1,6 @@
-After a merge, two feature status files might have the same status and priority.  The tool should correct this automatically when it indexes the status files and warn the user.  To correct this, it should put the two features into some arbitrary order and increase the priority number of all lower priority features (higher numbers means lower priority: priority 1 is the highest)
+After a merge, two feature status files might have the same status and
+priority.  The tool should correct this automatically when it indexes
+the status files and warn the user.  To correct this, it should put
+the two features into some arbitrary order and increase the priority
+number of all lower priority features (higher numbers means lower
+priority: priority 1 is the highest)
