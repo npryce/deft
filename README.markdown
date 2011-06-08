@@ -23,6 +23,7 @@ Deft is in an early stage of development so there's no convenient installer yet.
 * Run `make` to run all the tests.
 * The `dev-deft` script will run deft from the development environment, so you don't need to install anything by hand.  Run `dev-deft --help` for help.
 
+Now read the [Quickstart Guide](https://github.com/npryce/deft/wiki/_pages).
 
 Issue Tracking
 --------------
