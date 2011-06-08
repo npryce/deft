@@ -169,7 +169,7 @@ class FeatureTracker(object):
     
     def _save_feature(self, feature):
         self.storage.save_text(self._name_to_path(feature.name), 
-                               _format_status(feature.priority, feature.status))
+                               _format_status(feature.status, feature.priority))
     
     def _name_to_path(self, name, suffix=PropertiesSuffix):
         return os.path.join(self.config["datadir"], name + suffix)
