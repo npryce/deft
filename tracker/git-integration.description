@@ -1,0 +1,7 @@
+Integrate with Git so that using Deft with Git DVCS is more convenient.
+
+Not sure how this should work.  Should Git be extended with commands that manipluate a Deft tracker or should Deft automatically do DVCS operations?  I think the former: there should be higher level commands, integrated into Git, that also manipulate a Deft tracker in the repo.
+
+Ideas for commands:
+
+claim: the user claims a feature, starting work on it.  This will set its status to indicate that it is WIP, and commit and push the delta
