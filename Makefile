@@ -48,8 +48,9 @@ continually:
 	  clear; \
 	  if not make $(target) systest=$(systest); \
 	  then \
-	      notify-send --icon=error --category=blog --expire-time=1000 "Deft build broken" ; \
-	  fi ; \
+	      notify-send --icon=error --category=blog --expire-time=1000 "Deft build broken"; \
+	  fi; \
+	  date; \
 	  inotifywait -r -qq -e modify -e delete $(SCANNED_FILES); \
 	done
 
