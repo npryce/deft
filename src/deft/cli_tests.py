@@ -26,7 +26,7 @@ class FindEditorCommand_Test:
         cli.find_editor_command({})
 
 
-class FormatFeatureTable_Test:
+class WriteFeaturesAsText_Test:
     def test_formats_features_as_aligned_columns(self):
         features = [
             fake_feature(name="alice", status="pending", priority=1),
@@ -37,7 +37,7 @@ class FormatFeatureTable_Test:
         
         output = StringIO()
         
-        cli.format_feature_table(features, output)
+        cli.write_features_as_text(features, output)
         
         formatted_lines = output.getvalue().splitlines()
         
@@ -48,10 +48,38 @@ class FormatFeatureTable_Test:
                     "active   9 dave",
                     "active  10 eve"]))
         
-    def test_formats_empty_list_as_empty_string(self):
+    def test_writes_empty_list_as_empty_string(self):
         output = StringIO()
         
-        cli.format_feature_table([], output)
+        cli.write_features_as_text([], output)
         
         assert_that(output.getvalue(), equal_to(""))
         
+
+class WriteFeaturesAsCSV_Test:
+    def writes_features_in_csv(self):
+        features = [
+            fake_feature(name="alice", status="pending", priority=1),
+            fake_feature(name="bob", status="pending", priority=2),
+            fake_feature(name="carol", status="active", priority=8),
+            fake_feature(name="dave", status="active", priority=9),
+            fake_feature(name="eve", status="active", priority=10)]
+        
+        output = StringIO()
+        
+        cli.write_features_as_csv(features, output, dialect="excel")
+        
+        csv_lines = output.getvalue().splitlines()
+        assert_that(csv_lines, equal_to([
+                    "pending,1,alice",
+                    "pending,2,bob",
+                    "active,8,carol",
+                    "active,9,dave",
+                    "active,10,eve"]))
+    
+    def test_formats_empty_list_as_empty_string(self):
+        output = StringIO()
+        
+        cli.write_features_as_csv([], output)
+        
+        assert_that(output.getvalue(), equal_to(""))

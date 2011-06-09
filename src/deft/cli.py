@@ -3,6 +3,7 @@ import sys
 from functools import partial
 import os
 import shutil
+import csv
 import subprocess
 from argparse import ArgumentParser
 import deft.tracker
@@ -105,8 +106,16 @@ class CommandLineInterface(object):
         list_parser.add_argument("-s", "--status",
                                  help="statuses to list (lists all features if no statuses specified)",
                                  dest="statuses",
+                                 metavar="STATUS",
                                  nargs="+",
                                  default=[])
+        list_parser.add_argument("-c", "--csv",
+                                 help="output in CSV format (default is human-readable text)",
+                                 dest="format",
+                                 action="store_const",
+                                 const="csv",
+                                 default="text")
+        
         
         status_parser = subparsers.add_parser("status", 
                                               help="query or change the status of a feature")
@@ -208,7 +217,12 @@ class CommandLineInterface(object):
         else:
             features = tracker.all_features()
         
-        format_feature_table(features, self.out)
+        if args.format == "text":
+            write_features_as_text(features, self.out)
+        elif args.format == "csv":
+            write_features_as_csv(features, self.out)
+        else:
+            raise ValueError("unexpected format: " + args.format)
     
     
     @with_tracker
@@ -261,13 +275,17 @@ class CommandLineInterface(object):
         self.out.write(os.linesep)
 
 
-def format_feature_table(features, out):
+def features_to_table(features):
+    return [(f.status, f.priority, f.name) for f in features]
+
+
+def write_features_as_text(features, out):
     max_elts = partial(map, max)
     alignl = "{1:<{0}}".format
     alignr = "{1:>{0}}".format
     jagged = lambda w, t: t    
     
-    table = [map(str,t) for t in [(f.status, f.priority, f.name) for f in features]]
+    table = [map(str,t) for t in features_to_table(features)]
     col_widths = reduce(max_elts, [map(len,t) for t in table], (0,0,0))
     col_formatters = map(partial, (alignl, alignr, jagged), col_widths)
     formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
@@ -276,8 +294,11 @@ def format_feature_table(features, out):
     for line in lines:
         out.write(line)
         out.write(os.linesep)
-    
-    
+
+
+def write_features_as_csv(features, out):
+    csv_out = csv.writer(out)
+    csv_out.writerows(features_to_table(features))
 
 
 if __name__ == "__main__":
