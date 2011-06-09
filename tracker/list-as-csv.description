@@ -1,0 +1,16 @@
+The `list` command should be able to output in CSV format for easier parsing, because the default output format is designed to be human readable.
+
+For example:
+
+    % deft list --csv
+    new,1,shiny-buttons
+    new,2,irritating-noises
+    in-progress,1,gradient-fills
+    in-progress,2,rounded-corner
+
+It should be possible to select the CSV dialect as an optional parameter to the --csv option. For example:
+
+    % deft list --csv excel
+    ...
+
+The default format should probably be excel.
