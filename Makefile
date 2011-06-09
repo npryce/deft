@@ -26,7 +26,7 @@ env-again: clean-env env
 
 test: in-process-tests out-of-process-tests
 
-in-process-tests: clean-output-dir
+in-process-tests:
 	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "not fileio" $(test)
 
 out-of-process-tests: clean-output-dir
@@ -41,10 +41,12 @@ clean-output-dir:
 
 SCANNED_FILES=src testing-tools deft Makefile
 
+target=in-process-tests out-of-process-tests
+
 continually:
 	@while true; do \
 	  clear; \
-	  if not make systest=$(systest); \
+	  if not make $(target) systest=$(systest); \
 	  then \
 	      notify-send --icon=error --category=blog --expire-time=1000 "Deft build broken" ; \
 	  fi ; \
