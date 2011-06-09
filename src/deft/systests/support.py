@@ -1,4 +1,5 @@
 
+import sys
 import traceback
 from StringIO import StringIO
 import os
@@ -74,7 +75,9 @@ class ProcessError(Exception, ProcessResult):
 
 
 class SystestEnvironment(object):
-    description = "real environment"
+    @classmethod
+    def attribute(selfclass, test_func):
+        test_func.fileio = 1
     
     def __init__(self, name):
         self.testdir = os.path.join("output", "testing", "systest", name)
@@ -118,7 +121,9 @@ class SystestEnvironment(object):
 
 
 class InMemoryEnvironment(object):
-    description = "in-memory environment"
+    @classmethod
+    def attribute(selfclass, test_func):
+        pass
     
     def __init__(self, name):
         self.name = name
@@ -154,23 +159,27 @@ class InMemoryEnvironment(object):
     
     
 
-def dynamically_selected_environment(test_name):
+def select_environment_from_envvar():
     env_name = os.getenv("DEFT_SYSTEST_ENV")
     
     if env_name is None or env_name is "" or env_name == "real":
-        return SystestEnvironment(test_name)
+        return SystestEnvironment
     if env_name == "mem":
-        return InMemoryEnvironment(test_name)
+        return InMemoryEnvironment
     else:
-        raise ValueError("unknown environment %s, must be one of 'mem', 'real'"%env_name)
+        raise ValueError("unknown environment %s, must be one of 'mem', 'real' (defaults to 'real')"%env_name)
+
+_selected_environment = select_environment_from_envvar()
 
 
-def systest(test_func, env=dynamically_selected_environment):
+def systest(test_func, environment=_selected_environment):
     @wraps(test_func)
     def run_with_environment():
-        test_func(env(test_func.__module__ + "." + test_func.func_name))
+        env = environment(test_func.__module__ + "." + test_func.func_name)
+        test_func(env)
     
-    return compose(istest, attr('systest'))(run_with_environment)
+    environment.attribute(run_with_environment)
+    return istest(run_with_environment)
 
 
 

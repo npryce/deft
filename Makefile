@@ -3,9 +3,9 @@
 PYTHON=2.7
 
 # Set this on the command-line to select a system-test environment. One of:
-#   mem - runs tests using in-memory storage (fast but slight risk of inaccuracy)
-#   real - runs tests using disk storage (slow but accurate)
-env=real
+#   mem  - runs system tests using in-memory storage (fast but slight risk of inaccuracy)
+#   real - runs system tests by spawning processes and using disk storage (slow but accurate)
+systest=real
 
 PYTHON_ENV=python$(PYTHON)-dev
 
@@ -24,14 +24,13 @@ clean-env:
 
 env-again: clean-env env
 
-test: unit-tests system-tests
+test: in-process-tests out-of-process-tests
 
-unit-tests: clean-output-dir
-	$(PYTHON_ENV)/bin/nosetests -A "not systest" $(test)
+in-process-tests: clean-output-dir
+	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "not fileio" $(test)
 
-system-tests:
-system-tests: clean-output-dir
-	DEFT_SYSTEST_ENV=$(env) $(PYTHON_ENV)/bin/nosetests -A "systest" $(test)
+out-of-process-tests: clean-output-dir
+	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "fileio" $(test)
 
 wip-tests: clean-output-dir
 	$(PYTHON_ENV)/bin/nosetests -A "wip" --no-skip $(test) || true
@@ -45,7 +44,7 @@ SCANNED_FILES=src testing-tools deft Makefile
 continually:
 	@while true; do \
 	  clear; \
-	  if not make env=$(env); \
+	  if not make systest=$(systest); \
 	  then \
 	      notify-send --icon=error --category=blog --expire-time=1000 "Deft build broken" ; \
 	  fi ; \
@@ -53,4 +52,4 @@ continually:
 	done
 
 
-.PHONY: all env clean-env env-again test unit-tests system-tests clean-output-dir continually
+.PHONY: all env clean-env env-again test in-process-tests out-of-process-tests clean-output-dir continually
