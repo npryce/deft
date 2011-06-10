@@ -301,7 +301,7 @@ def write_features_as_csv(features, out):
     csv_out.writerows(features_to_table(features))
 
 
-if __name__ == "__main__":
+def main():
     try:
         CommandLineInterface(deft.tracker, sys.stdout, sys.stderr).run(sys.argv)
     except deft.tracker.UserError as e:

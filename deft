@@ -1,3 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env python
+import deft.cli
 
-python -m deft.cli "$@"
+deft.cli.main()
