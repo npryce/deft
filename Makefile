@@ -42,11 +42,12 @@ wip-tests: clean-test-output
 clean-install:
 	rm -rf output/install
 
-test-install: clean-install output/install
-	output/install/bin/python setup.py install -n
+test-install: output/install
+	output/install/bin/python setup.py install
 
-output/install: Makefile
-	virtualenv -p $(PYTHON_ENV)/bin/python --never-download --no-site-packages output/install
+output/install:
+	rm -rf build/
+	$(MAKE) env PYTHON_ENV=output/install PYTHON=$(PYTHON)
 
 SCANNED_FILES=src testing-tools deft Makefile
 
@@ -69,4 +70,5 @@ clean:
 
 
 .PHONY: all env clean-env env-again test in-process-tests out-of-process-tests 
-.PHONY: clean-test-output clean-install continually
+.PHONY: clean-test-output clean-install test-install 
+.PHONY: continually

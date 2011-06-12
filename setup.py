@@ -29,8 +29,17 @@ setup(name='Deft',
         'Topic :: Utilities'],
       platforms=['any'],
       
+      provides=['deft'],
       packages=['deft', 'deft.systests'],
       package_dir = {'': 'src'},
       scripts=['deft'],
-      requires=['yaml', 'argparse', 'functional'],
-      provides=['deft'])
+      
+      requires=[
+        'yaml (==3.10)', 
+        'argparse(==1.2)', 
+        'functional(==0.4)'],
+      
+      test_requires=[
+        'nose (1.0.0)',
+        'hamcrest (1.5)'],
+      test_suite='nose.collector')
