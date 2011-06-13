@@ -120,15 +120,16 @@ class StorageContract:
 
 
 
-# FileStorage-specific behaviour
 class FileStorage_Test(StorageContract):
     def setup(self):
-        self.testdir = path("output/testing/"+self.__class__.__name__.lower())
+        self.testdir = os.path.join("output", "testing", self.__class__.__name__.lower(), str(id(self)))
         ensure_empty_dir_exists(self.testdir)
         self.storage = self.create_storage(self.testdir)
     
     def create_storage(self, basedir):
         return FileStorage(basedir)
+    
+    # FileStorage-specific behaviour
 
     @attr("fileio")
     def test_files_are_created_on_disk_in_basedir(self):

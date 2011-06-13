@@ -17,6 +17,7 @@ env:
 	$(PYTHON_ENV)/bin/pip install pyYAML
 	$(PYTHON_ENV)/bin/pip install functional
 	$(PYTHON_ENV)/bin/pip install nose
+	$(PYTHON_ENV)/bin/pip install pytest
 	$(PYTHON_ENV)/bin/pip install PyHamcrest
 
 clean-env:
@@ -33,7 +34,7 @@ in-process-tests:
 	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "not fileio" $(test)
 
 out-of-process-tests: clean-test-output
-	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "fileio" $(test)
+	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "fileio" --processes 4 $(test)
 
 wip-tests: clean-test-output
 	$(PYTHON_ENV)/bin/nosetests -A "wip" --no-skip $(test) || true
