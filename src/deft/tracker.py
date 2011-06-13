@@ -1,4 +1,5 @@
 
+import itertools
 import os
 from glob import iglob
 from deft.indexing import Bucket
@@ -52,7 +53,11 @@ def load_config_with_storage(storage):
         raise UserError("tracker not initialised")
     
     return storage.load_yaml(ConfigFile)
-    
+
+
+
+
+_format_status = "{1:>8} {0}".format
 
 
 class FeatureTracker(object):
@@ -64,7 +69,10 @@ class FeatureTracker(object):
         
         self.config = config
         self.storage = storage
+        self._index = {}
+        
         self._init_empty_cache()
+        self._index_features()
     
     def configure(self, **config):
         self.config.update(config)
@@ -93,9 +101,11 @@ class FeatureTracker(object):
         if status is None:
             status = self.initial_status
         
-        priority = len(self._load_features_with_status(status)) + 1
+        bucket = self.features_with_status(status)
+        priority = len(bucket) + 1
         
         feature = Feature(tracker=self, name=name, status=status, priority=priority)
+        bucket.append(feature)
         
         self._loaded[self._name_to_path(name)] = feature
         self._save_feature(feature)
@@ -110,10 +120,10 @@ class FeatureTracker(object):
             raise UserError("no feature named " + name)
     
     def features_with_status(self, status):
-        return Bucket(self._load_features_with_status(status))
+        return self._index.setdefault(status, Bucket([]))
     
     def all_features(self):
-        return sorted(self._load_features(), key=lambda f: (f.status, f.priority))
+        return itertools.chain.from_iterable(self._index[status] for status in sorted(self._index))
     
     def purge(self, name):
         properties_path = self._name_to_path(name, PropertiesSuffix)
@@ -147,8 +157,14 @@ class FeatureTracker(object):
     def _feature_exists_named(self, name):
         return self.storage.exists(self._name_to_path(name))
     
-    def _load_features_with_status(self, status):
-        return [f for f in self._load_features() if f.status == status]
+    def _index_features(self):
+        features_by_status = {}
+        
+        for f in self._load_features():
+            features_by_status.setdefault(f.status, []).append(f)
+        
+        for status in features_by_status:
+            self._index[status] = Bucket(features_by_status[status])
     
     def _load_features(self):
         return [self._load_feature(f) for f in self.storage.list(self._name_to_path("*"))]
@@ -181,9 +197,6 @@ class FeatureTracker(object):
         return self.storage.abspath(self._name_to_path(name, suffix))
 
 
-_format_status = "{1:>8} {0}".format
-
-
 class Feature(object):
     def __init__(self, tracker, name, status, priority):
         self.name = name
@@ -212,7 +225,10 @@ class Feature(object):
         return self.__str__()
     
     def __repr__(self):
-        return self.__class__.__name__ + "(name=" + self.name + ")"
+        return self.__class__.__name__ + \
+            "(name=" + self.name + \
+            ", status=" + self.status + \
+            ", priority=" + str(self.priority) + ")"
 
 
 

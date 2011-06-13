@@ -45,3 +45,6 @@ class Bucket:
     
     def __str__(self):
         return self.__class__.__name__ + "(" + str([f for f in self.features]) + ")"
+    
+    def __repr__(self):
+        return self.__class__.__name__ + "(" + repr([f for f in self.features]) + ")"

@@ -10,7 +10,7 @@ class FeatureTracker_Test:
         self.tracker = FeatureTracker(default_config(datadir="tracker"), self.storage)
         
     def test_initially_contains_no_features(self):
-        assert_that(self.tracker.all_features(), has_length(0))
+        assert_that(list(self.tracker.all_features()), has_length(0))
     
     def test_reports_initial_status(self):
         tracker = FeatureTracker(default_config(initial_status="testing"), self.storage)
@@ -130,7 +130,7 @@ class FeatureTracker_Test:
         dave = self.tracker.create(name="dave", status="T")
         eve = self.tracker.create(name="eve", status="S")
         
-        assert_that(self.tracker.all_features(), equal_to([alice, eve, carol, dave, bob]))
+        assert_that(list(self.tracker.all_features()), equal_to([alice, eve, carol, dave, bob]))
     
     def test_lists_names_of_features_with_given_status_in_priority_order(self):
         alice = self.tracker.create(name="alice", status="same")
