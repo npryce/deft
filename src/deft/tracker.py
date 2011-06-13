@@ -102,9 +102,7 @@ class FeatureTracker(object):
             status = self.initial_status
         
         bucket = self.features_with_status(status)
-        priority = len(bucket) + 1
-        
-        feature = Feature(tracker=self, name=name, status=status, priority=priority)
+        feature = Feature(tracker=self, name=name, status=status)
         bucket.append(feature)
         
         self._loaded[self._name_to_path(name)] = feature
@@ -198,7 +196,7 @@ class FeatureTracker(object):
 
 
 class Feature(object):
-    def __init__(self, tracker, name, status, priority):
+    def __init__(self, tracker, name, status, priority=None):
         self.name = name
         self._status = status
         self._priority = priority
