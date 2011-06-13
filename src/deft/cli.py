@@ -204,7 +204,7 @@ class CommandLineInterface(object):
                                  description=(args.description or ""))
         
         if args.priority is not None:
-            tracker.change_priority(feature, args.priority)
+            feature.priority = args.priority
         
         if args.description is None:
             self.editor(feature.description_file)
@@ -229,7 +229,6 @@ class CommandLineInterface(object):
     def run_status(self, tracker, args):
         feature = tracker.feature_named(args.feature)
         if args.status is not None:
-            tracker.change_status(feature, args.status)
             feature.status = args.status
         else:
             self.println(feature.status)
@@ -239,7 +238,7 @@ class CommandLineInterface(object):
     def run_priority(self, tracker, args):
         feature = tracker.feature_named(args.feature)
         if args.priority is not None:
-            tracker.change_priority(feature, args.priority)
+            feature.priority = args.priority
         else:
             self.println(str(feature.priority))
     

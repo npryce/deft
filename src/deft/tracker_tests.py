@@ -53,25 +53,25 @@ class FeatureTracker_Test:
         dave = self.tracker.create(name="dave")
         eve = self.tracker.create(name="eve")
         
-        self.tracker.change_priority(alice, 3)
+        alice.priority = 3
         assert_priority_order("moved first to middle", bob, carol, alice, dave, eve)
         
-        self.tracker.change_priority(carol, 1)
+        carol.priority = 1
         assert_priority_order("moved middle to first", carol, bob, alice, dave, eve)
         
-        self.tracker.change_priority(eve, 1)
+        eve.priority = 1
         assert_priority_order("moved last to first", eve, carol, bob, alice, dave)
         
-        self.tracker.change_priority(bob, 5)
+        bob.priority = 5
         assert_priority_order("moved middle to last", eve, carol, alice, dave, bob)
         
-        self.tracker.change_priority(eve, 5)
+        eve.priority = 5
         assert_priority_order("moved first to last", carol, alice, dave, bob, eve)
         
-        self.tracker.change_priority(eve, 3)
+        eve.priority = 3
         assert_priority_order("moved last to middle", carol, alice, eve, dave, bob)
         
-        self.tracker.change_priority(dave, 2)
+        dave.priority = 2
         assert_priority_order("moved middle to middle", carol, dave, alice, eve, bob)
     
         
@@ -84,34 +84,34 @@ class FeatureTracker_Test:
         dave = self.tracker.create(name="dave", status="even")
         eve = self.tracker.create(name="eve", status="odd")
         
-        self.tracker.change_status(alice, "female")
+        alice.status = "female"
         assert_status("alice -> female",
                       female = [alice],
                       odd = [bob, carol, eve],
                       even = [dave])
         
-        self.tracker.change_status(bob, "male")
+        bob.status = "male"
         assert_status("bob -> male",
                       female = [alice],
                       male = [bob],
                       odd = [carol, eve],
                       even = [dave])
         
-        self.tracker.change_status(carol, "female")
+        carol.status = "female"
         assert_status("carol -> female",
                       female = [alice, carol],
                       male = [bob],
                       odd = [eve],
                       even = [dave])
         
-        self.tracker.change_status(dave, "male")
+        dave.status = "male"
         assert_status("dave -> male",
                       female = [alice, carol],
                       male = [bob, dave],
                       odd = [eve],
                       even = [])
         
-        self.tracker.change_status(eve, "female")
+        eve.status = "female"
         assert_status("eve -> female",
                       female = [alice, carol, eve],
                       male = [bob, dave],
@@ -175,7 +175,7 @@ class FeatureTracker_Test:
     def test_saves_changes_only_when_explicitly_told_to(self):
         alice = self.tracker.create(name="alice", status="first")
         
-        self.tracker.change_status(alice, "second")
+        alice.status = "second"
         
         assert_that(self.storage.open("tracker/alice.status").read(), contains_string("first"))
         

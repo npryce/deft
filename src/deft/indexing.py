@@ -18,19 +18,19 @@ class Bucket:
     
     def append(self, new_feature):
         self.features.append(new_feature)
-        new_feature.priority = len(self.features)
+        new_feature._record_priority(len(self.features))
     
     def insert(self, new_feature):
         index = new_feature.priority - 1
         self.features.insert(index, new_feature)
         for f in self.features[index+1:]:
-            f.priority = f.priority + 1
+            f._record_priority(f.priority + 1)
     
     def remove(self, feature):
         i = feature.priority-1
         del self.features[i]
         for f in self.features[i:]:
-            f.priority = f.priority - 1
+            f._record_priority(f.priority - 1)
     
     def change_priority(self, feature, new_priority):
         """
@@ -40,7 +40,7 @@ class Bucket:
         """
         
         self.remove(feature)
-        feature.priority = new_priority
+        feature._record_priority(new_priority)
         self.insert(feature)
     
     def __str__(self):

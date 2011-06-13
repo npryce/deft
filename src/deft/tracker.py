@@ -141,16 +141,16 @@ class FeatureTracker(object):
         self.storage.remove(description_path)
     
     
-    def change_status(self, feature, new_status):
+    def _change_status(self, feature, new_status):
         old_bucket = self.features_with_status(feature.status)
         new_bucket = self.features_with_status(new_status)
         
         old_bucket.remove(feature)
         new_bucket.append(feature)
-        feature.status = new_status
+        feature._record_status(new_status)
     
     
-    def change_priority(self, feature, new_priority):
+    def _change_priority(self, feature, new_priority):
         bucket = self.features_with_status(feature.status)
         bucket.change_priority(feature, new_priority)
     
@@ -208,6 +208,9 @@ class Feature(object):
         return self._status
     
     def _set_status(self, new_status):
+        self._tracker._change_status(self, new_status)
+    
+    def _record_status(self, new_status):
         self._status = new_status
         self._tracker._mark_dirty(self)
     
@@ -217,6 +220,9 @@ class Feature(object):
         return self._priority
     
     def _set_priority(self, new_priority):
+        self._tracker._change_priority(self, new_priority)
+    
+    def _record_priority(self, new_priority):
         self._priority = new_priority
         self._tracker._mark_dirty(self)
     
