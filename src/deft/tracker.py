@@ -200,16 +200,28 @@ class FeatureTracker(object):
 class Feature(object):
     def __init__(self, tracker, name, status, priority):
         self.name = name
-        self.status = status
-        self.priority = priority
+        self._status = status
+        self._priority = priority
         self._tracker = tracker
     
-    def __setattr__(self, name, new_value):
-        must_save = hasattr(self, '_tracker')
-        object.__setattr__(self, name, new_value)
-        if must_save:
-            self._tracker._mark_dirty(self)
+    def _get_status(self):
+        return self._status
     
+    def _set_status(self, new_status):
+        self._status = new_status
+        self._tracker._mark_dirty(self)
+    
+    status = property(_get_status, _set_status)
+    
+    def _get_priority(self):
+        return self._priority
+    
+    def _set_priority(self, new_priority):
+        self._priority = new_priority
+        self._tracker._mark_dirty(self)
+    
+    priority = property(_get_priority, _set_priority)
+
     @property
     def description_file(self):
         return self._tracker._name_to_real_path(self.name, DescriptionSuffix)
