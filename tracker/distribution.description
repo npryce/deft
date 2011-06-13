@@ -1,1 +1,6 @@
 proper packaging and distribution (setup.py, etc.)
+
+---- 
+Current state: packaging implemented but cannot run the system tests
+against an installation to check that it is installed correctly.
+Cannot do that on the train!
