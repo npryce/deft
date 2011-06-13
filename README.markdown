@@ -1,12 +1,12 @@
 Deft: Easy Distributed Feature Tracking
 =======================================
 
-Deft is a simple distributed feature tracker (aka issue tracker, task tracker) designed to work with a distributed version control system such as Git.
+Deft is a simple distributed feature tracker (aka issue tracker, task tracker, bug tracker) designed to work with a distributed version control system such as Git.
 
 Goals / Principles
 ------------------
 
-* all features have status (e.g. new, in-development, ready-for-testing, ready-for-deployment)
+* all features have a status (e.g. new, in-development, ready-for-testing, ready-for-deployment)
 * absolute prioritisation of features that have the same status
 * store feature database alongside the code in VCS, not in another tool
 * store the feature database in plain-text files that play well with VCS and diff/merge tools
