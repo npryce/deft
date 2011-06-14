@@ -1,5 +1,5 @@
 
-from deft.systests.support import SystestEnvironment, ProcessError, systest
+from deft.systests.support import systest
 from hamcrest import *
 
 

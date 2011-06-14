@@ -30,8 +30,16 @@ def init_tracker(**config_overrides):
 
 
 def tracker_storage():
-    #TODO: find a tracker in the ancestor directories
-    return FileStorage(os.getcwd())
+    basedir = os.path.abspath(os.getcwd())
+    while not os.path.exists(os.path.join(basedir, ConfigDir)):
+        parent = os.path.dirname(basedir)
+        if parent == basedir:
+            # At root directory (there is no API call to test this)
+            raise UserError("no tracker found in " + os.getcwd() + " or directories above " + os.getcwd())
+        else:
+            basedir = parent
+
+    return FileStorage(basedir)
 
 def load_tracker():
     return load_with_storage(tracker_storage())

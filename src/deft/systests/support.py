@@ -86,6 +86,9 @@ class SystestEnvironment(object):
     
     def abspath(self, subpath):
         return os.path.abspath(os.path.join(self.testdir, subpath))
+    
+    def makedirs(self, subpath):
+        return os.makedirs(self.abspath(subpath))
         
     def deft(self, *args, **kwargs):
         env = {
@@ -93,9 +96,13 @@ class SystestEnvironment(object):
             'DEFT_EDITOR': self.fake_editor_command(kwargs.get('editor_input', 'description-not-important'))
         }
         
-        return self.run(command=["deft"]+list(args), env_override=env)
+        cwd_subdir = kwargs.get("cwd", ".")
+        
+        return self.run(command=["deft"]+list(args), 
+                        env_override=env, 
+                        cwd=self.abspath(cwd_subdir))
     
-    def run(self, command, env_override={}):
+    def run(self, command, env_override={}, cwd=None):
         path = os.pathsep.join([os.path.abspath('python-dev/bin'),
                                 os.path.abspath(os.getcwd()),
                                 os.defpath])
@@ -106,7 +113,7 @@ class SystestEnvironment(object):
         process = Popen(command, 
                         stdin=PIPE, stdout=PIPE, stderr=PIPE, 
                         close_fds=True, 
-                        cwd=self.testdir,
+                        cwd=cwd or self.testdir,
                         env=env)
         
         (stdout, stderr) = process.communicate()
@@ -171,15 +178,19 @@ def select_environment_from_envvar():
 
 _selected_environment = select_environment_from_envvar()
 
-
-def systest(test_func, environment=_selected_environment):
-    @wraps(test_func)
-    def run_with_environment():
-        env = environment(test_func.__module__ + "." + test_func.func_name)
-        test_func(env)
+def systest_in(environment):
+    def decorator(test_func):
+        @wraps(test_func)
+        def run_with_environment():
+            env = environment(test_func.__module__ + "." + test_func.func_name)
+            test_func(env)
+            
+        environment.attribute(run_with_environment)
+        return istest(run_with_environment)
     
-    environment.attribute(run_with_environment)
-    return istest(run_with_environment)
+    return decorator
+
+systest = systest_in(_selected_environment)
 
 
 

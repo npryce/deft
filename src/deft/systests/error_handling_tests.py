@@ -1,6 +1,6 @@
 
 import deft.tracker
-from deft.systests.support import SystestEnvironment, ProcessError, systest, fail
+from deft.systests.support import InMemoryEnvironment, ProcessError, systest_in, systest, fail
 from hamcrest import *
 
 
@@ -14,7 +14,9 @@ def cannot_initialise_tracker_multiple_times(env):
     except ProcessError as e:
         assert_that(e.stderr, contains_string("already initialised"))
 
-@systest
+# Can't run this test against the real disk because the project also
+# contains a Deft tracker database to track it's own features!
+@systest_in(InMemoryEnvironment)
 def cannot_configure_an_uninitialised_tracker(env):
     try:
         env.deft("configure", "--initial-status", "foo")
