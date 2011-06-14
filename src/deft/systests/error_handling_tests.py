@@ -14,10 +14,14 @@ def cannot_initialise_tracker_multiple_times(env):
     except ProcessError as e:
         assert_that(e.stderr, contains_string("already initialised"))
 
-# Can't run this test against the real disk because the project also
-# contains a Deft tracker database to track it's own features!
+
 @systest_in(InMemoryEnvironment)
 def cannot_configure_an_uninitialised_tracker(env):
+    """
+    Cannot run this test against the real disk because the project also
+    contains a Deft tracker database to track it's own features!
+    """
+    
     try:
         env.deft("configure", "--initial-status", "foo")
         fail("deft should have failed when configuring an uninitialised tracker")
