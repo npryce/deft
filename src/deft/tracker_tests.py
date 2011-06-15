@@ -163,6 +163,10 @@ class FeatureTracker_Test:
         feature = self.tracker.create(name="bob")
         assert_that(feature.description_file, equal_to("basedir/tracker/bob.description"))
     
+    def test_can_report_filename_of_properties(self):
+        feature = self.tracker.create(name="carol")
+        assert_that(feature.properties_file, equal_to("basedir/tracker/carol.properties.yaml"))
+    
     def test_saves_new_features_immediately(self):
         alice = self.tracker.create(name="alice", description="springs")
         

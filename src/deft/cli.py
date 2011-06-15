@@ -160,6 +160,30 @@ class CommandLineInterface(object):
                                         nargs="?",
                                         default=None)
         
+        properties_parser = subparsers.add_parser("properties", 
+                                                  help="query, change or edit the properties of a feature")
+        properties_parser.add_argument("feature",
+                                       help="feature name",
+                                       metavar="feature")
+        properties_parser.add_argument("-e", "--edit",
+                                       help="edit the properties in YAML format (see http://www.yaml.org)",
+                                       action="store_const",
+                                       dest="edit",
+                                       const=True,
+                                       default=False)
+        properties_parser.add_argument("-f", "--file",
+                                       help="print the file of the properties",
+                                       action="store_const",
+                                       dest="file",
+                                       const=True,
+                                       default=False)
+        properties_parser.add_argument("-s", "--set",
+                                       help="set a property value",
+                                       metavar="S",
+                                       dest="set",
+                                       action="append",
+                                       nargs=2)
+        
         purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
         purge_parser.add_argument("features",
@@ -258,6 +282,17 @@ class CommandLineInterface(object):
             with feature.open_description() as input:
                 shutil.copyfileobj(input, self.out)
     
+    @with_tracker
+    def run_properties(self, tracker, args):
+        feature = tracker.feature_named(args.feature)
+        
+        if args.edit:
+            self.editor(feature.properties_file)
+        elif args.file:
+            self.println(feature.properties_file)
+        elif not args.set:
+            with feature.open_properties() as input:
+                shutil.copyfileobj(input, self.out)
     
     @with_tracker
     def run_purge(self, tracker, args):

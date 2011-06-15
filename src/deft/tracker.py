@@ -11,8 +11,9 @@ ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
 DefaultDataDir = os.path.join(ConfigDir, "data")
 
-PropertiesSuffix = ".status"
+StatusSuffix = ".status"
 DescriptionSuffix = ".description"
+PropertiesSuffix = ".properties.yaml"
 
 # Used to report user errors that have been explicitly detected
 class UserError(Exception):
@@ -115,7 +116,9 @@ class FeatureTracker(object):
         
         self._loaded[self._name_to_path(name)] = feature
         self._save_feature(feature)
+        
         feature.write_description(description)
+        feature.write_properties({})
         
         return feature
     
@@ -132,7 +135,7 @@ class FeatureTracker(object):
         return itertools.chain.from_iterable(self._index[status] for status in sorted(self._index))
     
     def purge(self, name):
-        properties_path = self._name_to_path(name, PropertiesSuffix)
+        properties_path = self._name_to_path(name, StatusSuffix)
         description_path = self._name_to_path(name, DescriptionSuffix)
         
         feature = self._load_feature(properties_path)
@@ -193,13 +196,13 @@ class FeatureTracker(object):
         self.storage.save_text(self._name_to_path(feature.name), 
                                _format_status(feature.status, feature.priority))
     
-    def _name_to_path(self, name, suffix=PropertiesSuffix):
+    def _name_to_path(self, name, suffix=StatusSuffix):
         return os.path.join(self.config["datadir"], name + suffix)
     
-    def _path_to_name(self, path, suffix=PropertiesSuffix):
+    def _path_to_name(self, path, suffix=StatusSuffix):
         return os.path.basename(path)[:-len(suffix)]
     
-    def _name_to_real_path(self, name, suffix=PropertiesSuffix):
+    def _name_to_real_path(self, name, suffix=StatusSuffix):
         return self.storage.abspath(self._name_to_path(name, suffix))
 
 
@@ -236,14 +239,29 @@ class Feature(object):
 
     @property
     def description_file(self):
-        return self._tracker._name_to_real_path(self.name, DescriptionSuffix)
+        return self._real_feature_file(DescriptionSuffix)
     
     def open_description(self, mode="r"):
-        return self._tracker.storage.open(self._tracker._name_to_path(self.name, DescriptionSuffix), mode)
+        return self._tracker.storage.open(self._feature_file(DescriptionSuffix), mode)
     
     def write_description(self, new_description):
-        with self.open_description("w") as output:
-            output.write(new_description)
+        self._tracker.storage.save_text(self._feature_file(DescriptionSuffix), new_description)
+    
+    @property
+    def properties_file(self):
+        return self._real_feature_file(PropertiesSuffix)
+    
+    def open_properties(self, mode="r"):
+        return self._tracker.storage.open(self._feature_file(PropertiesSuffix), mode)
+    
+    def write_properties(self, properties_dict):
+        self._tracker.storage.save_yaml(self._feature_file(PropertiesSuffix), properties_dict)
+    
+    def _feature_file(self, suffix):
+        return self._tracker._name_to_path(self.name, suffix)
+
+    def _real_feature_file(self, suffix):
+        return self._tracker._name_to_real_path(self.name, suffix)
     
     def __str__(self):
         return self.__str__()
