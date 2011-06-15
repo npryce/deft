@@ -8,7 +8,7 @@ import yaml
 class StorageFormats(object):
     def save_yaml(self, relpath, obj):
         with self.open(relpath, "w") as output:
-            yaml.dump(obj, output, default_flow_style=False)
+            yaml.safe_dump(obj, output, default_flow_style=False)
     
     def load_yaml(self, relpath):
         with self.open(relpath) as input:
