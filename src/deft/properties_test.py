@@ -5,6 +5,23 @@ from hamcrest import *
 
 
 class Properties_Tests:
+    def test_can_be_initialised_empty(self):
+        p = Properties()
+        
+        assert_that(not p)
+    
+    def test_can_be_initialised_from_an_existing_mapping(self):
+        p = Properties({"foo": "bar", "num": 10})
+        
+        assert_that(p["foo"], equal_to("bar"))
+        assert_that(p["num"], equal_to(10))
+    
+    def test_can_be_initialised_from_keyword_arguments(self):
+        p = Properties(foo="bar", num=10)
+        
+        assert_that(p["foo"], equal_to("bar"))
+        assert_that(p["num"], equal_to(10))
+    
     def test_can_set_and_get_properties(self):
         p = Properties()
         
