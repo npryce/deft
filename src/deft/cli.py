@@ -272,15 +272,14 @@ class CommandLineInterface(object):
         feature = tracker.feature_named(args.feature)
         
         if args.description is not None:
-            feature.write_description(args.description)
+            feature.description = args.description
         
         if args.edit:
             self.editor(feature.description_file)
         elif args.file:
             self.println(feature.description_file)
         elif args.description is None:
-            with feature.open_description() as input:
-                shutil.copyfileobj(input, self.out)
+            self.out.write(feature.description)
     
     @with_tracker
     def run_properties(self, tracker, args):

@@ -1,7 +1,8 @@
 
 import os
-from storage import FileStorage
+from storage import FileStorage, Cache, TextFormat, YamlFormat
 from deft.fileops import *
+from deft.memstorage import MemStorage, MemoryIO
 from hamcrest import *
 from nose.tools import raises
 from nose.plugins.attrib import attr
@@ -155,3 +156,162 @@ class FileStorage_Test(StorageContract):
     def _abspath(self, p):
         return os.path.abspath(os.path.join(self.testdir, path(p)))
     
+
+
+
+
+class Cache_Tests:
+    def test_caches_files_from_backing_storage(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        text = "the quick brown fox"
+        
+        with storage.open("the/path", "w") as out:
+            out.write(text)
+        
+        assert_that(cache.load("the/path", TextFormat), equal_to(text))
+        assert_that(cache.load("the/path", TextFormat), equal_to(text))
+        
+        assert_that(storage.read_count("the/path"), equal_to(1))
+    
+        
+    def test_saves_objects_only_when_flushed(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        cache.save("a", "a1", TextFormat)
+        cache.save("b", "b1", TextFormat)
+        
+        assert_that(not storage.exists("a"))
+        assert_that(not storage.exists("b"))
+        
+        cache.flush()
+        
+        assert_that(storage.open("a").read(), equal_to("a1"))
+        assert_that(storage.open("b").read(), equal_to("b1"))
+        
+        cache.save("a", "a2", TextFormat)
+        cache.save("b", "b2", TextFormat)
+        
+        assert_that(storage.open("a").read(), equal_to("a1"))
+        assert_that(storage.open("b").read(), equal_to("b1"))
+        
+        cache.flush()
+        
+        assert_that(storage.open("a").read(), equal_to("a2"))
+        assert_that(storage.open("b").read(), equal_to("b2"))
+
+    
+    def test_can_flush_a_single_file(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        cache.save("a", "a1", TextFormat)
+        cache.save("b", "b1", TextFormat)
+        
+        cache.flush_file("a")
+        
+        assert_that(storage.open("a").read(), equal_to("a1"))
+        assert_that(not storage.exists("b"))
+        
+        cache.flush_file("b")
+        
+        assert_that(storage.open("a").read(), equal_to("a1"))
+        assert_that(storage.open("b").read(), equal_to("b1"))
+        
+        cache.save("a", "a2", TextFormat)
+        cache.save("b", "b2", TextFormat)
+        
+        cache.flush_file("b")
+        assert_that(storage.open("a").read(), equal_to("a1"))
+        assert_that(storage.open("b").read(), equal_to("b2"))
+    
+    
+    def test_query_for_existence_of_file_checks_filesystem_and_cache(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        cache.save("x", "x-content", TextFormat)
+        with storage.open("y", "w") as y_output: 
+            y_output.write("y-content")
+        
+        assert_that(cache.exists("x"))
+        assert_that(cache.exists("y"))
+        
+    
+    def test_can_bind_update_callback_to_path(self):
+        "for use in the Observer pattern"
+        
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        d = {'a':1}
+        
+        cache.save("d_path", d, YamlFormat)
+        
+        update_callback = cache.observer_for("d_path")
+        
+        d['b'] = 2
+        update_callback()
+        
+        cache.flush()
+        
+        assert_that(storage.open("d_path").read(), equal_to("a: 1\nb: 2\n"))
+    
+    
+    def test_can_remove_files_from_cache(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        cache.save("x-path", "x", TextFormat)
+        cache.flush()
+        
+        cache.remove("x-path")
+        
+        assert_that(not cache.exists("x-path"))
+        assert_that(storage.exists("x-path"))
+    
+    
+    def test_removed_files_are_removed_from_storage_when_cache_is_flushed(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        cache.save("x-path", "x", TextFormat)
+        cache.flush()
+        
+        cache.remove("x-path")
+        cache.flush()
+        
+        assert_that(not cache.exists("x-path"))
+        assert_that(not storage.exists("x-path"))
+    
+    def test_can_save_over_a_removed_file_before_flush(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+
+        cache.save("x-path", "x", TextFormat)
+        cache.flush()
+        
+        cache.remove("x-path")
+        cache.save("x-path", "new-x", TextFormat)
+
+        assert_that(cache.exists("x-path"))
+        assert_that(storage.exists("x-path"))
+        
+        cache.flush()
+        
+        assert_that(cache.exists("x-path"))
+        assert_that(storage.exists("x-path"))
+        assert_that(storage.open("x-path").read(), equal_to("new-x"))
+    
+    @raises(ValueError)
+    def test_marking_a_removed_path_as_dirty_is_an_error(self):
+        storage = MemStorage("basedir")
+        cache = Cache(storage)
+        
+        cache.save("x-path", "x", TextFormat)
+        cache.flush()
+        
+        cache.remove("x-path")
+        cache.mark_dirty("x-path")

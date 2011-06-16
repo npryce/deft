@@ -3,7 +3,7 @@ import itertools
 import os
 from glob import iglob
 from deft.indexing import Bucket
-from deft.storage import FileStorage
+from deft.storage import FileStorage, Cache, TextFormat, YamlFormat
 
 FormatVersion = '2.0'
 
@@ -64,11 +64,6 @@ def load_config_with_storage(storage):
     return storage.load_yaml(ConfigFile)
 
 
-
-
-_format_status = "{1:>8} {0}".format
-
-
 class FeatureTracker(object):
     def __init__(self, config, storage):
         repo_format = config['format']
@@ -78,9 +73,9 @@ class FeatureTracker(object):
         
         self.config = config
         self.storage = storage
+        self._cache = Cache(storage)
         self._index = {}
         
-        self._init_empty_cache()
         self._index_features()
     
     def configure(self, **config):
@@ -95,13 +90,7 @@ class FeatureTracker(object):
         self.storage.save_yaml(ConfigFile, self.config)
     
     def save(self):
-        for feature in self._dirty:
-            self._save_feature(feature)
-        self._init_empty_cache()
-    
-    def _init_empty_cache(self):
-        self._dirty = set()
-        self._loaded = {}
+        self._cache.flush()
     
     def create(self, name, status=None, description=""):
         if self._feature_exists_named(name):
@@ -110,15 +99,17 @@ class FeatureTracker(object):
         if status is None:
             status = self.initial_status
         
-        bucket = self.features_with_status(status)
         feature = Feature(tracker=self, name=name, status=status)
+        feature_status_path = self._name_to_path(name,StatusSuffix)
+        
+        bucket = self.features_with_status(status)
         bucket.append(feature)
         
-        self._loaded[self._name_to_path(name)] = feature
-        self._save_feature(feature)
+        self._cache.save(feature_status_path, feature, FeatureStatusFormat(self, name))
+        self._cache.flush_file(feature_status_path)
         
-        feature.write_description(description)
-        feature.write_properties({})
+        feature.description = description
+        feature.properties = {}
         
         return feature
     
@@ -135,20 +126,13 @@ class FeatureTracker(object):
         return itertools.chain.from_iterable(self._index[status] for status in sorted(self._index))
     
     def purge(self, name):
-        properties_path = self._name_to_path(name, StatusSuffix)
-        description_path = self._name_to_path(name, DescriptionSuffix)
-        
-        feature = self._load_feature(properties_path)
+        feature = self.feature_named(name)
         bucket = self.features_with_status(feature.status)
         
         bucket.remove(feature)
         
-        del self._loaded[properties_path]
-        self._dirty.discard(feature)
-        
-        self.storage.remove(properties_path)
-        self.storage.remove(description_path)
-    
+        self._cache.remove(self._name_to_path(name, StatusSuffix))
+        self.storage.remove(self._name_to_path(name, DescriptionSuffix))
     
     def _change_status(self, feature, new_status):
         old_bucket = self.features_with_status(feature.status)
@@ -158,13 +142,12 @@ class FeatureTracker(object):
         new_bucket.append(feature)
         feature._record_status(new_status)
     
-    
     def _change_priority(self, feature, new_priority):
         bucket = self.features_with_status(feature.status)
         bucket.change_priority(feature, new_priority)
     
     def _feature_exists_named(self, name):
-        return self.storage.exists(self._name_to_path(name))
+        return self._cache.exists(self._name_to_path(name))
     
     def _index_features(self):
         features_by_status = {}
@@ -179,22 +162,18 @@ class FeatureTracker(object):
         return [self._load_feature(f) for f in self.storage.list(self._name_to_path("*"))]
     
     def _load_feature(self, path):
-        if path in self._loaded:
-            return self._loaded[path]
-        else:
-            text = self.storage.load_text(path)
-            priority = int(text[0:8])
-            status = text[9:]
-            feature = Feature(tracker=self, name=self._path_to_name(path), status=status, priority=priority)
-            self._loaded[path] = feature
-            return feature
+        return self._cache.load(path, FeatureStatusFormat(self, self._path_to_name(path)))
+    
+    def _load(self, path, format):
+        with self.storage.open(path) as input:
+            return format.load(input)
+    
+    def _save(self, path, data, format):
+        with self.storage.open(path, "w") as output:
+            return format.save(data, output)
     
     def _mark_dirty(self, feature):
-        self._dirty.add(feature)
-    
-    def _save_feature(self, feature):
-        self.storage.save_text(self._name_to_path(feature.name), 
-                               _format_status(feature.status, feature.priority))
+        self._cache.mark_dirty(self._name_to_path(feature.name))
     
     def _name_to_path(self, name, suffix=StatusSuffix):
         return os.path.join(self.config["datadir"], name + suffix)
@@ -236,16 +215,18 @@ class Feature(object):
         self._tracker._mark_dirty(self)
     
     priority = property(_get_priority, _set_priority)
+    
+    def _get_description(self):
+        return self._tracker._load(self._feature_file(DescriptionSuffix), TextFormat)
+    
+    def _set_description(self, new_description):
+        self._tracker._save(self._feature_file(DescriptionSuffix), new_description, TextFormat)
+    
+    description = property(_get_description, _set_description)
 
     @property
     def description_file(self):
         return self._real_feature_file(DescriptionSuffix)
-    
-    def open_description(self, mode="r"):
-        return self._tracker.storage.open(self._feature_file(DescriptionSuffix), mode)
-    
-    def write_description(self, new_description):
-        self._tracker.storage.save_text(self._feature_file(DescriptionSuffix), new_description)
     
     @property
     def properties_file(self):
@@ -274,3 +255,16 @@ class Feature(object):
 
 
 
+class FeatureStatusFormat:
+    def __init__(self, tracker, name):
+        self.tracker = tracker
+        self.name = name
+    
+    def load(self, input):
+        text = input.read()
+        priority = int(text[0:8])
+        status = text[9:]
+        return Feature(tracker=self.tracker, name=self.name, status=status, priority=priority)
+    
+    def save(self, feature, output):
+        output.write("{1:>8} {0}".format(feature.status, feature.priority))

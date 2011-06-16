@@ -6,14 +6,17 @@ from fnmatch import fnmatch
 from storage import StorageFormats
 
 
-class MemStorageIO(StringIO):
-    def __init__(self, storage, relpath, content=""):
+def read_only_save_callback(data):
+    pass
+
+
+class MemoryIO(StringIO):
+    def __init__(self, content="", save_callback=read_only_save_callback):
         StringIO.__init__(self, content)
-        self.storage = storage
-        self.relpath = relpath
+        self._save_callback = save_callback
     
     def close(self):
-        self.storage.files[self.relpath] = self.getvalue()
+        self._save_callback(self.getvalue())
         StringIO.close(self)
     
     def __enter__(self):
@@ -27,6 +30,7 @@ class MemStorage(StorageFormats):
     def __init__(self, basedir="basedir"):
         self.basedir = basedir
         self.files = {}
+        self.read_counts = {}
     
     def abspath(self, relpath):
         return os.path.normpath(os.path.join(self.basedir, relpath))
@@ -35,6 +39,9 @@ class MemStorage(StorageFormats):
         norm_abspath = os.path.normpath(abspath)
         norm_basedir = os.path.normpath(self.basedir)
         return os.path.relpath(norm_abspath, norm_basedir)
+    
+    def read_count(self, relpath):
+        return self.read_counts.get(relpath, 0)
     
     def exists(self, relpath):
         return relpath in self.files 
@@ -53,11 +60,21 @@ class MemStorage(StorageFormats):
     def _open_read(self, relpath):
         if not self.exists(relpath):
             raise IOError(relpath + " does not exist")
-        return MemStorageIO(self, relpath, self.files[relpath])
+        
+        self.read_counts[relpath] = self.read_counts.get(relpath,0) + 1
+        
+        def read_only(data):
+            pass
+        
+        return MemoryIO(content=self.files[relpath])
     
     def _open_write(self, relpath):
+        def store_data(data):
+            self.files[relpath] = data
+        
         self.makedirs(os.path.dirname(relpath))
-        return MemStorageIO(self, relpath)
+        
+        return MemoryIO(save_callback=store_data)
     
     def remove(self, relpath):
         for subpath in self.list(os.path.join(relpath, "*")):

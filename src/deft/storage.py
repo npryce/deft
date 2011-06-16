@@ -1,4 +1,5 @@
 
+from functools import partial
 import os
 import shutil
 from glob import iglob
@@ -56,3 +57,90 @@ class FileStorage(StorageFormats):
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
 
+
+
+class Cache(object):
+    def __init__(self, storage):
+        self.storage = storage
+        self._cached = {}
+        self._removed = set()
+        self._dirty = set()
+    
+    def exists(self, path):
+        return path in self._cached or (path not in self._removed and self.storage.exists(path))
+        
+    def load(self, path, format):
+        if path in self._cached:
+            return self._cached[path][0]
+        else:
+            with self.storage.open(path, "r") as input:
+                loaded_object = format.load(input)
+                self._cache(path, loaded_object, format)
+                return loaded_object
+    
+    def save(self, path, obj, format):
+        self._cache(path, obj, format)
+        self._removed.discard(path)
+        self.mark_dirty(path)
+    
+    def _cache(self, path, obj, format):
+        self._cached[path] = (obj, format)
+    
+    def remove(self, path):
+        del self._cached[path]
+        self._removed.add(path)
+
+    def observer_for(self, path):
+        return partial(self.mark_dirty, path)
+    
+    def mark_dirty(self, path):
+        if path in self._removed:
+            raise ValueError("cannot mark " + path + " as dirty: it has been removed")
+        
+        self._dirty.add(path)
+    
+    def flush(self):
+        for path in self._dirty:
+            self._flush_update(path)
+        self._dirty.clear()
+        
+        for path in self._removed:
+            self._flush_remove(path)
+        self._removed.clear()
+    
+    def flush_file(self, path):
+        if path in self._removed:
+            self._flush_remove(path)
+            self._removed.discard(path)
+        elif path in self._dirty:
+            self._flush_update(path)
+            self._dirty.remove(path)
+
+    def _flush_remove(self, path):
+        self.storage.remove(path)
+        
+    def _flush_update(self, path):
+        dirty_object, format = self._cached[path]
+        with self.storage.open(path, "w") as output:
+            format.save(dirty_object, output)
+        
+
+
+class YamlFormat:
+    @classmethod
+    def load(selfclass, input):
+        return yaml.safe_load(input)
+    
+    @classmethod
+    def save(selfclass, obj, output):
+        yaml.safe_dump(obj, output, default_flow_style=False)
+
+
+class TextFormat:
+    @classmethod
+    def load(selfclass, input):
+        return input.read()
+    
+    @classmethod
+    def save(selfclass, text, output):
+        return output.write(text)

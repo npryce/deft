@@ -1,5 +1,5 @@
 
-from deft.tracker import FeatureTracker, default_config
+from deft.tracker import FeatureTracker, default_config, PropertiesSuffix
 from memstorage import MemStorage
 from hamcrest import *
 
@@ -25,7 +25,7 @@ class FeatureTracker_Test:
         assert_that(new_feature.name, equal_to("alice"))
         assert_that(new_feature.status, equal_to("pending"))
     
-    def test_new_features_have_default_inititial_status_if_status_not_explicitly_specified(self):
+    def test_new_features_have_default_initial_status_if_status_not_explicitly_specified(self):
         new_feature = self.tracker.create(name="alice")
         
         assert_that(new_feature.status, equal_to(self.tracker.initial_status))
@@ -144,20 +144,19 @@ class FeatureTracker_Test:
     def test_can_initialise_feature_with_a_description(self):
         new_feature = self.tracker.create(name="new-feature", description="the description text")
         
-        assert_that(new_feature.open_description().read(), equal_to("the description text"))
+        assert_that(new_feature.description, equal_to("the description text"))
     
     def test_if_not_given_a_new_feature_has_an_empty_description(self):
         new_feature = self.tracker.create(name="new-feature")
         
-        assert_that(new_feature.open_description().read(), equal_to(""))
+        assert_that(new_feature.description, equal_to(""))
         
     def test_can_overwrite_the_description(self):
         new_feature = self.tracker.create(name="new-feature", description="the initial description")
         
-        with new_feature.open_description("w") as out:
-            out.write("a new description")
+        new_feature.description = "a new description"
         
-        assert_that(new_feature.open_description().read(), equal_to("a new description"))
+        assert_that(new_feature.description, equal_to("a new description"))
         
     def test_can_report_filename_of_description(self):
         feature = self.tracker.create(name="bob")
@@ -167,17 +166,18 @@ class FeatureTracker_Test:
         feature = self.tracker.create(name="carol")
         assert_that(feature.properties_file, equal_to("basedir/tracker/carol.properties.yaml"))
     
-    def test_saves_new_features_immediately(self):
+    def test_saves_initial_state_of_new_features_immediately(self):
         alice = self.tracker.create(name="alice", description="springs")
         
-        assert_that(self.storage.exists("tracker/alice.status"))
-        assert_that(self.storage.exists("tracker/alice.description"))
-        assert_that(self.storage.open("tracker/alice.status").read(), contains_string("1"))
-        assert_that(self.storage.open("tracker/alice.status").read(), contains_string(alice.status))
+        assert_that(self.storage.open("tracker/alice.status").read(), 
+                    all_of(contains_string("1"), 
+                           contains_string(alice.status)))
+        
         assert_that(self.storage.open("tracker/alice.description").read(), equal_to("springs"))
     
-    def test_saves_changes_only_when_explicitly_told_to(self):
+    def test_saves_changes_to_features_only_when_explicitly_told_to(self):
         alice = self.tracker.create(name="alice", status="first")
+        self.tracker.save()
         
         alice.status = "second"
         
