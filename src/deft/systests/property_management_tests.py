@@ -11,19 +11,21 @@ from deft.storage import YamlFormat
 def can_set_and_get_a_property_of_a_feature(env):
     env.deft("init")
     env.deft("create", "feature-x")
-    env.deft("properties", "feature-x", "--set" "pname", "pvalue")
+    env.deft("properties", "feature-x", "--set", "pname", "pvalue")
     
     assert_that(env.deft("properties", "feature-x", "pname").value, equal_to("pvalue"))
 
-@wip
 @systest
 def can_list_all_the_properties_of_a_feature(env):
     env.deft("init")
     env.deft("create", "feature-x")
-    env.deft("properties", "feature-x", "--set" "name", "alice")
-    env.deft("properties", "feature-x", "--set" "age", "30")
+    env.deft("properties", "feature-x", "--set", "name", "alice")
+    env.deft("properties", "feature-x", "--set", "age", "30", "--set", "gender", "female")
     
-    assert_that(env.deft("properties", "feature-x").yaml, equal_to({"name": "alice", "age": 30}))
+    assert_that(env.deft("properties", "feature-x").yaml, equal_to(
+            {"name": "alice", 
+             "age": 30, 
+             "gender": "female"}))
     
 
 @systest

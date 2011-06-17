@@ -4,6 +4,7 @@ from functools import partial
 import os
 import shutil
 import csv
+import yaml
 import subprocess
 from argparse import ArgumentParser
 import deft.tracker
@@ -289,8 +290,15 @@ class CommandLineInterface(object):
             self.editor(feature.properties_file)
         elif args.file:
             self.println(feature.properties_file)
-        elif not args.set:
-            deft.tracker.YamlFormat.save(feature.properties, self.out)
+        else:
+            properties = feature.properties
+            if args.set:
+                for (name, value_str) in args.set:
+                    properties[name] = yaml.safe_load(value_str)
+                feature.properties = properties
+            else:
+                deft.tracker.YamlFormat.save(feature.properties, self.out)
+                
     
     @with_tracker
     def run_purge(self, tracker, args):
