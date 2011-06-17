@@ -11,7 +11,7 @@ from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
 from deft.fileops import *
-from deft.storage import FileStorage
+from deft.storage import FileStorage, YamlFormat
 from deft.memstorage import MemStorage
 from deft.cli import CommandLineInterface
 from deft.tracker import FeatureTracker, UserError, init_with_storage, load_with_storage
@@ -61,6 +61,10 @@ class ProcessResult(object):
     @property
     def value(self):
         return self.stdout.strip()
+    
+    @property
+    def yaml(self):
+        return YamlFormat.load(StringIO(self.stdout))
     
     @property
     def stderr_lines(self):

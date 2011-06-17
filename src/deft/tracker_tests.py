@@ -1,5 +1,5 @@
 
-from deft.tracker import FeatureTracker, default_config, PropertiesSuffix
+from deft.tracker import FeatureTracker, default_config, PropertiesSuffix, UserError
 from memstorage import MemStorage
 from hamcrest import *
 
@@ -157,7 +157,7 @@ class FeatureTracker_Test:
         new_feature.description = "a new description"
         
         assert_that(new_feature.description, equal_to("a new description"))
-        
+    
     def test_can_report_filename_of_description(self):
         feature = self.tracker.create(name="bob")
         assert_that(feature.description_file, equal_to("basedir/tracker/bob.description"))
@@ -175,7 +175,7 @@ class FeatureTracker_Test:
         
         assert_that(self.storage.open("tracker/alice.description").read(), equal_to("springs"))
     
-    def test_saves_changes_to_features_only_when_explicitly_told_to(self):
+    def test_saves_changes_to_feature_status_only_when_explicitly_told_to(self):
         alice = self.tracker.create(name="alice", status="first")
         self.tracker.save()
         
@@ -187,7 +187,37 @@ class FeatureTracker_Test:
         
         assert_that(self.storage.open("tracker/alice.status").read(), contains_string("second"))
         
+    def test_description_written_to_storage_immediately_when_feature_is_created(self):
+        alice = self.tracker.create(name="alice", description="first-description")
+        assert_that(self.storage.open("tracker/alice.description").read(), equal_to("first-description"))
+        
+    def test_description_written_to_storage_immediately_when_description_is_changed(self):
+        alice = self.tracker.create(name="alice", description="first-description")
+        alice.description = "second-description"
+        assert_that(self.storage.open("tracker/alice.description").read(), equal_to("second-description"))
+    
+    def test_purging_a_feature_removes_all_trace_of_it_from_tracker_and_storage(self):
+        alice = self.tracker.create(name="alice", status="new", description="alice-description")
+        alice.properties = {'a': 'some value'}
+        
+        self.tracker.save()
+        
+        assert_that(len(self.storage.list("tracker/alice.*")), is_not(equal_to(0)))
+        
+        self.tracker.purge("alice")
+        
+        try:
+            self.tracker.feature_named("alice")
+            raise AssertionError("should have thrown UserError")
+        except UserError as expected:
+            pass
 
+        self.tracker.save()
+        
+        assert_that(list(self.storage.list("tracker/alice.*")), equal_to([]))
+        
+        
+        
     def assert_status(self, description, **kwargs):
         for status in kwargs:
             self.assert_priority_order(description, *kwargs[status], status=status)

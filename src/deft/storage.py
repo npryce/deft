@@ -126,21 +126,21 @@ class Cache(object):
         
 
 
-class YamlFormat:
-    @classmethod
-    def load(selfclass, input):
+class YamlFormat(object):
+    @staticmethod
+    def load(input):
         return yaml.safe_load(input)
     
-    @classmethod
-    def save(selfclass, obj, output):
+    @staticmethod
+    def save(obj, output):
         yaml.safe_dump(obj, output, default_flow_style=False)
 
 
-class TextFormat:
-    @classmethod
-    def load(selfclass, input):
+class TextFormat(object):
+    @staticmethod
+    def load(input):
         return input.read()
     
-    @classmethod
-    def save(selfclass, text, output):
+    @staticmethod
+    def save(text, output):
         return output.write(text)

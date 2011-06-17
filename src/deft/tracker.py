@@ -1,4 +1,5 @@
 
+import sys
 import itertools
 import os
 from glob import iglob
@@ -133,6 +134,7 @@ class FeatureTracker(object):
         
         self._cache.remove(self._name_to_path(name, StatusSuffix))
         self.storage.remove(self._name_to_path(name, DescriptionSuffix))
+        self.storage.remove(self._name_to_path(name, PropertiesSuffix))
     
     def _change_status(self, feature, new_status):
         old_bucket = self.features_with_status(feature.status)
@@ -185,13 +187,27 @@ class FeatureTracker(object):
         return self.storage.abspath(self._name_to_path(name, suffix))
 
 
+
+class FeatureFileProperty(object):
+    def __init__(self, suffix, format):
+        self._suffix = suffix
+        self._format = format
+    
+    def __get__(self, feature, owner):
+        return feature._load(self._suffix, self._format)
+    
+    def __set__(self, feature, value):
+        feature._save(self._suffix, value, self._format)
+    
+
+
 class Feature(object):
     def __init__(self, tracker, name, status, priority=None):
         self.name = name
         self._status = status
         self._priority = priority
         self._tracker = tracker
-    
+
     def _get_status(self):
         return self._status
     
@@ -216,14 +232,9 @@ class Feature(object):
     
     priority = property(_get_priority, _set_priority)
     
-    def _get_description(self):
-        return self._tracker._load(self._feature_file(DescriptionSuffix), TextFormat)
+    description = FeatureFileProperty(DescriptionSuffix, TextFormat)
+    properties = FeatureFileProperty(PropertiesSuffix, YamlFormat)
     
-    def _set_description(self, new_description):
-        self._tracker._save(self._feature_file(DescriptionSuffix), new_description, TextFormat)
-    
-    description = property(_get_description, _set_description)
-
     @property
     def description_file(self):
         return self._real_feature_file(DescriptionSuffix)
@@ -232,12 +243,12 @@ class Feature(object):
     def properties_file(self):
         return self._real_feature_file(PropertiesSuffix)
     
-    def open_properties(self, mode="r"):
-        return self._tracker.storage.open(self._feature_file(PropertiesSuffix), mode)
-    
-    def write_properties(self, properties_dict):
-        self._tracker.storage.save_yaml(self._feature_file(PropertiesSuffix), properties_dict)
-    
+    def _load(self, suffix, format):
+        return self._tracker._load(self._feature_file(suffix), format)
+
+    def _save(self, suffix, data, format):
+        return self._tracker._save(self._feature_file(suffix), data, format)
+        
     def _feature_file(self, suffix):
         return self._tracker._name_to_path(self.name, suffix)
 
@@ -254,6 +265,7 @@ class Feature(object):
             ", priority=" + str(self.priority) + ")"
 
 
+    
 
 class FeatureStatusFormat:
     def __init__(self, tracker, name):

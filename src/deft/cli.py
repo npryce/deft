@@ -290,8 +290,7 @@ class CommandLineInterface(object):
         elif args.file:
             self.println(feature.properties_file)
         elif not args.set:
-            with feature.open_properties() as input:
-                shutil.copyfileobj(input, self.out)
+            deft.tracker.YamlFormat.save(feature.properties, self.out)
     
     @with_tracker
     def run_purge(self, tracker, args):
