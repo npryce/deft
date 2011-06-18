@@ -184,6 +184,11 @@ class CommandLineInterface(object):
                                        dest="set",
                                        action="append",
                                        nargs=2)
+        properties_parser.add_argument("-p", "--print",
+                                       help="properties to query",
+                                       dest="properties_to_print",
+                                       default=None,
+                                       nargs="+")
         
         purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
@@ -296,9 +301,10 @@ class CommandLineInterface(object):
                 for (name, value_str) in args.set:
                     properties[name] = yaml.safe_load(value_str)
                 feature.properties = properties
+            elif args.properties_to_print:
+                self.println(" ".join(map(str,map(properties.__getitem__, args.properties_to_print))))
             else:
                 deft.tracker.YamlFormat.save(feature.properties, self.out)
-                
     
     @with_tracker
     def run_purge(self, tracker, args):

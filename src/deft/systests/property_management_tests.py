@@ -6,14 +6,25 @@ from deft.systests.support import systest, wip
 from deft.storage import YamlFormat
 
 
-@wip
 @systest
 def can_set_and_get_a_property_of_a_feature(env):
     env.deft("init")
     env.deft("create", "feature-x")
-    env.deft("properties", "feature-x", "--set", "pname", "pvalue")
+    env.deft("properties", "feature-x", "--set", "x", "1")
+    env.deft("properties", "feature-x", "--set", "y", "2")
     
-    assert_that(env.deft("properties", "feature-x", "pname").value, equal_to("pvalue"))
+    assert_that(env.deft("properties", "feature-x", "--print", "x").value, equal_to("1"))
+    assert_that(env.deft("properties", "feature-x", "--print", "y").value, equal_to("2"))
+
+@systest
+def can_query_multiple_properties_of_a_feature(env):
+    env.deft("init")
+    env.deft("create", "feature-x")
+    env.deft("properties", "feature-x", "--set", "x", "1")
+    env.deft("properties", "feature-x", "--set", "y", "2")
+    
+    assert_that(env.deft("properties", "feature-x", "--print", "x", "y").value, equal_to("1 2"))
+
 
 @systest
 def can_list_all_the_properties_of_a_feature(env):
