@@ -6,7 +6,7 @@ import shutil
 import csv
 import yaml
 import subprocess
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Action
 import deft.tracker
 
 
@@ -40,6 +40,29 @@ def with_tracker(function):
 def _ignore_output(s):
     pass
     
+
+
+
+
+def append_value(namespace, name, value):
+    values = getattr(namespace, name) or []
+    values = values + [value]
+    setattr(namespace, name, values)
+
+class AppendPropertySetter(Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        def setter(properties):
+            properties[values[0]] = values[1]
+        
+        append_value(namespace, self.dest, setter)
+
+class AppendPropertyDeleter(Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        def deleter(properties):
+            del properties[values[0]]
+        
+        append_value(namespace, self.dest, deleter)
+
 
 class CommandLineInterface(object):
     def __init__(self, backend, out, err, editor=run_editor_process):
@@ -180,10 +203,16 @@ class CommandLineInterface(object):
                                        default=False)
         properties_parser.add_argument("-s", "--set",
                                        help="set a property value",
-                                       metavar="S",
-                                       dest="set",
-                                       action="append",
+                                       metavar=("NAME", "VALUE"),
+                                       action=AppendPropertySetter,
+                                       dest="changes",
                                        nargs=2)
+        properties_parser.add_argument("-r", "--remove",
+                                       help="remove a property from the feature",
+                                       metavar="NAME",
+                                       action=AppendPropertyDeleter,
+                                       dest="changes",
+                                       nargs=1)
         properties_parser.add_argument("-p", "--print",
                                        help="properties to query",
                                        dest="properties_to_print",
@@ -254,7 +283,6 @@ class CommandLineInterface(object):
         else:
             raise ValueError("unexpected format: " + args.format)
     
-    
     @with_tracker
     def run_status(self, tracker, args):
         feature = tracker.feature_named(args.feature)
@@ -263,7 +291,6 @@ class CommandLineInterface(object):
         else:
             self.println(feature.status)
     
-    
     @with_tracker
     def run_priority(self, tracker, args):
         feature = tracker.feature_named(args.feature)
@@ -271,7 +298,6 @@ class CommandLineInterface(object):
             feature.priority = args.priority
         else:
             self.println(str(feature.priority))
-    
     
     @with_tracker
     def run_description(self, tracker, args):
@@ -297,15 +323,16 @@ class CommandLineInterface(object):
             self.println(feature.properties_file)
         else:
             properties = feature.properties
-            if args.set:
-                for (name, value_str) in args.set:
-                    properties[name] = yaml.safe_load(value_str)
+            if args.changes:
+                for change in args.changes:
+                    change(properties)
                 feature.properties = properties
             elif args.properties_to_print:
                 self.println(" ".join(map(str,map(properties.__getitem__, args.properties_to_print))))
             else:
                 deft.tracker.YamlFormat.save(feature.properties, self.out)
     
+        
     @with_tracker
     def run_purge(self, tracker, args):
         for name in args.features:

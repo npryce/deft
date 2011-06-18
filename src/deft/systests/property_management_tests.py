@@ -35,7 +35,7 @@ def can_list_all_the_properties_of_a_feature(env):
     
     assert_that(env.deft("properties", "feature-x").yaml, equal_to(
             {"name": "alice", 
-             "age": 30, 
+             "age": "30", 
              "gender": "female"}))
     
 
@@ -46,9 +46,9 @@ def can_edit_the_properties_of_a_feature(env):
     env.deft("create", "feature-x")
     
     env.deft("properties", "feature-x", "--edit",
-             editor_input="foo: bar\ncount: 1")
+             editor_input="foo: bar\ncount: '1'")
     
-    assert_that(env.deft("properties", "feature-x").yaml, equal_to({"foo": "bar", "count": 1}))
+    assert_that(env.deft("properties", "feature-x").yaml, equal_to({"foo": "bar", "count": "1"}))
 
 
 @systest
@@ -59,3 +59,15 @@ def can_print_the_name_of_the_properties_file(env):
     
     assert_that(env.deft("properties", "--file", "feature-x").value, equal_to(
             env.abspath(os.path.join("tracker", "feature-x.properties.yaml"))))
+
+
+@systest
+def can_remove_properties(env):
+    env.deft("init")
+    env.deft("create", "feature-x")
+    env.deft("properties", "feature-x", "--set", "x", "1")
+    env.deft("properties", "feature-x", "--set", "y", "2")
+    
+    env.deft("properties", "feature-x", "--remove", "x")
+    
+    assert_that(env.deft("properties", "feature-x").yaml, equal_to({"y": "2"}))
