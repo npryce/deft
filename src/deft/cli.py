@@ -328,7 +328,7 @@ class CommandLineInterface(object):
                     change(properties)
                 feature.properties = properties
             elif args.properties_to_print:
-                self.println(" ".join(map(str,map(properties.__getitem__, args.properties_to_print))))
+                self.println(" ".join(map(str, map(properties.__getitem__, args.properties_to_print))))
             elif properties:
                     deft.tracker.YamlFormat.save(properties, self.out)
     
