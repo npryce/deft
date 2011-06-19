@@ -37,6 +37,14 @@ def can_list_all_the_properties_of_a_feature(env):
             {"name": "alice", 
              "age": "30", 
              "gender": "female"}))
+
+
+@systest
+def prints_nothing_if_feature_has_no_properties(env):
+    env.deft("init")
+    env.deft("create", "feature-x")
+    
+    assert_that(env.deft("properties", "feature-x").stdout, equal_to(""))
     
 
 @systest

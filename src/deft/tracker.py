@@ -6,7 +6,7 @@ from glob import iglob
 from deft.indexing import Bucket
 from deft.storage import FileStorage, Cache, TextFormat, YamlFormat
 
-FormatVersion = '2.0'
+FormatVersion = '2.1'
 
 ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
