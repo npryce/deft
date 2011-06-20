@@ -2,7 +2,7 @@
 from StringIO import StringIO
 import os
 from hamcrest import *
-from deft.systests.support import systest, wip
+from deft.systests.support import systest, wip, ProcessError
 from deft.storage import YamlFormat
 
 
@@ -45,7 +45,16 @@ def prints_nothing_if_feature_has_no_properties(env):
     env.deft("create", "feature-x")
     
     assert_that(env.deft("properties", "feature-x").stdout, equal_to(""))
+
+@systest
+def is_an_error_to_request_nonexistent_property_by_name(env):
+    env.deft("init")
+    env.deft("create", "feature-x")
     
+    try:
+        env.deft("properties", "feature-x", "--print", "pname")
+    except ProcessError as e:
+        assert_that(e.stderr, contains_string("feature-x does not have a property named 'pname'"))
 
 @systest
 def can_edit_the_properties_of_a_feature(env):
@@ -79,3 +88,13 @@ def can_remove_properties(env):
     env.deft("properties", "feature-x", "--remove", "x")
     
     assert_that(env.deft("properties", "feature-x").yaml, equal_to({"y": "2"}))
+
+
+@systest
+def can_set_properties_when_creating_a_feature(env):
+    env.deft("init")
+    env.deft("create", "alice", "--set", "gender", "female", "--set", "age", "30")
+    
+    assert_that(env.deft("properties", "alice", "-p", "gender").value, equal_to("female"))
+    assert_that(env.deft("properties", "alice", "-p", "age").value, equal_to("30"))
+    

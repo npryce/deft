@@ -141,10 +141,16 @@ class FeatureTracker_Test:
         
         assert_that(list(self.tracker.features_with_status("same")), equal_to([alice, bob, carol, dave]))
     
-    def test_can_initialise_feature_with_a_description(self):
+    def test_can_create_feature_with_a_description(self):
         new_feature = self.tracker.create(name="new-feature", description="the description text")
         
         assert_that(new_feature.description, equal_to("the description text"))
+
+    def test_can_create_feature_with_properties(self):
+        new_feature = self.tracker.create(name="new-feature", properties={"a":"1", "b":"2"})
+        
+        assert_that(new_feature.properties, equal_to({"a":"1", "b":"2"}))
+    
     
     def test_if_not_given_a_new_feature_has_an_empty_description(self):
         new_feature = self.tracker.create(name="new-feature")
@@ -158,6 +164,20 @@ class FeatureTracker_Test:
         
         assert_that(new_feature.description, equal_to("a new description"))
     
+    def test_can_overwrite_the_properties(self):
+        new_feature = self.tracker.create(name="new-feature", properties={"a":"1", "b":"2"})
+        
+        new_feature.properties = {"a": "10", "b": "22"}
+        
+        assert_that(new_feature.properties, equal_to({"a": "10", "b": "22"}))
+    
+    def returns_a_copy_of_its_properties(self):
+        new_feature = self.tracker.create(name="new-feature", properties={"a":"1", "b":"2"})
+        
+        new_feature.properties["1"] = "10"
+        
+        assert_that(new_feature.properties, equal_to({"a": "1", "b": "2"}))
+        
     def test_can_report_filename_of_description(self):
         feature = self.tracker.create(name="bob")
         assert_that(feature.description_file, equal_to("basedir/tracker/bob.description"))

@@ -8,7 +8,7 @@ import yaml
 import subprocess
 from argparse import ArgumentParser, Action
 import deft.tracker
-
+from deft.tracker import UserError
 
 
 EditorEnvironmentVariables = ["DEFT_EDITOR", "VISUAL", "EDITOR"]
@@ -18,14 +18,14 @@ def find_editor_command(env):
         if v in env:
             return env[v]
     else:
-        raise deft.tracker.UserError("no editor specified: one of the environment variables " + 
-                                     (", ".join(EditorEnvironmentVariables)) + " must be set")
+        raise UserError("no editor specified: one of the environment variables " + 
+                        (", ".join(EditorEnvironmentVariables)) + " must be set")
 
 def run_editor_process(path):
     command = find_editor_command(os.environ) + " " + "\"" + path + "\""
     retcode = subprocess.call(command, shell=True)
     if retcode != 0:
-        raise deft.tracker.UserError("editor command failed with status " + str(retcode) + ": " + command)
+        raise UserError("editor command failed with status " + str(retcode) + ": " + command)
 
 
 def with_tracker(function):
@@ -124,6 +124,13 @@ class CommandLineInterface(object):
         create_parser.add_argument("-d", "--description",
                                    help="a longer description of the feature",
                                    default=None)
+        create_parser.add_argument("-t", "--set",
+                                   help="set a property of the feature",
+                                   dest="properties",
+                                   metavar=("NAME", "VALUE"),
+                                   action="append",
+                                   nargs=2,
+                                   default=[])
         
         list_parser = subparsers.add_parser("list", 
                                             help="list tracked features in order of priority")
@@ -161,7 +168,7 @@ class CommandLineInterface(object):
                                      nargs="?",
                                      type=int,
                                      default=None)
-
+        
         description_parser = subparsers.add_parser("description", 
                                                    help="query, change or edit the long description of a feature")
         description_parser.add_argument("feature",
@@ -260,13 +267,15 @@ class CommandLineInterface(object):
     def run_create(self, tracker, args):
         feature = tracker.create(name=args.name,
                                  status=args.status or None,
-                                 description=(args.description or ""))
+                                 description=(args.description or ""),
+                                 properties=dict(args.properties))
         
         if args.priority is not None:
             feature.priority = args.priority
         
         if args.description is None:
             self.editor(feature.description_file)
+            
     
     
     @with_tracker
@@ -330,7 +339,10 @@ class CommandLineInterface(object):
             else:
                 if args.properties_to_print:
                     for key in args.properties_to_print:
-                        self.println(properties[key])
+                        if key in properties:
+                            self.println(properties[key])
+                        else:
+                            raise UserError("feature " + feature.name + " does not have a property named " + repr(key))
                 elif properties:
                     deft.tracker.YamlFormat.save(properties, self.out)
     

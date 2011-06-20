@@ -93,7 +93,7 @@ class FeatureTracker(object):
     def save(self):
         self._cache.flush()
     
-    def create(self, name, status=None, description=""):
+    def create(self, name, status=None, description="", properties=None):
         if self._feature_exists_named(name):
             raise UserError("a feature already exists with name: " + name)
         
@@ -110,7 +110,7 @@ class FeatureTracker(object):
         self._cache.flush_file(feature_status_path)
         
         feature.description = description
-        feature.properties = {}
+        feature.properties = properties or {}
         
         return feature
     
