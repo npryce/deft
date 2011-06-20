@@ -23,7 +23,7 @@ def can_query_multiple_properties_of_a_feature(env):
     env.deft("properties", "feature-x", "--set", "x", "1")
     env.deft("properties", "feature-x", "--set", "y", "2")
     
-    assert_that(env.deft("properties", "feature-x", "--print", "x", "y").value, equal_to("1 2"))
+    assert_that(env.deft("properties", "feature-x", "--print", "x", "y").lines, equal_to(["1", "2"]))
 
 
 @systest
