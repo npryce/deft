@@ -187,18 +187,31 @@ class FeatureTracker(object):
         return self.storage.abspath(self._name_to_path(name, suffix))
 
 
+def _no_validation(value):
+    pass
 
 class FeatureFileProperty(object):
-    def __init__(self, suffix, format):
+    def __init__(self, suffix, format, validate=_no_validation):
         self._suffix = suffix
         self._format = format
+        self._validate = validate
     
     def __get__(self, feature, owner):
         return feature._load(self._suffix, self._format)
     
     def __set__(self, feature, value):
+        self._validate(value)
         feature._save(self._suffix, value, self._format)
-    
+
+
+ReservedPropertyNames = frozenset(["status", "priority", "description"])
+
+def validate_properties(properties):
+    print type(properties)
+    print properties
+    invalid_keys = set(properties.keys()).intersection(ReservedPropertyNames)
+    if invalid_keys:
+        raise UserError("feature properties cannot have the following reserved names: " + ", ".join(invalid_keys))
 
 
 class Feature(object):
@@ -233,7 +246,7 @@ class Feature(object):
     priority = property(_get_priority, _set_priority)
     
     description = FeatureFileProperty(DescriptionSuffix, TextFormat)
-    properties = FeatureFileProperty(PropertiesSuffix, YamlFormat)
+    properties = FeatureFileProperty(PropertiesSuffix, YamlFormat, validate_properties)
     
     @property
     def description_file(self):

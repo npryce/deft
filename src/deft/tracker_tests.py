@@ -151,6 +151,23 @@ class FeatureTracker_Test:
         
         assert_that(new_feature.properties, equal_to({"a":"1", "b":"2"}))
     
+    def test_cannot_create_property_with_reserved_name(self):
+        for name in ["status", "priority", "description"]:
+            try:
+                self.tracker.create(name="feature-for-"+name, properties={name: "y"})
+                raise AssertionError("should have disallowed property named " + name)
+            except UserError as e:
+                assert_that(str(e), contains_string(name))
+    
+    def test_cannot_set_property_with_reserved_name(self):
+        feature = self.tracker.create(name="x")
+        for name in ["status", "priority", "description"]:
+            try:
+                feature.properties = {name: "y"}
+                raise AssertionError("should have disallowed property named " + name)
+            except UserError as e:
+                assert_that(str(e), contains_string(name))
+    
     
     def test_if_not_given_a_new_feature_has_an_empty_description(self):
         new_feature = self.tracker.create(name="new-feature")
