@@ -207,8 +207,6 @@ class FeatureFileProperty(object):
 ReservedPropertyNames = frozenset(["status", "priority", "description"])
 
 def validate_properties(properties):
-    print type(properties)
-    print properties
     invalid_keys = set(properties.keys()).intersection(ReservedPropertyNames)
     if invalid_keys:
         raise UserError("feature properties cannot have the following reserved names: " + ", ".join(invalid_keys))
