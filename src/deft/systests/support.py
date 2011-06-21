@@ -33,7 +33,10 @@ class Rows:
         return iter(self.rows)
     
     def cols(self, *col_indices):
-        return Rows([[row[c] for c in col_indices] for row in self.rows])
+        try: 
+            return Rows([[row[c] for c in col_indices] for row in self.rows])
+        except IndexError as e:
+            raise IndexError("cannot select column indices " + str(col_indices) + " from " + str(self.rows))
     
     def __eq__(self, other):
         return list(self) == list(other)

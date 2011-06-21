@@ -140,13 +140,18 @@ class CommandLineInterface(object):
                                  metavar="STATUS",
                                  nargs="+",
                                  default=[])
+        list_parser.add_argument("-p", "--properties",
+                                 help="properties to show for each feature",
+                                 metavar="NAME",
+                                 dest="properties",
+                                 default=[],
+                                 nargs="+")
         list_parser.add_argument("-c", "--csv",
                                  help="output in CSV format (default is human-readable text)",
                                  dest="format",
                                  action="store_const",
                                  const="csv",
                                  default="text")
-        
         
         status_parser = subparsers.add_parser("status", 
                                               help="query or change the status of a feature")
@@ -285,10 +290,12 @@ class CommandLineInterface(object):
         else:
             features = tracker.all_features()
         
+        table = features_to_table(features, args.properties)
+        
         if args.format == "text":
-            write_features_as_text(features, self.out)
+            write_features_as_text(table, self.out)
         elif args.format == "csv":
-            write_features_as_csv(features, self.out)
+            write_features_as_csv(table, self.out)
         else:
             raise ValueError("unexpected format: " + args.format)
     
@@ -362,19 +369,33 @@ class CommandLineInterface(object):
         self.out.write(os.linesep)
 
 
-def features_to_table(features):
-    return [(f.status, f.priority, f.name) for f in features]
+def property_values(feature, names):
+    if names:
+        properties = feature.properties
+        return [properties.get(name, "") for name in names]
+    else:
+        return []
+
+def features_to_table(features, property_names=[]):
+    return [tuple([f.status, f.priority, f.name] + property_values(f, property_names)) for f in features]
 
 
-def write_features_as_text(features, out):
+def write_features_as_text(features_table, out):
+    if not features_table:
+        return
+    
     max_elts = partial(map, max)
+    
     alignl = "{1:<{0}}".format
     alignr = "{1:>{0}}".format
-    jagged = lambda w, t: t    
-    
-    table = [map(str,t) for t in features_to_table(features)]
-    col_widths = reduce(max_elts, [map(len,t) for t in table], (0,0,0))
-    col_formatters = map(partial, (alignl, alignr, jagged), col_widths)
+    def align_for(v):
+        return alignr if type(v) == int else alignl
+
+    table = [map(str,t) for t in features_table]
+    zeros = [0 for elt in features_table[0]]
+    aligns = [align_for(v) for v in features_table[0]]
+    col_widths = reduce(max_elts, [map(len,t) for t in table], zeros)
+    col_formatters = map(partial, aligns, col_widths)
     formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
     lines = [" ".join(row) for row in formatted_table]
     
@@ -383,9 +404,9 @@ def write_features_as_text(features, out):
         out.write(os.linesep)
 
 
-def write_features_as_csv(features, out):
+def write_features_as_csv(features_table, out):
     csv_out = csv.writer(out)
-    csv_out.writerows(features_to_table(features))
+    csv_out.writerows(features_table)
 
 
 def main():

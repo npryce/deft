@@ -26,14 +26,56 @@ class FindEditorCommand_Test:
         cli.find_editor_command({})
 
 
-class WriteFeaturesAsText_Test:
-    def test_formats_features_as_aligned_columns(self):
+
+
+class FeaturesToTable_Test:
+    def test_converts_list_of_features_to_list_of_tuples(self):
         features = [
             fake_feature(name="alice", status="pending", priority=1),
             fake_feature(name="bob", status="pending", priority=2),
             fake_feature(name="carol", status="active", priority=8),
             fake_feature(name="dave", status="active", priority=9),
             fake_feature(name="eve", status="active", priority=10)]
+        
+        assert_that(cli.features_to_table(features),
+                    equal_to([("pending", 1, "alice"),
+                              ("pending", 2, "bob"),
+                              ("active", 8, "carol"),
+                              ("active", 9, "dave"),
+                              ("active", 10, "eve")]))
+    
+    def test_converts_list_of_features_to_list_of_tuples_with_selected_properties(self):
+        features = [
+            fake_feature(name="alice", status="pending", priority=1, properties={'x': "10", 'y': "20"}),
+            fake_feature(name="bob", status="pending", priority=2, properties={'x': "99", 'y': "999"})]
+        
+        assert_that(cli.features_to_table(features, property_names=["x", "y"]),
+                    equal_to([("pending", 1, "alice", "10", "20"),
+                              ("pending", 2, "bob", "99", "999")]))
+    
+    
+    def test_converts_undefined_properties_to_empty_string(self):
+        features = [
+            fake_feature(name="alice", status="pending", priority=1, properties={'x': "10", 'y': "20"}),
+            fake_feature(name="bob", status="pending", priority=2, properties={'y': "999"})]
+        
+        assert_that(cli.features_to_table(features, property_names=["x", "y"]),
+                    equal_to([("pending", 1, "alice", "10", "20"),
+                              ("pending", 2, "bob", "", "999")]))
+        
+        
+    def test_converts_empty_list_of_features_to_empty_list_of_tuples(self):
+        assert_that(cli.features_to_table([]), equal_to([]))
+
+
+class WriteFeaturesAsText_Test:
+    def test_formats_features_as_aligned_columns(self):
+        features = [
+            ("pending", 1, "alice"),
+            ("pending", 2, "bob"),
+            ("active", 8, "carol"),
+            ("active", 9, "dave"),
+            ("active", 10, "eve")]
         
         output = StringIO()
         
@@ -43,10 +85,10 @@ class WriteFeaturesAsText_Test:
         
         assert_that(formatted_lines, equal_to([
                     "pending  1 alice",
-                    "pending  2 bob",
+                    "pending  2 bob  ",
                     "active   8 carol",
-                    "active   9 dave",
-                    "active  10 eve"]))
+                    "active   9 dave ",
+                    "active  10 eve  "]))
         
     def test_writes_empty_list_as_empty_string(self):
         output = StringIO()
@@ -54,16 +96,18 @@ class WriteFeaturesAsText_Test:
         cli.write_features_as_text([], output)
         
         assert_that(output.getvalue(), equal_to(""))
-        
+
+
+    
 
 class WriteFeaturesAsCSV_Test:
     def writes_features_in_csv(self):
         features = [
-            fake_feature(name="alice", status="pending", priority=1),
-            fake_feature(name="bob", status="pending", priority=2),
-            fake_feature(name="carol", status="active", priority=8),
-            fake_feature(name="dave", status="active", priority=9),
-            fake_feature(name="eve", status="active", priority=10)]
+            ("pending", 1, "alice"),
+            ("pending", 2, "bob"),
+            ("active", 8, "carol"),
+            ("active", 9, "dave"),
+            ("active", 10, "eve")]
         
         output = StringIO()
         

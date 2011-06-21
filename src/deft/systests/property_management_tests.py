@@ -25,7 +25,6 @@ def can_query_multiple_properties_of_a_feature(env):
     
     assert_that(env.deft("properties", "feature-x", "--print", "x", "y").lines, equal_to(["1", "2"]))
 
-
 @systest
 def can_list_all_the_properties_of_a_feature(env):
     env.deft("init")
@@ -37,7 +36,6 @@ def can_list_all_the_properties_of_a_feature(env):
             {"name": "alice", 
              "age": "30", 
              "gender": "female"}))
-
 
 @systest
 def prints_nothing_if_feature_has_no_properties(env):
@@ -77,7 +75,6 @@ def can_print_the_name_of_the_properties_file(env):
     assert_that(env.deft("properties", "--file", "feature-x").value, equal_to(
             env.abspath(os.path.join("tracker", "feature-x.properties.yaml"))))
 
-
 @systest
 def can_remove_properties(env):
     env.deft("init")
@@ -89,7 +86,6 @@ def can_remove_properties(env):
     
     assert_that(env.deft("properties", "feature-x").yaml, equal_to({"y": "2"}))
 
-
 @systest
 def can_set_properties_when_creating_a_feature(env):
     env.deft("init")
@@ -98,3 +94,17 @@ def can_set_properties_when_creating_a_feature(env):
     assert_that(env.deft("properties", "alice", "-p", "gender").value, equal_to("female"))
     assert_that(env.deft("properties", "alice", "-p", "age").value, equal_to("30"))
     
+@systest
+def can_include_properties_when_listing_features(env):
+    env.deft("init")
+    env.deft("create", "alice", "--set", "hair", "red", "--set", "eyes", "blue")
+    env.deft("create", "bob", "--set", "hair", "brown", "--set", "eyes", "brown")
+    env.deft("create", "carol", "--set", "hair", "blonde", "--set", "eyes", "hazel")
+    env.deft("create", "dave", "--set", "hair", "green", "--set", "eyes", "bloodshot")
+    
+    assert_that(env.deft("list", "--properties", "hair", "eyes").rows.cols(2,3,4),
+                equal_to([["alice", "red", "blue"],
+                          ["bob", "brown", "brown"],
+                          ["carol", "blonde", "hazel"],
+                          ["dave", "green", "bloodshot"]]))
+                

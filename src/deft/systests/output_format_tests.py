@@ -11,7 +11,7 @@ def can_list_features_as_human_readable_text(env):
     
     assert_that(env.deft("list", "--status", "new", "being-worked-on").lines,
                 equal_to(["new             1 alice",
-                          "being-worked-on 1 bob"]))
+                          "being-worked-on 1 bob  "]))
 
 
 @systest
