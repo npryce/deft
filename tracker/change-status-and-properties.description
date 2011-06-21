@@ -1,0 +1,7 @@
+It should be possible to set/remove properties when you change the status of a feature, with the same syntax as used in the properties command
+
+E.g.
+
+    deft status my-feature in-progress --set branch git://github.com/me/my-feature-branch.git --set size M
+
+

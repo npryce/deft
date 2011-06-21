@@ -1,0 +1,5 @@
+It should be possible to change the properties of a feature when changing its priority.
+
+E.g.
+
+    deft priority some-bug-report 1 --set category security-hole
