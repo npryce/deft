@@ -186,3 +186,24 @@ def can_purge_unwanted_features_from_working_copy(env):
     assert_that(env.deft("list", "--status", "new").rows.cols(2), equal_to([["a"], ["c"], ["d"]]))
     assert_that(env.deft("priority", "c").value, equal_to("2"))
     assert_that(env.deft("priority", "d").value, equal_to("3"))
+
+@systest
+def can_rename_features(env):
+    env.deft("init")
+
+    env.deft("create", "a")
+    env.deft("create", "b", "--description", "description originally for b",
+             "--set", "xxx", "yyy")
+    env.deft("create", "c")
+    
+    original_status = env.deft("status", "b").value
+    original_priority = env.deft("priority", "b").value
+    original_description = env.deft("description", "b").stdout
+    original_properties = env.deft("properties", "b").stdout
+    
+    env.deft("rename", "b", "z")
+    
+    assert_that(env.deft("status", "z").value, equal_to(original_status))
+    assert_that(env.deft("priority", "z").value, equal_to(original_priority))
+    assert_that(env.deft("description", "z").stdout, equal_to(original_description))
+    assert_that(env.deft("properties", "z").stdout, equal_to(original_properties))

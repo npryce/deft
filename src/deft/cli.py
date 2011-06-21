@@ -231,6 +231,15 @@ class CommandLineInterface(object):
                                        default=None,
                                        nargs="+")
         
+        rename_parser = subparsers.add_parser("rename",
+                                              help="rename a feature")
+        rename_parser.add_argument("feature",
+                                   help="the current name of the feature",
+                                   metavar="FROM-NAME")
+        rename_parser.add_argument("new_name",
+                                   help="the new name of the feature",
+                                   metavar="TO-NAME")
+        
         purge_parser = subparsers.add_parser("purge", 
                                              help="delete one or more features from the working copy")
         purge_parser.add_argument("features",
@@ -353,7 +362,11 @@ class CommandLineInterface(object):
                 elif properties:
                     deft.tracker.YamlFormat.save(properties, self.out)
     
-        
+    @with_tracker
+    def run_rename(self, tracker, args):
+        feature = tracker.feature_named(args.feature)
+        feature.name = args.new_name
+    
     @with_tracker
     def run_purge(self, tracker, args):
         for name in args.features:

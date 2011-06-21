@@ -76,6 +76,18 @@ class MemStorage(StorageFormats):
         
         return MemoryIO(save_callback=store_data)
     
+    def rename(self, relpath, newpath):
+        if not relpath in self.files:
+            raise IOError(relpath + " does not exist")
+        
+        if newpath in self.files:
+            raise IOError(newpath + " already exists")
+        
+        data = self.files.pop(relpath)
+        self.makedirs(os.path.dirname(newpath))
+        self.files[newpath] = data
+        
+
     def remove(self, relpath):
         for subpath in self.list(os.path.join(relpath, "*")):
             self.files.pop(subpath, None)

@@ -36,9 +36,27 @@ class FileStorage(StorageFormats):
     
     def open(self, relpath, mode="r"):
         if mode == "w":
-            self.makedirs(os.path.dirname(relpath))
+            self._ensure_parent_dir_exists(relpath)
         
         return open(self.abspath(relpath), mode)
+    
+    def rename(self, old_relpath, new_relpath):
+        old_abspath = self.abspath(old_relpath)
+        new_abspath = self.abspath(new_relpath)
+        
+        try:
+            if not os.path.exists(old_abspath):
+                raise IOError(old_abspath + " does not exist")
+            if os.path.exists(new_abspath):
+                raise IOError(new_abspath + " already exists")
+            
+            os.renames(old_abspath, new_abspath)
+            
+        except OSError as e:
+            raise IOError(e.strerror)
+    
+    def _ensure_parent_dir_exists(self, relpath):
+        self.makedirs(os.path.dirname(relpath))
     
     def remove(self, relpath):
         path = self.abspath(relpath)

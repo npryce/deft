@@ -232,7 +232,53 @@ class FeatureTracker_Test:
         alice = self.tracker.create(name="alice", description="first-description")
         alice.description = "second-description"
         assert_that(self.storage.open("tracker/alice.description").read(), equal_to("second-description"))
-    
+        
+
+    def test_can_rename_a_feature(self):
+        f = self.tracker.create(name="alice", description="alice-description", properties={"gender": "female"})
+        self.tracker.save()
+        
+        original_status = f.status
+        original_priority = f.priority
+        original_description = f.description
+        original_properties = f.properties
+        
+        f.name = "carol"
+        
+        assert_that(f.name, equal_to("carol"))
+        assert_that(f.status, equal_to(original_status))
+        assert_that(f.priority, equal_to(original_priority))
+        assert_that(f.description, equal_to(original_description))
+        assert_that(f.properties, equal_to(original_properties))
+        
+        try:
+            self.tracker.feature_named("alice")
+            raise AssertionError("should have raised UserError")
+        except UserError:
+            pass
+        
+        assert_that(self.tracker.feature_named("carol"), same_instance(f))
+        
+    def test_can_rename_a_feature_to_same_name(self):
+        f = self.tracker.create(name="alice", description="alice-description", properties={"gender": "female"})
+        self.tracker.save()
+        
+        original_status = f.status
+        original_priority = f.priority
+        original_description = f.description
+        original_properties = f.properties
+        
+        f.name = "alice"
+        
+        assert_that(f.name, equal_to("alice"))
+        assert_that(f.status, equal_to(original_status))
+        assert_that(f.priority, equal_to(original_priority))
+        assert_that(f.description, equal_to(original_description))
+        assert_that(f.properties, equal_to(original_properties))
+        
+        assert_that(self.tracker.feature_named("alice"), same_instance(f))
+        
+        
     def test_purging_a_feature_removes_all_trace_of_it_from_tracker_and_storage(self):
         alice = self.tracker.create(name="alice", status="new", description="alice-description")
         alice.properties = {'a': 'some value'}

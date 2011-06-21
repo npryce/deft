@@ -136,6 +136,20 @@ class FeatureTracker(object):
         self.storage.remove(self._name_to_path(name, DescriptionSuffix))
         self.storage.remove(self._name_to_path(name, PropertiesSuffix))
     
+    def _change_name(self, feature, new_name):
+        old_name = feature.name
+
+        if new_name == old_name:
+            return
+        
+        self._cache.remove(self._name_to_path(old_name, StatusSuffix))
+        self._cache.save(self._name_to_path(new_name, StatusSuffix), feature, FeatureStatusFormat(self, new_name))
+        feature._record_name(new_name)
+        
+        for suffix in [DescriptionSuffix, PropertiesSuffix]:
+            self.storage.rename(self._name_to_path(old_name, suffix),
+                                self._name_to_path(new_name, suffix))
+        
     def _change_status(self, feature, new_status):
         old_bucket = self.features_with_status(feature.status)
         new_bucket = self.features_with_status(new_status)
@@ -143,7 +157,7 @@ class FeatureTracker(object):
         old_bucket.remove(feature)
         new_bucket.append(feature)
         feature._record_status(new_status)
-    
+        
     def _change_priority(self, feature, new_priority):
         bucket = self.features_with_status(feature.status)
         bucket.change_priority(feature, new_priority)
@@ -214,11 +228,24 @@ def validate_properties(properties):
 
 class Feature(object):
     def __init__(self, tracker, name, status, priority=None):
-        self.name = name
+        self._name = name
         self._status = status
         self._priority = priority
         self._tracker = tracker
-
+    
+    def _get_name(self):
+        return self._name
+    
+    def _set_name(self, new_name):
+        self._tracker._change_name(self, new_name)
+    
+    def _record_name(self, new_name):
+        self._name = new_name
+        self._tracker._mark_dirty(self)
+    
+    name = property(_get_name, _set_name)
+    
+        
     def _get_status(self):
         return self._status
     
@@ -261,19 +288,19 @@ class Feature(object):
         return self._tracker._save(self._feature_file(suffix), data, format)
         
     def _feature_file(self, suffix):
-        return self._tracker._name_to_path(self.name, suffix)
+        return self._tracker._name_to_path(self._name, suffix)
 
     def _real_feature_file(self, suffix):
-        return self._tracker._name_to_real_path(self.name, suffix)
+        return self._tracker._name_to_real_path(self._name, suffix)
     
     def __str__(self):
         return self.__str__()
     
     def __repr__(self):
         return self.__class__.__name__ + \
-            "(name=" + self.name + \
-            ", status=" + self.status + \
-            ", priority=" + str(self.priority) + ")"
+            "(name=" + self._name + \
+            ", status=" + self._status + \
+            ", priority=" + str(self._priority) + ")"
 
 
     
