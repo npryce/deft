@@ -105,6 +105,17 @@ def can_list_issues_in_multiple_statuses_in_order_that_statuses_are_given_then_b
                 ["pending", "1", "feature-1"],
                 ["pending", "2", "feature-2"]]))
 
+
+@systest
+def can_list_statuses(env):
+    env.deft("init")
+    env.deft("create", "x", "--status", "T")
+    env.deft("create", "y", "--status", "S")
+    env.deft("create", "z", "--status", "U")
+    
+    assert_that(env.deft("statuses").lines, equal_to(["S", "T", "U"]))
+    
+
 @systest
 def can_change_status_of_feature(env):
     env.deft("init")

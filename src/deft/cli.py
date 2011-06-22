@@ -153,6 +153,9 @@ class CommandLineInterface(object):
                                  const="csv",
                                  default="text")
         
+        statuses_parser = subparsers.add_parser("statuses",
+                                                help="list all active statuses")
+        
         status_parser = subparsers.add_parser("status", 
                                               help="query or change the status of a feature")
         status_parser.add_argument("feature",
@@ -291,6 +294,10 @@ class CommandLineInterface(object):
             self.editor(feature.description_file)
             
     
+    @with_tracker
+    def run_statuses(self, tracker, args):
+        for s in tracker.statuses:
+            self.println(s)
     
     @with_tracker
     def run_list(self, tracker, args):

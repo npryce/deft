@@ -118,6 +118,26 @@ class FeatureTracker_Test:
                       odd = [],
                       even = [])
     
+    def test_lists_all_statuses_in_alphabetical_order(self):
+        alice = self.tracker.create(name="alice", status="S")
+        bob = self.tracker.create(name="bob", status="U")
+        carol = self.tracker.create(name="carol", status="T")
+        dave = self.tracker.create(name="dave", status="T")
+        eve = self.tracker.create(name="eve", status="S")
+        
+        assert_that(self.tracker.statuses, equal_to(["S", "T", "U"]))
+        
+    def test_does_not_list_empty_indices(self):
+        alice = self.tracker.create(name="alice", status="S")
+        bob = self.tracker.create(name="bob", status="U")
+        carol = self.tracker.create(name="carol", status="T")
+        dave = self.tracker.create(name="dave", status="T")
+        eve = self.tracker.create(name="eve", status="S")
+        
+        bob.status = "V"
+        
+        assert_that(self.tracker.statuses, equal_to(["S", "T", "V"]))
+        
     def test_an_unused_status_is_reported_as_empty(self):
         assert_status = self.assert_status
         

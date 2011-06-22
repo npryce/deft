@@ -114,6 +114,10 @@ class FeatureTracker(object):
         
         return feature
     
+    @property
+    def statuses(self):
+        return sorted([k for k in self._index.keys() if self._index[k]])
+    
     def feature_named(self, name):
         if self._feature_exists_named(name):
             return self._load_feature(self._name_to_path(name))
