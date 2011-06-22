@@ -1,0 +1,11 @@
+It should be possible to list the top n features when listing by status
+
+E.g. to list the top ten features to work on, including those in progress:
+
+    deft list -s in-progress new -n 10
+
+With negative numbers, it can show the bottom n items, useful for triaging issues:
+
+    deft list -s new -n -10
+
+

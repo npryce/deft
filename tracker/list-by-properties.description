@@ -1,0 +1,11 @@
+Want to list features by querying property values.
+
+Probably can do this by eval'ing Python expressions with no globals an properties as the locals.
+
+For example:
+
+    deft list -q 'component == "gui"'
+
+    deft list -s ready-for-testing -q '(os == "win32" or os == "linux") and version > 2.0'
+
+    deft list -q 'os in ["macosx", "linux", "solaris"]'
