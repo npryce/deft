@@ -217,43 +217,21 @@ class FeatureTracker_Test:
         
     def test_can_report_filename_of_description(self):
         feature = self.tracker.create(name="bob")
-        assert_that(feature.description_file, equal_to("basedir/tracker/bob.description"))
+        assert_that(feature.description_file, equal_to("basedir/tracker/features/bob.description"))
     
     def test_can_report_filename_of_properties(self):
         feature = self.tracker.create(name="carol")
-        assert_that(feature.properties_file, equal_to("basedir/tracker/carol.properties.yaml"))
+        assert_that(feature.properties_file, equal_to("basedir/tracker/features/carol.properties.yaml"))
     
-    def test_saves_initial_state_of_new_features_immediately(self):
-        alice = self.tracker.create(name="alice", description="springs")
-        
-        assert_that(self.storage.open("tracker/alice.status").read(), 
-                    all_of(contains_string("1"), 
-                           contains_string(alice.status)))
-        
-        assert_that(self.storage.open("tracker/alice.description").read(), equal_to("springs"))
-    
-    def test_saves_changes_to_feature_status_only_when_explicitly_told_to(self):
-        alice = self.tracker.create(name="alice", status="first")
-        self.tracker.save()
-        
-        alice.status = "second"
-        
-        assert_that(self.storage.open("tracker/alice.status").read(), contains_string("first"))
-        
-        self.tracker.save()
-        
-        assert_that(self.storage.open("tracker/alice.status").read(), contains_string("second"))
-        
     def test_description_written_to_storage_immediately_when_feature_is_created(self):
         alice = self.tracker.create(name="alice", description="first-description")
-        assert_that(self.storage.open("tracker/alice.description").read(), equal_to("first-description"))
+        assert_that(self.storage.open("tracker/features/alice.description").read(), equal_to("first-description"))
         
     def test_description_written_to_storage_immediately_when_description_is_changed(self):
         alice = self.tracker.create(name="alice", description="first-description")
         alice.description = "second-description"
-        assert_that(self.storage.open("tracker/alice.description").read(), equal_to("second-description"))
+        assert_that(self.storage.open("tracker/features/alice.description").read(), equal_to("second-description"))
         
-
     def test_can_rename_a_feature(self):
         f = self.tracker.create(name="alice", description="alice-description", properties={"gender": "female"})
         self.tracker.save()
@@ -297,7 +275,16 @@ class FeatureTracker_Test:
         assert_that(f.properties, equal_to(original_properties))
         
         assert_that(self.tracker.feature_named("alice"), same_instance(f))
+    
+    def test_cannot_rename_a_feature_to_existing_name(self):
+        alice = self.tracker.create(name="alice")
+        bob = self.tracker.create(name="bob")
         
+        try:
+            bob.name = "alice"
+            raise AssertionError("should have failed")
+        except UserError as expected:
+            pass
         
     def test_purging_a_feature_removes_all_trace_of_it_from_tracker_and_storage(self):
         alice = self.tracker.create(name="alice", status="new", description="alice-description")
@@ -305,7 +292,7 @@ class FeatureTracker_Test:
         
         self.tracker.save()
         
-        assert_that(len(self.storage.list("tracker/alice.*")), is_not(equal_to(0)))
+        assert_that(list(self.storage.list("tracker/features/alice.*")), is_not(equal_to([])))
         
         self.tracker.purge("alice")
         
@@ -314,7 +301,7 @@ class FeatureTracker_Test:
             raise AssertionError("should have thrown UserError")
         except UserError as expected:
             pass
-
+        
         self.tracker.save()
         
         assert_that(list(self.storage.list("tracker/alice.*")), equal_to([]))

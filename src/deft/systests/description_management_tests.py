@@ -33,4 +33,4 @@ def can_print_the_name_of_the_description_file(env):
     env.deft("create", "feature-x", "--description", "initial-description")
     
     assert_that(env.deft("description", "--file", "feature-x").value, equal_to(
-            env.abspath(os.path.join("tracker", "feature-x.description"))))
+            env.abspath(os.path.join("tracker", "features", "feature-x.description"))))

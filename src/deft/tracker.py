@@ -3,16 +3,16 @@ import sys
 import itertools
 import os
 from glob import iglob
-from deft.indexing import Bucket
-from deft.storage import FileStorage, Cache, TextFormat, YamlFormat
+from deft.indexing import PriorityIndex
+from deft.storage import FileStorage, TextFormat, YamlFormat
 
-FormatVersion = '2.1'
+FormatVersion = '3.0'
 
 ConfigDir = ".deft"
 ConfigFile = os.path.join(ConfigDir, "config")
 DefaultDataDir = os.path.join(ConfigDir, "data")
 
-StatusSuffix = ".status"
+StatusIndexSuffix = ".index"
 DescriptionSuffix = ".description"
 PropertiesSuffix = ".properties.yaml"
 
@@ -74,10 +74,21 @@ class FeatureTracker(object):
         
         self.config = config
         self.storage = storage
-        self._cache = Cache(storage)
-        self._index = {}
+        self._name_index = {}
+        self._status_index = {}
         
         self._index_features()
+    
+    def _index_features(self):
+        for f in self.storage.list(self._status_path("*")):
+            status = os.path.basename(f)[:-(len(StatusIndexSuffix)+1)]
+            with self.storage.open(f) as input:
+                feature_names = input.read().splitlines()
+            
+            self._status_index[status] = PriorityIndex(feature_names)
+            
+            for name in feature_names:
+                self._name_index[name] = Feature(tracker=self, name=name, status=status)
     
     def configure(self, **config):
         self.config.update(config)
@@ -91,98 +102,102 @@ class FeatureTracker(object):
         self.storage.save_yaml(ConfigFile, self.config)
     
     def save(self):
-        self._cache.flush()
+        pass
     
     def create(self, name, status=None, description="", properties=None):
-        if self._feature_exists_named(name):
+        if self._has_feature_named(name):
             raise UserError("a feature already exists with name: " + name)
         
         if status is None:
             status = self.initial_status
         
         feature = Feature(tracker=self, name=name, status=status)
-        feature_status_path = self._name_to_path(name,StatusSuffix)
-        
-        bucket = self.features_with_status(status)
-        bucket.append(feature)
-        
-        self._cache.save(feature_status_path, feature, FeatureStatusFormat(self, name))
-        self._cache.flush_file(feature_status_path)
-        
         feature.description = description
         feature.properties = properties or {}
+        
+        self._name_index[name] = feature
+        
+        status_index = self._status(status)
+        status_index.append(name)
+        
+        self._save_status_index(status)
         
         return feature
     
     @property
     def statuses(self):
-        return sorted([k for k in self._index.keys() if self._index[k]])
+        return sorted([k for k in sorted(self._status_index.keys()) if self._status_index[k]])
     
     def feature_named(self, name):
-        if self._feature_exists_named(name):
-            return self._load_feature(self._name_to_path(name))
+        if self._has_feature_named(name):
+            return self._name_index[name]
         else:
             raise UserError("no feature named " + name)
     
     def features_with_status(self, status):
-        return self._index.setdefault(status, Bucket([]))
+        return [self.feature_named(n) for n in self._status(status)]
     
     def all_features(self):
-        return itertools.chain.from_iterable(self._index[status] for status in sorted(self._index))
+        return (self.feature_named(n) for n in itertools.chain.from_iterable(
+                self._status(s) for s in sorted(self._status_index)))
     
     def purge(self, name):
         feature = self.feature_named(name)
-        bucket = self.features_with_status(feature.status)
+        self._status(feature.status).remove(name)
+        del self._name_index[name]
         
-        bucket.remove(feature)
-        
-        self._cache.remove(self._name_to_path(name, StatusSuffix))
+        self._save_status_index(feature.status)
         self.storage.remove(self._name_to_path(name, DescriptionSuffix))
         self.storage.remove(self._name_to_path(name, PropertiesSuffix))
     
     def _change_name(self, feature, new_name):
         old_name = feature.name
-
+        
         if new_name == old_name:
             return
         
-        self._cache.remove(self._name_to_path(old_name, StatusSuffix))
-        self._cache.save(self._name_to_path(new_name, StatusSuffix), feature, FeatureStatusFormat(self, new_name))
+        if new_name in self._name_index:
+            raise UserError("a feature named " + repr(new_name) + " already exists")
+        
+        self._status(feature.status).rename(old_name, new_name)
+        del self._name_index[old_name]
+        self._name_index[new_name] = feature
         feature._record_name(new_name)
+        
+        self._save_status_index(feature.status)
         
         for suffix in [DescriptionSuffix, PropertiesSuffix]:
             self.storage.rename(self._name_to_path(old_name, suffix),
                                 self._name_to_path(new_name, suffix))
         
     def _change_status(self, feature, new_status):
-        old_bucket = self.features_with_status(feature.status)
-        new_bucket = self.features_with_status(new_status)
+        old_status = feature.status
         
-        old_bucket.remove(feature)
-        new_bucket.append(feature)
+        old_index = self._status(old_status)
+        new_index = self._status(new_status)
+        
+        old_index.remove(feature.name)
+        new_index.append(feature.name)
         feature._record_status(new_status)
         
+        self._save_status_index(old_status)
+        self._save_status_index(new_status)
+        
     def _change_priority(self, feature, new_priority):
-        bucket = self.features_with_status(feature.status)
-        bucket.change_priority(feature, new_priority)
+        index = self._status(feature.status)
+        index.change_priority(feature.name, new_priority)
+        self._save_status_index(feature.status)
     
-    def _feature_exists_named(self, name):
-        return self._cache.exists(self._name_to_path(name))
+    def _status(self, status):
+        return self._status_index.setdefault(status, PriorityIndex([]))
     
-    def _index_features(self):
-        features_by_status = {}
-        
-        for f in self._load_features():
-            features_by_status.setdefault(f.status, []).append(f)
-        
-        for status in features_by_status:
-            self._index[status] = Bucket(features_by_status[status])
+    def _save_status_index(self, status):
+        with self.storage.open(self._status_path(status), "w") as output:
+            for feature_name in self._status(status):
+                output.writelines(feature_name+"\n")
     
-    def _load_features(self):
-        return [self._load_feature(f) for f in self.storage.list(self._name_to_path("*"))]
-    
-    def _load_feature(self, path):
-        return self._cache.load(path, FeatureStatusFormat(self, self._path_to_name(path)))
+    def _has_feature_named(self, name):
+        return name in self._name_index
     
     def _load(self, path, format):
         with self.storage.open(path) as input:
@@ -191,17 +206,17 @@ class FeatureTracker(object):
     def _save(self, path, data, format):
         with self.storage.open(path, "w") as output:
             return format.save(data, output)
+        
+    def _status_path(self, status):
+        return os.path.join(self.config["datadir"], "status", status+"." + StatusIndexSuffix)
+        
+    def _name_to_path(self, name, suffix):
+        return os.path.join(self.config["datadir"], "features", name + suffix)
     
-    def _mark_dirty(self, feature):
-        self._cache.mark_dirty(self._name_to_path(feature.name))
-    
-    def _name_to_path(self, name, suffix=StatusSuffix):
-        return os.path.join(self.config["datadir"], name + suffix)
-    
-    def _path_to_name(self, path, suffix=StatusSuffix):
+    def _path_to_name(self, path, suffix):
         return os.path.basename(path)[:-len(suffix)]
     
-    def _name_to_real_path(self, name, suffix=StatusSuffix):
+    def _name_to_real_path(self, name, suffix):
         return self.storage.abspath(self._name_to_path(name, suffix))
 
 
@@ -245,11 +260,9 @@ class Feature(object):
     
     def _record_name(self, new_name):
         self._name = new_name
-        self._tracker._mark_dirty(self)
     
     name = property(_get_name, _set_name)
     
-        
     def _get_status(self):
         return self._status
     
@@ -258,19 +271,17 @@ class Feature(object):
     
     def _record_status(self, new_status):
         self._status = new_status
-        self._tracker._mark_dirty(self)
     
     status = property(_get_status, _set_status)
     
     def _get_priority(self):
-        return self._priority
+        return self._tracker._status(self.status).priority_of_feature(self.name)
     
     def _set_priority(self, new_priority):
         self._tracker._change_priority(self, new_priority)
     
     def _record_priority(self, new_priority):
         self._priority = new_priority
-        self._tracker._mark_dirty(self)
     
     priority = property(_get_priority, _set_priority)
     
@@ -293,7 +304,7 @@ class Feature(object):
         
     def _feature_file(self, suffix):
         return self._tracker._name_to_path(self._name, suffix)
-
+    
     def _real_feature_file(self, suffix):
         return self._tracker._name_to_real_path(self._name, suffix)
     
@@ -302,23 +313,7 @@ class Feature(object):
     
     def __repr__(self):
         return self.__class__.__name__ + \
-            "(name=" + self._name + \
-            ", status=" + self._status + \
-            ", priority=" + str(self._priority) + ")"
+            "(name=" + self.name + \
+            ", status=" + self.status + \
+            ", priority=" + str(self.priority) + ")"
 
-
-    
-
-class FeatureStatusFormat:
-    def __init__(self, tracker, name):
-        self.tracker = tracker
-        self.name = name
-    
-    def load(self, input):
-        text = input.read()
-        priority = int(text[0:8])
-        status = text[9:]
-        return Feature(tracker=self.tracker, name=self.name, status=status, priority=priority)
-    
-    def save(self, feature, output):
-        output.write("{1:>8} {0}".format(feature.status, feature.priority))

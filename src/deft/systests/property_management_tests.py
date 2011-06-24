@@ -73,7 +73,7 @@ def can_print_the_name_of_the_properties_file(env):
     env.deft("create", "feature-x")
     
     assert_that(env.deft("properties", "--file", "feature-x").value, equal_to(
-            env.abspath(os.path.join("tracker", "feature-x.properties.yaml"))))
+            env.abspath(os.path.join("tracker", "features", "feature-x.properties.yaml"))))
 
 @systest
 def can_remove_properties(env):
