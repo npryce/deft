@@ -5,3 +5,4 @@ list-as-csv
 find-tracker-of-project
 feature-properties
 rename-issues
+commit-friendly-storage-format
