@@ -81,7 +81,7 @@ class FeatureTracker(object):
     
     def _index_features(self):
         for f in self.storage.list(self._status_path("*")):
-            status = os.path.basename(f)[:-(len(StatusIndexSuffix)+1)]
+            status = os.path.basename(f)[:-(len(StatusIndexSuffix))]
             with self.storage.open(f) as input:
                 feature_names = input.read().splitlines()
             
@@ -147,8 +147,8 @@ class FeatureTracker(object):
         del self._name_index[name]
         
         self._save_status_index(feature.status)
-        self.storage.remove(self._name_to_path(name, DescriptionSuffix))
-        self.storage.remove(self._name_to_path(name, PropertiesSuffix))
+        self.storage.remove(self._feature_path(name, DescriptionSuffix))
+        self.storage.remove(self._feature_path(name, PropertiesSuffix))
     
     def _change_name(self, feature, new_name):
         old_name = feature.name
@@ -167,8 +167,8 @@ class FeatureTracker(object):
         self._save_status_index(feature.status)
         
         for suffix in [DescriptionSuffix, PropertiesSuffix]:
-            self.storage.rename(self._name_to_path(old_name, suffix),
-                                self._name_to_path(new_name, suffix))
+            self.storage.rename(self._feature_path(old_name, suffix),
+                                self._feature_path(new_name, suffix))
         
     def _change_status(self, feature, new_status):
         old_status = feature.status
@@ -208,16 +208,16 @@ class FeatureTracker(object):
             return format.save(data, output)
         
     def _status_path(self, status):
-        return os.path.join(self.config["datadir"], "status", status+"." + StatusIndexSuffix)
+        return os.path.join(self.config["datadir"], "status", status+ StatusIndexSuffix)
         
-    def _name_to_path(self, name, suffix):
+    def _feature_path(self, name, suffix):
         return os.path.join(self.config["datadir"], "features", name + suffix)
     
     def _path_to_name(self, path, suffix):
         return os.path.basename(path)[:-len(suffix)]
     
     def _name_to_real_path(self, name, suffix):
-        return self.storage.abspath(self._name_to_path(name, suffix))
+        return self.storage.abspath(self._feature_path(name, suffix))
 
 
 def _no_validation(value):
@@ -303,7 +303,7 @@ class Feature(object):
         return self._tracker._save(self._feature_file(suffix), data, format)
         
     def _feature_file(self, suffix):
-        return self._tracker._name_to_path(self._name, suffix)
+        return self._tracker._feature_path(self._name, suffix)
     
     def _real_feature_file(self, suffix):
         return self._tracker._name_to_real_path(self._name, suffix)
