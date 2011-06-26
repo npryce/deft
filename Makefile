@@ -77,7 +77,7 @@ continually:
 	done
 
 clean:
-	rm -rf output/
+	rm -rf output/ build/ dist/
 	find src -name '*.pyc' | xargs rm
 
 
