@@ -211,7 +211,7 @@ class FeatureTracker(object):
     def _feature_path(self, name, suffix):
         return os.path.join(self.config["datadir"], "features", name + suffix)
     
-    def _name_to_real_path(self, name, suffix):
+    def _feature_abspath(self, name, suffix):
         return self.storage.abspath(self._feature_path(name, suffix))
 
 
@@ -275,23 +275,23 @@ class Feature(object):
     
     @property
     def description_file(self):
-        return self._real_feature_file(DescriptionSuffix)
+        return self._abspath(DescriptionSuffix)
     
     @property
     def properties_file(self):
-        return self._real_feature_file(PropertiesSuffix)
+        return self._abspath(PropertiesSuffix)
     
     def _load(self, suffix, format):
-        return self._tracker._load(self._feature_file(suffix), format)
+        return self._tracker._load(self._path(suffix), format)
 
     def _save(self, suffix, data, format):
-        return self._tracker._save(self._feature_file(suffix), data, format)
+        return self._tracker._save(self._path(suffix), data, format)
         
-    def _feature_file(self, suffix):
+    def _path(self, suffix):
         return self._tracker._feature_path(self._name, suffix)
     
-    def _real_feature_file(self, suffix):
-        return self._tracker._name_to_real_path(self._name, suffix)
+    def _abspath(self, suffix):
+        return self._tracker._feature_abspath(self._name, suffix)
     
     def __str__(self):
         return self.__str__()
