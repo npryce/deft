@@ -1,5 +1,6 @@
 
 import sys
+from functools import partial
 import itertools
 import os
 from glob import iglob
@@ -244,7 +245,7 @@ def validate_properties(properties):
         raise UserError("feature properties cannot have the following reserved names: " + ", ".join(invalid_keys))
 
 
-class TrackerManagedProperty(object):
+class TrackedProperty(object):
     def __init__(self, field_name, change_request_fn):
         self._field_name = field_name
         self._change_request_fn = change_request_fn
@@ -264,18 +265,13 @@ class Feature(object):
         self._priority = priority
         self._tracker = tracker
     
-    name = TrackerManagedProperty("_name", FeatureTracker._change_name)
-    status = TrackerManagedProperty("_status", FeatureTracker._change_status)
+    name = TrackedProperty("_name", FeatureTracker._change_name)
+    status = TrackedProperty("_status", FeatureTracker._change_status)
+    priority = property(
+        lambda self: self._tracker._priority_of(self),
+        lambda self, new_priority: self._tracker._change_priority(self, new_priority))
     description = FeatureFileProperty(DescriptionSuffix, TextFormat)
     properties = FeatureFileProperty(PropertiesSuffix, YamlFormat, validate_properties)
-    
-    def _get_priority(self):
-        return self._tracker._priority_of(self)
-    
-    def _set_priority(self, new_priority):
-        self._tracker._change_priority(self, new_priority)
-    
-    priority = property(_get_priority, _set_priority)
     
     @property
     def description_file(self):
