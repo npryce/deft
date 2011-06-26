@@ -3,9 +3,10 @@
 python=2.7
 
 # Set this on the command-line to select a system-test environment. One of:
-#   mem  - runs system tests using in-memory storage (fast but slight risk of inaccuracy)
-#   real - runs system tests by spawning processes and using disk storage (slow but accurate)
-systest=real
+#   mem     - runs system tests using in-memory storage (fast but slight risk of inaccuracy)
+#   dev     - runs system tests by spawning processes and using disk storage (slow but accurate)
+#   install - like 'dev' but runs out of a test installation in output/install
+systest=dev
 
 PYTHON_ENV=python$(python)-dev
 
@@ -54,8 +55,9 @@ clean-install:
 
 test-install: output/install
 	output/install/bin/python setup.py install
+	make out-of-process-tests systest=install
 
-output/install:
+output/install: Makefile
 	rm -rf build/
 	$(MAKE) env PYTHON_ENV=output/install python=$(python)
 

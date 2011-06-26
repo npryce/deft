@@ -1,5 +1,6 @@
 
 import sys
+from abc import ABCMeta, abstractmethod
 import traceback
 from StringIO import StringIO
 import os
@@ -80,8 +81,9 @@ class ProcessError(Exception, ProcessResult):
         ProcessResult.__init__(self, command, status, stdout, stderr)
 
 
-
-class SystestEnvironment(object):
+class OutOfProcessEnvironment(object):
+    __metaclass__ = ABCMeta
+    
     @classmethod
     def attribute(selfclass, test_func):
         test_func.fileio = 1
@@ -109,12 +111,12 @@ class SystestEnvironment(object):
                         env_override=env, 
                         cwd=self.abspath(cwd_subdir))
     
+    @abstractmethod
+    def binpath(self):
+        pass
+    
     def run(self, command, env_override={}, cwd=None):
-        path = os.pathsep.join([os.path.abspath('python-dev/bin'),
-                                os.path.abspath(os.getcwd()),
-                                os.defpath])
-        
-        env = {'PATH': path}
+        env = {'PATH': self.binpath()}
         env.update(env_override)
         
         process = Popen(command, 
@@ -133,6 +135,18 @@ class SystestEnvironment(object):
     def fake_editor_command(self, input):
         return os.path.abspath("testing-tools/fake-editor") + " " + repr(input)
 
+
+class DevEnvironment(OutOfProcessEnvironment):
+    def binpath(self):
+        return os.pathsep.join([os.path.abspath('python-dev/bin'),
+                                os.path.abspath(os.getcwd()),
+                                os.defpath])
+
+
+class InstallTestEnvironment(OutOfProcessEnvironment):
+    def binpath(self):
+        return os.pathsep.join([os.path.abspath('output/install/bin'),
+                                os.defpath])
 
 class InMemoryEnvironment(object):
     @classmethod
@@ -176,12 +190,14 @@ class InMemoryEnvironment(object):
 def select_environment_from_envvar():
     env_name = os.getenv("DEFT_SYSTEST_ENV")
     
-    if env_name is None or env_name is "" or env_name == "real":
-        return SystestEnvironment
-    if env_name == "mem":
+    if env_name is None or env_name is "" or env_name == "dev":
+        return DevEnvironment
+    elif env_name == "mem":
         return InMemoryEnvironment
+    elif env_name == "install":
+        return InstallTestEnvironment
     else:
-        raise ValueError("unknown environment %s, must be one of 'mem', 'real' (defaults to 'real')"%env_name)
+        raise ValueError("unknown environment %s, must be one of 'mem', 'dev', 'install' (defaults to 'dev')"%env_name)
 
 _selected_environment = select_environment_from_envvar()
 

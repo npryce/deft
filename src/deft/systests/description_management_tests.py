@@ -1,7 +1,7 @@
 
 import os
 from hamcrest import *
-from deft.systests.support import SystestEnvironment, ProcessError, systest, fail, wip
+from deft.systests.support import systest
 
 
 @systest
