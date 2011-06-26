@@ -180,6 +180,10 @@ class FeatureTracker(object):
         
         self._save_status_index(old_status)
         self._save_status_index(new_status)
+
+
+    def _priority_of(self, feature):
+        return self._status(feature.status).priority_of_feature(feature.name)
         
     def _change_priority(self, feature, new_priority):
         index = self._status(feature.status)
@@ -266,7 +270,7 @@ class Feature(object):
     properties = FeatureFileProperty(PropertiesSuffix, YamlFormat, validate_properties)
     
     def _get_priority(self):
-        return self._tracker._status(self.status).priority_of_feature(self.name)
+        return self._tracker._priority_of(self)
     
     def _set_priority(self, new_priority):
         self._tracker._change_priority(self, new_priority)
