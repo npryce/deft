@@ -19,3 +19,6 @@ FeatureBranch = "branch"
 
 # The milestone in which the feature will be, or was, released.
 Milestone = "milestone"
+
+# Estimated effort in "T-Shirt size" form: XS, S, M, L, XL.
+EstimatedEffort = "estimated-effort"
