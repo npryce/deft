@@ -162,7 +162,6 @@ class FeatureTracker(object):
         self._status(feature.status).rename(old_name, new_name)
         del self._name_index[old_name]
         self._name_index[new_name] = feature
-        feature._record_name(new_name)
         
         self._save_status_index(feature.status)
         
@@ -178,7 +177,6 @@ class FeatureTracker(object):
         
         old_index.remove(feature.name)
         new_index.append(feature.name)
-        feature._record_status(new_status)
         
         self._save_status_index(old_status)
         self._save_status_index(new_status)
@@ -245,6 +243,19 @@ def validate_properties(properties):
         raise UserError("feature properties cannot have the following reserved names: " + ", ".join(invalid_keys))
 
 
+class TrackerManagedProperty(object):
+    def __init__(self, field_name, change_request_fn):
+        self._field_name = field_name
+        self._change_request_fn = change_request_fn
+    
+    def __get__(self, feature, owner):
+        return getattr(feature, self._field_name)
+
+    def __set__(self, feature, new_value):
+        self._change_request_fn(feature._tracker, feature, new_value)
+        setattr(feature, self._field_name, new_value)
+
+
 class Feature(object):
     def __init__(self, tracker, name, status, priority=None):
         self._name = name
@@ -252,41 +263,18 @@ class Feature(object):
         self._priority = priority
         self._tracker = tracker
     
-    def _get_name(self):
-        return self._name
-    
-    def _set_name(self, new_name):
-        self._tracker._change_name(self, new_name)
-    
-    def _record_name(self, new_name):
-        self._name = new_name
-    
-    name = property(_get_name, _set_name)
-    
-    def _get_status(self):
-        return self._status
-    
-    def _set_status(self, new_status):
-        self._tracker._change_status(self, new_status)
-    
-    def _record_status(self, new_status):
-        self._status = new_status
-    
-    status = property(_get_status, _set_status)
-    
+    name = TrackerManagedProperty("_name", FeatureTracker._change_name)
+    status = TrackerManagedProperty("_status", FeatureTracker._change_status)
+    description = FeatureFileProperty(DescriptionSuffix, TextFormat)
+    properties = FeatureFileProperty(PropertiesSuffix, YamlFormat, validate_properties)
+
     def _get_priority(self):
         return self._tracker._status(self.status).priority_of_feature(self.name)
     
     def _set_priority(self, new_priority):
         self._tracker._change_priority(self, new_priority)
     
-    def _record_priority(self, new_priority):
-        self._priority = new_priority
-    
     priority = property(_get_priority, _set_priority)
-    
-    description = FeatureFileProperty(DescriptionSuffix, TextFormat)
-    properties = FeatureFileProperty(PropertiesSuffix, YamlFormat, validate_properties)
     
     @property
     def description_file(self):
