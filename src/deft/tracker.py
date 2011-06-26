@@ -211,9 +211,6 @@ class FeatureTracker(object):
     def _feature_path(self, name, suffix):
         return os.path.join(self.config["datadir"], "features", name + suffix)
     
-    def _path_to_name(self, path, suffix):
-        return os.path.basename(path)[:-len(suffix)]
-    
     def _name_to_real_path(self, name, suffix):
         return self.storage.abspath(self._feature_path(name, suffix))
 
