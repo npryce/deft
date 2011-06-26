@@ -215,21 +215,21 @@ class FeatureTracker(object):
         return self.storage.abspath(self._feature_path(name, suffix))
 
 
-def _no_validation(value):
-    pass
-
 class FeatureFileProperty(object):
+    def _no_validation(value):
+        pass
+    
     def __init__(self, suffix, format, validate=_no_validation):
         self._suffix = suffix
         self._format = format
         self._validate = validate
     
     def __get__(self, feature, owner):
-        return feature._load(self._suffix, self._format)
+        return feature._tracker._load(feature._path(self._suffix), self._format)
     
-    def __set__(self, feature, value):
-        self._validate(value)
-        feature._save(self._suffix, value, self._format)
+    def __set__(self, feature, new_value):
+        self._validate(new_value)
+        feature._tracker._save(feature._path(self._suffix), new_value, self._format)
 
 
 ReservedPropertyNames = frozenset(["status", "priority", "description"])
@@ -264,7 +264,7 @@ class Feature(object):
     status = TrackerManagedProperty("_status", FeatureTracker._change_status)
     description = FeatureFileProperty(DescriptionSuffix, TextFormat)
     properties = FeatureFileProperty(PropertiesSuffix, YamlFormat, validate_properties)
-
+    
     def _get_priority(self):
         return self._tracker._status(self.status).priority_of_feature(self.name)
     
@@ -281,12 +281,6 @@ class Feature(object):
     def properties_file(self):
         return self._abspath(PropertiesSuffix)
     
-    def _load(self, suffix, format):
-        return self._tracker._load(self._path(suffix), format)
-
-    def _save(self, suffix, data, format):
-        return self._tracker._save(self._path(suffix), data, format)
-        
     def _path(self, suffix):
         return self._tracker._feature_path(self._name, suffix)
     
