@@ -61,7 +61,7 @@ To work on the Deft code itself:
    environment. Run ``dev-deft --help`` for help.
 
 
-.. _PyPI: http://pypi.python.org
+.. _PyPI: http://pypi.python.org/pypi/Deft
 .. _Quickstart Guide: https://github.com/npryce/deft/wiki/Quickstart-Guide
 .. _Deft itself: https://github.com/npryce/deft/tree/master/tracker
 .. _Python 2.7: http://www.python.org
