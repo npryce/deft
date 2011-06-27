@@ -8,7 +8,7 @@ def read(fname):
 
 
 setup(name='Deft',
-      version='0.1.1',
+      version='0.2.0',
       description='Easy Distributed Feature Tracking',
       long_description=read("README.rst"),
       author='Nat Pryce',
@@ -23,7 +23,6 @@ setup(name='Deft',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Programming Language :: Python',
-        'Programming Language :: Unix Shell',
         'Natural Language :: English',
         'Topic :: Software Development :: Bug Tracking',
         'Topic :: Utilities'],
