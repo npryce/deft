@@ -12,6 +12,8 @@ PYTHON_ENV=python$(python)-dev
 
 PYCHART_VER=1.39
 
+DEFT_VER:=$(shell python setup.py --version)
+
 
 all: test
 
@@ -53,9 +55,18 @@ wip-tests: clean-test-output
 clean-install:
 	rm -rf output/install
 
-test-install: output/install
-	output/install/bin/python setup.py install
+local-install: output/install output/unpack/Deft-$(DEFT_VER)
+	(cd output/unpack/Deft-$(DEFT_VER); ../../install/bin/python setup.py install)
+
+test-install: local-install
 	make out-of-process-tests systest=install
+
+output/unpack/Deft-$(DEFT_VER): dist/Deft-$(DEFT_VER).tar.gz
+	mkdir -p output/unpack
+	tar xzf $< -C $(dir $@)
+
+dist/Deft-$(DEFT_VER).tar.gz: setup.py Makefile
+	$(PYTHON_ENV)/bin/python setup.py sdist
 
 output/install: Makefile
 	rm -rf build/
