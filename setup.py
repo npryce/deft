@@ -10,7 +10,7 @@ def read(fname):
 setup(name='Deft',
       version='0.1.0',
       description='Easy Distributed Feature Tracking',
-      long_description=read("README.markdown"),
+      long_description=read("README.rst"),
       author='Nat Pryce',
       author_email='about-deft@natpryce.com',
       url='http://github.com/npryce/deft',
