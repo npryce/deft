@@ -65,12 +65,14 @@ output/unpack/Deft-$(DEFT_VER): dist/Deft-$(DEFT_VER).tar.gz
 	mkdir -p output/unpack
 	tar xzf $< -C $(dir $@)
 
-dist/Deft-$(DEFT_VER).tar.gz: setup.py Makefile
+dist/Deft-$(DEFT_VER).tar.gz: setup.py Makefile README.rst
 	$(PYTHON_ENV)/bin/python setup.py sdist
 
 output/install: Makefile
 	rm -rf build/
 	$(MAKE) env PYTHON_ENV=output/install python=$(python)
+
+dist: dist/Deft-$(DEFT_VER).tar.gz
 
 SCANNED_FILES=src testing-tools deft Makefile
 
@@ -93,5 +95,5 @@ clean:
 
 
 .PHONY: all env clean-env env-again test in-process-tests out-of-process-tests 
-.PHONY: clean-test-output clean-install test-install 
+.PHONY: clean-test-output clean-install test-install local-install dist
 .PHONY: continually
