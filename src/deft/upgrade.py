@@ -7,36 +7,34 @@ from deft.tracker import FormatVersion as CurrentVersion
 from deft.tracker import UserError, load_config_with_storage, ConfigFile
 
 
-def upgrade(storage):
-    config = load_config_with_storage(storage)
-    storage_version = config["format"]
+class Upgrader(object):
+    def __init__(self, target, steps):
+        self.target = target
+        self.upgraders = dict(steps)
     
-    if storage_version == CurrentVersion:
-        raise UserError("already at version " + CurrentVersion)
-    elif storage_version == "1.0":
-        upgrade_from_1_0(storage, config)
-    elif storage_version == "2.0":
-        upgrade_from_2_0(storage, config)
-    elif storage_version == "2.1":
-        upgrade_from_2_1(storage, config)
-    else:
-        raise UserError("cannot upgrade from " + storage_version + " to " + CurrentVersion)
+    def upgrade(self, storage):
+        config = storage.load_yaml(ConfigFile)
+        
+        if config["format"] == self.target:
+            return False
+        
+        if config["format"] not in self.upgraders:
+            raise UserError("cannot migrate from version " + config["format"] + " to version " + self.target)
+        
+        while config["format"] != self.target:
+            self.upgraders[config["format"]](storage, config)
+        
+        storage.save_yaml(ConfigFile, config)
+        
+        return True
+
+def create_upgrader():
+    upgrader = Upgrader(target=CurrentVersion, steps={
+            "1.0": upgrade_1_0_to_2_0,
+            "2.0": upgrade_2_0_to_2_1,
+            "2.1": upgrade_2_1_to_3_0})
     
-    assert config["format"] == CurrentVersion
-    storage.save_yaml(ConfigFile, config)
-    print "upgraded from version " + storage_version + " to " + CurrentVersion
-
-
-def upgrade_from_2_1(storage, config):
-    upgrade_2_1_to_3_0(storage, config)
-
-def upgrade_from_2_0(storage, config):
-    upgrade_2_0_to_2_1(storage, config)
-    upgrade_from_2_1(storage, config)
-    
-def upgrade_from_1_0(storage, config):
-    upgrade_1_0_to_2_0(storage, config)
-    upgrade_from_2_0(storage, config)
+    return upgrader
 
 
 def upgrade_2_1_to_3_0(storage, config):

@@ -8,7 +8,8 @@ import yaml
 import subprocess
 from argparse import ArgumentParser, Action
 import deft.tracker
-from deft.tracker import UserError
+from deft.tracker import UserError, FormatVersion
+from deft.upgrade import create_upgrader
 
 
 EditorEnvironmentVariables = ["DEFT_EDITOR", "VISUAL", "EDITOR"]
@@ -380,9 +381,12 @@ class CommandLineInterface(object):
             tracker.purge(name)
     
     def run_upgrade_format(self, args):
-        from deft.upgrade import upgrade
-        upgrade(self.backend.tracker_storage())
-        
+        upgrader = create_upgrader()
+        storage = self.backend.tracker_storage()
+        if upgrader.upgrade(storage):
+            args.info_output("upgraded to format version " + FormatVersion)
+        else:
+            args.info_output("already at format version " + FormatVersion)
     
     def println(self, text):
         self.out.write(text)
