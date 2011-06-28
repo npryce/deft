@@ -28,6 +28,7 @@ class Upgrader(object):
         
         return True
 
+
 def create_upgrader():
     upgrader = Upgrader(target=CurrentVersion, steps={
             "1.0": upgrade_1_0_to_2_0,
