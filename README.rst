@@ -31,12 +31,13 @@ After that you can use the ``deft`` command to create, manipulate
 and query Deft feature trackers. Use ``deft --help`` and/or read
 the `Quickstart Guide`_ to get started.
 
-Reporting Issues and Feature Requests
--------------------------------------
+Support
+-------
 
-Issues are tracked with `Deft itself`_.
-If you want to raise issues or feature requests:
+You can join the `Deft discussion group`_.
 
+
+Issues are tracked with `Deft itself`_. If you want to raise issues or feature requests:
 
 -  Fork the repo & check it out locally
 -  Follow the 'Developing Deft' steps
@@ -67,3 +68,4 @@ To work on the Deft code itself:
 .. _Python 2.7: http://www.python.org
 .. _virtualenv: http://www.virtualenv.org
 .. _GitHub: http://github.com/npryce/deft
+:: _Deft discussion group: https://groups.google.com/group/deft-users 
