@@ -68,4 +68,4 @@ To work on the Deft code itself:
 .. _Python 2.7: http://www.python.org
 .. _virtualenv: http://www.virtualenv.org
 .. _GitHub: http://github.com/npryce/deft
-:: _Deft discussion group: https://groups.google.com/group/deft-users 
+.. _Deft discussion group: https://groups.google.com/group/deft-users
