@@ -36,7 +36,8 @@ setup(name='Deft',
       requires=[
         'yaml (==3.10)', 
         'argparse(==1.2)', 
-        'functional(==0.4)'],
+        'functional(==0.4)',
+        'dulwich(==0.7.1)'],
       
       test_requires=[
         'nose (1.0.0)',
