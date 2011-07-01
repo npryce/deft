@@ -2,7 +2,7 @@
 
 import os
 from deft.storage.memory import MemStorage, MemoryIO
-from deft.storage.filesystem_tests import StorageContract
+from deft.storage.testsupport import StorageContract
 from hamcrest import *
 
 
