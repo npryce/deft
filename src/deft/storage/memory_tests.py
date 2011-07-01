@@ -1,8 +1,8 @@
 
 
 import os
-from deft.memstorage import MemStorage, MemoryIO
-from deft.storage_tests import StorageContract
+from deft.storage.memory import MemStorage, MemoryIO
+from deft.storage.filesystem_tests import StorageContract
 from hamcrest import *
 
 

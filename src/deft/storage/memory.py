@@ -3,7 +3,7 @@ import sys
 from StringIO import StringIO
 import os
 from fnmatch import fnmatch
-from storage import StorageFormats
+from deft.storage.filesystem import StorageFormats
 
 
 def read_only_save_callback(data):

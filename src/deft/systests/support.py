@@ -12,8 +12,9 @@ from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
 from deft.fileops import *
-from deft.storage import FileStorage, YamlFormat
-from deft.memstorage import MemStorage
+from deft.storage import YamlFormat
+from deft.storage.filesystem import FileStorage
+from deft.storage.memory import MemStorage
 from deft.cli import CommandLineInterface
 from deft.tracker import FeatureTracker, UserError, init_with_storage, load_with_storage
 

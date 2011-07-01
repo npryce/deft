@@ -1,8 +1,9 @@
 
 import os
-from storage import FileStorage, TextFormat, YamlFormat
+from deft.storage import TextFormat, YamlFormat
+from deft.storage.filesystem import FileStorage
+from deft.storage.memory import MemStorage, MemoryIO
 from deft.fileops import *
-from deft.memstorage import MemStorage, MemoryIO
 from hamcrest import *
 from nose.tools import raises
 from nose.plugins.attrib import attr

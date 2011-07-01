@@ -1,7 +1,7 @@
 
 from deft.tracker import UserError, ConfigFile
 from deft.upgrade import Upgrader
-from deft.memstorage import MemStorage
+from deft.storage.memory import MemStorage
 from hamcrest import *
 
 

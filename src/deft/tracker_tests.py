@@ -1,6 +1,6 @@
 
 from deft.tracker import FeatureTracker, default_config, PropertiesSuffix, UserError
-from memstorage import MemStorage
+from deft.storage.memory import MemStorage
 from hamcrest import *
 
 

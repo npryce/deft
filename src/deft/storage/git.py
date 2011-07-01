@@ -7,7 +7,7 @@ import stat
 from dulwich.repo import Repo
 from dulwich.objects import Blob, Tree, Commit
 from deft.storage import StorageFormats
-from deft.memstorage import MemoryIO
+from deft.storage.memory import MemoryIO
 
 
 def date_of(commit):
