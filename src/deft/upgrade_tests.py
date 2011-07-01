@@ -1,5 +1,5 @@
 
-from deft.tracker import UserError, ConfigFile
+from deft.tracker import UserError, ConfigFile, load_config_from_storage, save_config_to_storage
 from deft.upgrade import Upgrader
 from deft.storage.memory import MemStorage
 from hamcrest import *
@@ -17,17 +17,14 @@ def never_called(*args, **kwargs):
 
 def storage_with_config(config):
     storage = MemStorage("testing")
-    storage.save_yaml(ConfigFile, config)
+    save_config_to_storage(storage, config)
     return storage
 
 def storage_with_format(format):
     return storage_with_config({"format": format})
 
-def config_of(storage):
-    return storage.load_yaml(ConfigFile)
-
 def format_of(storage):
-    return config_of(storage)["format"]
+    return load_config_from_storage(storage)["format"]
 
 class Upgrader_Tests:
     def test_upgrades_from_existing_format_to_target_format(self):

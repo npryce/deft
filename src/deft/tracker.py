@@ -58,13 +58,18 @@ def init_with_storage(storage, config_overrides):
     return tracker
 
 def load_with_storage(storage):
-    return FeatureTracker(load_config_with_storage(storage), storage)
+    return FeatureTracker(load_config_from_storage(storage), storage)
 
-def load_config_with_storage(storage):
+def load_config_from_storage(storage):
     if not storage.exists(ConfigDir):
         raise UserError("tracker not initialised")
     
-    return storage.load_yaml(ConfigFile)
+    with storage.open(ConfigFile) as input:
+        return YamlFormat.load(input)
+
+def save_config_to_storage(storage, config):
+    with storage.open(ConfigFile, "w") as output:
+        YamlFormat.save(config, output)
 
 
 class FeatureTracker(object):
@@ -101,7 +106,7 @@ class FeatureTracker(object):
         return self.config['initial_status']
     
     def save_config(self):
-        self.storage.save_yaml(ConfigFile, self.config)
+        save_config_to_storage(self.storage, self.config)
     
     def save(self):
         pass

@@ -56,7 +56,7 @@ def cannot_manipulate_a_feature_that_does_not_exist(env):
 
 @systest
 def refuses_to_work_with_tracker_that_has_incompatible_format_version(env):
-    env.storage.save_yaml(".deft/config", {
+    deft.tracker.save_config_to_storage(env.storage, {
             'format': '9999.9999',
             'datadir': '.deft/data'})
     

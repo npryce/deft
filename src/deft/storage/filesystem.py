@@ -2,9 +2,9 @@
 import os
 import shutil
 from glob import iglob
-from deft.storage import StorageFormats
 
-class FileStorage(StorageFormats):
+
+class FileStorage(object):
     def __init__(self, basedir):
         self.basedir = basedir
     

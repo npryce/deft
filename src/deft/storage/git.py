@@ -6,7 +6,6 @@ import os
 import stat
 from dulwich.repo import Repo
 from dulwich.objects import Blob, Tree, Commit
-from deft.storage import StorageFormats
 from deft.storage.memory import MemoryIO
 
 
@@ -44,7 +43,7 @@ def is_subtree(tree, name):
     return tree[name][0] & mode & stat.S_IFDIR
 
 
-class GitTreeStorage(StorageFormats):
+class GitTreeStorage(object):
     def __init__(self, repo, tree, deftdir):
         self.repo = repo
         self.tree = tree

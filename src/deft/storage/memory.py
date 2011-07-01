@@ -3,7 +3,6 @@ import sys
 from StringIO import StringIO
 import os
 from fnmatch import fnmatch
-from deft.storage.filesystem import StorageFormats
 
 
 def read_only_save_callback(data):
@@ -26,7 +25,7 @@ class MemoryIO(StringIO):
         self.close()
 
 
-class MemStorage(StorageFormats):
+class MemStorage(object):
     def __init__(self, basedir="basedir"):
         self.basedir = basedir
         self.files = {}

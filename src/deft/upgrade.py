@@ -4,7 +4,7 @@ import os
 from os.path import join, basename
 import yaml
 from deft.tracker import FormatVersion as CurrentVersion
-from deft.tracker import UserError, load_config_with_storage, ConfigFile
+from deft.tracker import UserError, load_config_from_storage, save_config_to_storage
 
 
 class Upgrader(object):
@@ -13,7 +13,7 @@ class Upgrader(object):
         self.upgraders = dict(steps)
     
     def upgrade(self, storage):
-        config = storage.load_yaml(ConfigFile)
+        config = load_config_from_storage(storage)
         
         if config["format"] == self.target:
             return False
@@ -24,7 +24,7 @@ class Upgrader(object):
         while config["format"] != self.target:
             self.upgraders[config["format"]](storage, config)
         
-        storage.save_yaml(ConfigFile, config)
+        save_config_to_storage(storage, config)
         
         return True
 
