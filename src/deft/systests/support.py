@@ -167,7 +167,10 @@ class InMemoryEnvironment(object):
         stderr = StringIO()
         
         def fake_editor(path):
-            self.storage.save_text(self.storage.relpath(path), editor_content)
+            relpath = self.storage.relpath(path)
+            with self.storage.open(relpath, "w") as output:
+                print type(output)
+                output.write(editor_content)
         
         cli = CommandLineInterface(self, out=stdout, err=stderr, editor=fake_editor)
         try:
