@@ -43,10 +43,10 @@ test: in-process-tests out-of-process-tests
 clean-test-output:
 		rm -rf output/testing
 
-in-process-tests:
+in-process-tests: clean-pyc
 	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "not fileio" $(test)
 
-out-of-process-tests: clean-test-output
+out-of-process-tests: clean-pyc clean-test-output
 	DEFT_SYSTEST_ENV=$(systest) $(PYTHON_ENV)/bin/nosetests -A "fileio" --processes 4 $(test)
 
 wip-tests: clean-test-output
@@ -90,11 +90,13 @@ continually:
 	  inotifywait -r -qq -e modify -e delete $(SCANNED_FILES); \
 	done
 
-clean:
+clean: clean-pyc
 	rm -rf output/ build/ dist/
+
+clean-pyc:
 	find src -name '*.pyc' | xargs rm
 
 
 .PHONY: all env clean-env env-again test in-process-tests out-of-process-tests 
 .PHONY: clean-test-output clean-install test-install local-install dist
-.PHONY: continually
+.PHONY: continually clean-pyc
