@@ -3,35 +3,91 @@ from hamcrest import *
 from nose.tools import raises
 
 
-class StorageContract:
-    def test_content_of_written_files_can_be_read(self):
-        with self.storage.open("foo.txt", "w") as output:
-            output.write("testing!")
+class ReadOnlyStorageContract:
+    def test_reports_files_existence(self):
+        self.given_file("example")
+        self.given_file("example-dir/example-file")
+        
+        assert_that(self.storage.exists("example"), equal_to(True))
+        assert_that(self.storage.exists("example-dir"), equal_to(True))
+        assert_that(self.storage.exists("example-dir/example-file"), equal_to(True))
+        
+        assert_that(self.storage.exists("other-file"), equal_to(False))
+        assert_that(self.storage.exists("other-dir"), equal_to(False))
+        assert_that(self.storage.exists("example-dir/yet-another-file"), equal_to(False))
+    
+    
+    def test_can_open_file_for_reading(self):
+        self.given_file("foo.txt", content="testing!")
         
         with self.storage.open("foo.txt", "r") as input:
             written_content = input.read()
         
         assert_that(written_content, equal_to("testing!"))
-    
-        
-    def test_written_files_exist(self):
-        self.given_file("example.txt")
-        
-        assert_that(self.storage.exists("example.txt"), equal_to(True))
-    
-        
-    def test_automagically_makes_parent_directories_when_writing_files(self):
-        self.given_file("parent/subparent/example.txt")
-    
-        assert_that(self.storage.exists("parent"), equal_to(True))
-        assert_that(self.storage.exists("parent/subparent"), equal_to(True))
 
+
+    def test_can_open_file_in_subdirectory_for_reading(self):
+        self.given_file("d1/d2/f.txt", content="example-in-subdirectory")
+        
+        with self.storage.open("d1/d2/f.txt", "r") as input:
+            written_content = input.read()
+        
+        assert_that(written_content, equal_to("example-in-subdirectory"))
+    
+        
+    def test_open_flag_defaults_to_reading(self):
+        self.given_file("bar.txt", content="testing!")
+        
+        with self.storage.open("bar.txt") as input:
+            written_content = input.read()
+        
+        assert_that(written_content, equal_to("testing!"))
+        
         
     @raises(IOError)
     def test_raises_ioerror_if_file_opened_for_reading_does_not_exist(self):
         assert_that(self.storage.exists("does-not-exist"), equal_to(False))
         self.storage.open("does-not-exist")
         
+        
+    def test_lists_files_that_match_glob_pattern(self):
+        self.given_file("a/b1/1.txt")
+        self.given_file("a/b1/2.txt")
+        self.given_file("a/b1/3.mpg")
+        self.given_file("a/b2/c")
+        self.given_file("x/y")
+        
+        assert_that(sorted(self.storage.list("a/b1/*.txt")), equal_to(
+                ["a/b1/1.txt","a/b1/2.txt"]))
+        
+        assert_that(sorted(self.storage.list("a/b*/*")), equal_to(
+                ["a/b1/1.txt","a/b1/2.txt","a/b1/3.mpg","a/b2/c"]))
+        
+        assert_that(sorted(self.storage.list("*")), equal_to(["a", "x"]))
+        
+        assert_that(list(self.storage.list("a/zzz*")), equal_to([]))
+        assert_that(list(self.storage.list("zzz/*")), equal_to([]))
+    
+    
+    def test_can_report_real_path_for_relative_path(self):
+        assert_that(self.create_storage("/foo/bar").abspath("x/y"), equal_to("/foo/bar/x/y"))
+        assert_that(self.create_storage("foo/bar").abspath("x/y"), equal_to("foo/bar/x/y"))
+        assert_that(self.create_storage("foo/bar/../baz/.").abspath("x/y"), equal_to("foo/baz/x/y"))
+    
+    
+class StorageContract(ReadOnlyStorageContract):
+    def given_file(self, relpath, content="testing"):
+        with self.storage.open(relpath, "w") as output:
+            output.write(content)
+
+    def test_automagically_makes_parent_directories_when_writing_files(self):
+        with self.storage.open("parent/subparent/example.txt", "w") as output:
+            output.write("testing")
+        
+        assert_that(self.storage.exists("parent"), equal_to(True))
+        assert_that(self.storage.exists("parent/subparent"), equal_to(True))
+        assert_that(self.storage.exists("parent/subparent/example.txt"), equal_to(True))
+
         
     def test_can_delete_files(self):
         self.given_file("to-be-deleted")
@@ -72,24 +128,6 @@ class StorageContract:
         assert_that(self.storage.exists("another-dir"), equal_to(False))
     
     
-    def test_lists_files_that_match_glob_pattern(self):
-        self.given_file("a/b1/1.txt")
-        self.given_file("a/b1/2.txt")
-        self.given_file("a/b1/3.mpg")
-        self.given_file("a/b2/c")
-        self.given_file("x/y")
-        
-        assert_that(sorted(self.storage.list("a/b1/*.txt")), equal_to(
-                ["a/b1/1.txt","a/b1/2.txt"]))
-        
-        assert_that(sorted(self.storage.list("a/b*/*")), equal_to(
-                ["a/b1/1.txt","a/b1/2.txt","a/b1/3.mpg","a/b2/c"]))
-        
-        assert_that(sorted(self.storage.list("*")), equal_to(["a", "x"]))
-        
-        assert_that(list(self.storage.list("a/zzz*")), equal_to([]))
-        assert_that(list(self.storage.list("zzz/*")), equal_to([]))
-    
     def test_can_rename_files(self):
         self.given_file("x", content="x-contents")
         
@@ -118,13 +156,3 @@ class StorageContract:
         self.given_file("y")
         
         self.storage.rename("x", "y")
-    
-    def test_can_report_real_path_for_relative_path(self):
-        assert_that(self.create_storage("/foo/bar").abspath("x/y"), equal_to("/foo/bar/x/y"))
-        assert_that(self.create_storage("foo/bar").abspath("x/y"), equal_to("foo/bar/x/y"))
-        assert_that(self.create_storage("foo/bar/../baz/.").abspath("x/y"), equal_to("foo/baz/x/y"))
-        
-    def given_file(self, relpath, content="testing"):
-        with self.storage.open(relpath, "w") as output:
-            output.write(content)
-
