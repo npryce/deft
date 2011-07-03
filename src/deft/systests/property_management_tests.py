@@ -3,7 +3,6 @@ from StringIO import StringIO
 import os
 from hamcrest import *
 from deft.systests.support import systest, wip, ProcessError
-from deft.storage import YamlFormat
 
 
 @systest

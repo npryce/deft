@@ -12,7 +12,7 @@ from nose.tools import istest, nottest
 from nose.plugins.attrib import attr
 from nose.plugins.skip import SkipTest
 from deft.fileops import *
-from deft.storage import YamlFormat
+from deft.formats import YamlFormat
 from deft.storage.filesystem import FileStorage
 from deft.storage.memory import MemStorage
 from deft.cli import CommandLineInterface

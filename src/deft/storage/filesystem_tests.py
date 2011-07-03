@@ -1,10 +1,10 @@
 
 import os
-from deft.storage import TextFormat, YamlFormat
+from deft.formats import TextFormat, YamlFormat
 from deft.storage.filesystem import FileStorage
 from deft.storage.memory import MemStorage, MemoryIO
 from deft.fileops import *
-from deft.storage.testsupport import StorageContract
+from deft.storage.contract import StorageContract
 from hamcrest import *
 from nose.plugins.attrib import attr
 

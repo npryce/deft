@@ -5,7 +5,7 @@ import itertools
 import os
 from glob import iglob
 from deft.indexing import PriorityIndex
-from deft.storage import TextFormat, YamlFormat
+from deft.formats import TextFormat, YamlFormat
 from deft.storage.filesystem import FileStorage
 
 FormatVersion = '3.0'
