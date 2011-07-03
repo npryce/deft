@@ -76,10 +76,6 @@ class ReadOnlyStorageContract:
     
     
 class StorageContract(ReadOnlyStorageContract):
-    def given_file(self, relpath, content="testing"):
-        with self.storage.open(relpath, "w") as output:
-            output.write(content)
-
     def test_automagically_makes_parent_directories_when_writing_files(self):
         with self.storage.open("parent/subparent/example.txt", "w") as output:
             output.write("testing")
@@ -156,3 +152,17 @@ class StorageContract(ReadOnlyStorageContract):
         self.given_file("y")
         
         self.storage.rename("x", "y")
+
+
+class TransientStorageContract(StorageContract):
+    def given_file(self, relpath, content="testing"):
+        with self.storage.open(relpath, "w") as output:
+            output.write(content)
+
+
+class PersistentStorageContract(StorageContract):
+    def given_file(self, relpath, content="testing"):
+        with self.create_storage().open(relpath, "w") as output:
+            output.write(content)
+
+    

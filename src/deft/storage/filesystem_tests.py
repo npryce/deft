@@ -4,7 +4,7 @@ from deft.formats import TextFormat, YamlFormat
 from deft.storage.filesystem import FileStorage
 from deft.storage.memory import MemStorage, MemoryIO
 from deft.fileops import *
-from deft.storage.contract import StorageContract
+from deft.storage.contract import PersistentStorageContract
 from hamcrest import *
 from nose.plugins.attrib import attr
 
@@ -14,14 +14,14 @@ def path(p):
 
 
 @attr("fileio")
-class FileStorage_Test(StorageContract):
+class FileStorage_Test(PersistentStorageContract):
     def setup(self):
         self.testdir = os.path.join("output", "testing", self.__class__.__name__.lower(), str(id(self)))
         ensure_empty_dir_exists(self.testdir)
-        self.storage = self.create_storage(self.testdir)
+        self.storage = self.create_storage()
     
-    def create_storage(self, basedir):
-        return FileStorage(basedir)
+    def create_storage(self, basedir=None):
+        return FileStorage(self.testdir if basedir is None else basedir)
     
     # FileStorage-specific behaviour
 
