@@ -39,10 +39,11 @@ class FileStorage_Test(StorageContract):
     
     def test_deletes_directory_trees_from_disk(self):
         self.given_file("example-dir/example-file")
-        self.storage.remove("example-dir/example-file")
+        self.storage.remove("example-dir")
         
-        assert_that(os.path.exists(self._abspath("example-file")), equal_to(False))
-        
+        assert_that(os.path.exists(self._abspath("example-dir/example-file")), equal_to(False))
+        assert_that(os.path.exists(self._abspath("example-dir")), equal_to(False))
+    
     def _abspath(self, p):
         return os.path.abspath(os.path.join(self.testdir, path(p)))
     
