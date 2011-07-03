@@ -15,13 +15,13 @@ class StorageContract:
     
         
     def test_written_files_exist(self):
-        self._create_example_file("example.txt")
+        self.given_file("example.txt")
         
         assert_that(self.storage.exists("example.txt"), equal_to(True))
     
         
     def test_automagically_makes_parent_directories_when_writing_files(self):
-        self._create_example_file("parent/subparent/example.txt")
+        self.given_file("parent/subparent/example.txt")
     
         assert_that(self.storage.exists("parent"), equal_to(True))
         assert_that(self.storage.exists("parent/subparent"), equal_to(True))
@@ -34,7 +34,7 @@ class StorageContract:
         
         
     def test_can_delete_files(self):
-        self._create_example_file("to-be-deleted")
+        self.given_file("to-be-deleted")
         
         self.storage.remove("to-be-deleted")
         
@@ -50,8 +50,8 @@ class StorageContract:
     
     
     def test_can_delete_directory_tree(self):
-        self._create_example_file("parent/child/file1")
-        self._create_example_file("parent/child/file2")
+        self.given_file("parent/child/file1")
+        self.given_file("parent/child/file2")
         
         self.storage.remove("parent/child")
         
@@ -63,7 +63,7 @@ class StorageContract:
     
     
     def test_ignores_attempt_to_remove_nonexistent_directory_tree(self):
-        self._create_example_file("dir/file")
+        self.given_file("dir/file")
         
         assert_that(self.storage.exists("another-dir"), equal_to(False))
         
@@ -73,11 +73,11 @@ class StorageContract:
     
     
     def test_lists_files_that_match_glob_pattern(self):
-        self._create_example_file("a/b1/1.txt")
-        self._create_example_file("a/b1/2.txt")
-        self._create_example_file("a/b1/3.mpg")
-        self._create_example_file("a/b2/c")
-        self._create_example_file("x/y")
+        self.given_file("a/b1/1.txt")
+        self.given_file("a/b1/2.txt")
+        self.given_file("a/b1/3.mpg")
+        self.given_file("a/b2/c")
+        self.given_file("x/y")
         
         assert_that(sorted(self.storage.list("a/b1/*.txt")), equal_to(
                 ["a/b1/1.txt","a/b1/2.txt"]))
@@ -91,7 +91,7 @@ class StorageContract:
         assert_that(list(self.storage.list("zzz/*")), equal_to([]))
     
     def test_can_rename_files(self):
-        self._create_example_file("x", content="x-contents")
+        self.given_file("x", content="x-contents")
         
         self.storage.rename("x", "y")
         
@@ -100,7 +100,7 @@ class StorageContract:
         assert_that(self.storage.open("y").read(), equal_to("x-contents"))
         
     def test_can_rename_files_to_new_directory(self):
-        self._create_example_file("parent/x", content="x-contents")
+        self.given_file("parent/x", content="x-contents")
         
         self.storage.rename("parent/x", "basedir/y")
         
@@ -114,8 +114,8 @@ class StorageContract:
     
     @raises(IOError)
     def test_cannot_rename_file_over_existing_file(self):
-        self._create_example_file("x")
-        self._create_example_file("y")
+        self.given_file("x")
+        self.given_file("y")
         
         self.storage.rename("x", "y")
     
@@ -124,7 +124,7 @@ class StorageContract:
         assert_that(self.create_storage("foo/bar").abspath("x/y"), equal_to("foo/bar/x/y"))
         assert_that(self.create_storage("foo/bar/../baz/.").abspath("x/y"), equal_to("foo/baz/x/y"))
         
-    def _create_example_file(self, relpath, content="testing"):
+    def given_file(self, relpath, content="testing"):
         with self.storage.open(relpath, "w") as output:
             output.write(content)
 

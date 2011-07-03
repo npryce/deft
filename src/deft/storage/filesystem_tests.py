@@ -26,19 +26,19 @@ class FileStorage_Test(StorageContract):
     # FileStorage-specific behaviour
 
     def test_files_are_created_on_disk_in_basedir(self):
-        self._create_example_file("foo/bar", content="example-content")
+        self.given_file("foo/bar", content="example-content")
         
         assert_that(os.path.exists(self._abspath("foo/bar")))
         assert_that(open(self._abspath("foo/bar"),"r").read(), equal_to("example-content"))
     
     def test_deletes_files_from_disk(self):
-        self._create_example_file("example-file")
+        self.given_file("example-file")
         self.storage.remove("example-file")
         
         assert_that(os.path.exists(self._abspath("example-file")), equal_to(False))
     
     def test_deletes_directory_trees_from_disk(self):
-        self._create_example_file("example-dir/example-file")
+        self.given_file("example-dir/example-file")
         self.storage.remove("example-dir/example-file")
         
         assert_that(os.path.exists(self._abspath("example-file")), equal_to(False))
