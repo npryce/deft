@@ -35,10 +35,10 @@ class MemStorage_Test(StorageContract):
         return MemStorage(basedir)
     
     def test_can_report_relative_path_for_realpath(self):
-        assert_that(self.create_storage("/foo/bar").relpath("/foo/bar/x/y"), equal_to("x/y"))
-        assert_that(self.create_storage("foo/bar").relpath("foo/bar/x/y"), equal_to("x/y"))
-        assert_that(self.create_storage("foo").relpath("foo/x/y"), equal_to("x/y"))
-        assert_that(self.create_storage("").relpath("x/y"), equal_to("x/y"))
-        assert_that(self.create_storage(".").relpath("x/y"), equal_to("x/y"))
+        assert_that(MemStorage("/foo/bar").relpath("/foo/bar/x/y"), equal_to("x/y"))
+        assert_that(MemStorage("foo/bar").relpath("foo/bar/x/y"), equal_to("x/y"))
+        assert_that(MemStorage("foo").relpath("foo/x/y"), equal_to("x/y"))
+        assert_that(MemStorage("").relpath("x/y"), equal_to("x/y"))
+        assert_that(MemStorage(".").relpath("x/y"), equal_to("x/y"))
         
     
