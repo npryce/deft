@@ -76,6 +76,17 @@ class ReadOnlyStorageContract:
     
     
 class StorageContract(ReadOnlyStorageContract):
+    def test_can_overwrite_existing_files(self):
+        self.given_file("the-file", content="original-content")
+        
+        with self.storage.open("the-file", "w") as output:
+            output.write("new-content")
+
+        with self.storage.open("the-file", "r") as input:
+            content = input.read()
+            
+        assert_that(content, equal_to("new-content"))
+    
     def test_automagically_makes_parent_directories_when_writing_files(self):
         with self.storage.open("parent/subparent/example.txt", "w") as output:
             output.write("testing")
