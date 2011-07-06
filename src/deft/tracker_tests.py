@@ -1,14 +1,37 @@
 
-from deft.tracker import FeatureTracker, default_config, PropertiesSuffix, UserError
+import warnings
+from deft.formats import LinesFormat
+from deft.tracker import (
+    FeatureTracker, default_config, PropertiesSuffix, 
+    UserError, LostAndFoundStatus, RepairWarning)
 from deft.storage.memory import MemStorage
+from deft.storage.filesystem_tests import path
 from hamcrest import *
 
 
-class FeatureTracker_Test:
+def assert_status(description, tracker, status_buckets):
+    for status in status_buckets:
+        assert_priority_order(description, tracker, features=status_buckets[status], status=status)
+
+
+def assert_priority_order(description, tracker, features, status=None):
+    status = status or tracker.initial_status
+    
+    assert_that(list(tracker.features_with_status(status)), equal_to(list(features)), 
+                description + ", order of " + status)
+    
+    for i in range(len(features)):
+        expected_priority = i+1
+        assert_that(features[i].priority, equal_to(expected_priority), 
+                    "priority " + str(expected_priority) + " after " + description)
+
+
+
+class FeatureTracker_HappyPath_Tests:
     def setup(self):
         self.storage = MemStorage("basedir")
         self.tracker = FeatureTracker(default_config(datadir="tracker"), self.storage)
-        
+    
     def test_initially_contains_no_features(self):
         assert_that(list(self.tracker.all_features()), has_length(0))
     
@@ -45,8 +68,6 @@ class FeatureTracker_Test:
         assert_that(pending_b.priority, equal_to(2))
     
     def test_can_change_the_priority_of_a_feature(self):
-        assert_priority_order = self.assert_priority_order
-        
         alice = self.tracker.create(name="alice")
         bob = self.tracker.create(name="bob")
         carol = self.tracker.create(name="carol")
@@ -54,30 +75,28 @@ class FeatureTracker_Test:
         eve = self.tracker.create(name="eve")
         
         alice.priority = 3
-        assert_priority_order("moved first to middle", bob, carol, alice, dave, eve)
+        assert_priority_order("moved first to middle", self.tracker, [bob, carol, alice, dave, eve])
         
         carol.priority = 1
-        assert_priority_order("moved middle to first", carol, bob, alice, dave, eve)
+        assert_priority_order("moved middle to first", self.tracker, [carol, bob, alice, dave, eve])
         
         eve.priority = 1
-        assert_priority_order("moved last to first", eve, carol, bob, alice, dave)
+        assert_priority_order("moved last to first", self.tracker, [eve, carol, bob, alice, dave])
         
         bob.priority = 5
-        assert_priority_order("moved middle to last", eve, carol, alice, dave, bob)
+        assert_priority_order("moved middle to last", self.tracker, [eve, carol, alice, dave, bob])
         
         eve.priority = 5
-        assert_priority_order("moved first to last", carol, alice, dave, bob, eve)
+        assert_priority_order("moved first to last", self.tracker, [carol, alice, dave, bob, eve])
         
         eve.priority = 3
-        assert_priority_order("moved last to middle", carol, alice, eve, dave, bob)
+        assert_priority_order("moved last to middle", self.tracker, [carol, alice, eve, dave, bob])
         
         dave.priority = 2
-        assert_priority_order("moved middle to middle", carol, dave, alice, eve, bob)
+        assert_priority_order("moved middle to middle", self.tracker, [carol, dave, alice, eve, bob])
     
         
     def test_can_change_status(self):
-        assert_status = self.assert_status
-        
         alice = self.tracker.create(name="alice", status="odd")
         bob = self.tracker.create(name="bob", status="odd")
         carol = self.tracker.create(name="carol", status="odd")
@@ -85,38 +104,38 @@ class FeatureTracker_Test:
         eve = self.tracker.create(name="eve", status="odd")
         
         alice.status = "female"
-        assert_status("alice -> female",
-                      female = [alice],
-                      odd = [bob, carol, eve],
-                      even = [dave])
+        assert_status("alice -> female", self.tracker,
+                      {"female": [alice],
+                       "odd": [bob, carol, eve],
+                       "even": [dave]})
         
         bob.status = "male"
-        assert_status("bob -> male",
-                      female = [alice],
-                      male = [bob],
-                      odd = [carol, eve],
-                      even = [dave])
+        assert_status("bob -> male", self.tracker,
+                      {"female": [alice],
+                       "male": [bob],
+                       "odd": [carol, eve],
+                       "even": [dave]})
         
         carol.status = "female"
-        assert_status("carol -> female",
-                      female = [alice, carol],
-                      male = [bob],
-                      odd = [eve],
-                      even = [dave])
+        assert_status("carol -> female", self.tracker,
+                      {"female": [alice, carol],
+                       "male": [bob],
+                       "odd": [eve],
+                       "even": [dave]})
         
         dave.status = "male"
-        assert_status("dave -> male",
-                      female = [alice, carol],
-                      male = [bob, dave],
-                      odd = [eve],
-                      even = [])
+        assert_status("dave -> male", self.tracker,
+                      {"female": [alice, carol],
+                       "male": [bob, dave],
+                       "odd": [eve],
+                       "even": []})
         
         eve.status = "female"
-        assert_status("eve -> female",
-                      female = [alice, carol, eve],
-                      male = [bob, dave],
-                      odd = [],
-                      even = [])
+        assert_status("eve -> female", self.tracker,
+                      {"female": [alice, carol, eve],
+                       "male": [bob, dave],
+                       "odd": [],
+                       "even": []})
     
     def test_lists_all_statuses_in_alphabetical_order(self):
         alice = self.tracker.create(name="alice", status="S")
@@ -139,9 +158,7 @@ class FeatureTracker_Test:
         assert_that(self.tracker.statuses, equal_to(["S", "T", "V"]))
         
     def test_an_unused_status_is_reported_as_empty(self):
-        assert_status = self.assert_status
-        
-        assert_status("never used status", unused_status = [])
+        assert_status("never used status", self.tracker, {"unused_status": []})
     
     def test_lists_names_of_all_features_in_order_of_status_then_priority(self):
         alice = self.tracker.create(name="alice", status="S")
@@ -306,21 +323,53 @@ class FeatureTracker_Test:
         
         assert_that(list(self.storage.list("tracker/alice.*")), equal_to([]))
         
-        
-        
-    def assert_status(self, description, **kwargs):
-        for status in kwargs:
-            self.assert_priority_order(description, *kwargs[status], status=status)
     
-    def assert_priority_order(self, description, *features, **kwargs):
-        status = kwargs.get("status", self.tracker.initial_status)
+
+class FeatureTracker_StorageRepair_Tests:
+    """
+    These tests monkey about with the underlying storage to simulate failed merges.
+    """
+    
+    def test_puts_features_that_are_not_in_any_status_index_into_the_lost_and_found_index(self):
+        storage = MemStorage()
         
-        assert_that(list(self.tracker.features_with_status(status)), equal_to(list(features)), 
-                    "order after " + description)
+        tracker = FeatureTracker(default_config(datadir="tracker"), storage)
         
-        for i in range(len(features)):
-            expected_priority = i+1
-            assert_that(features[i].priority, equal_to(expected_priority), 
-                        "priority " + str(expected_priority) + " after " + description)
+        tracker.create(name="alice", status="testing")
+        tracker.create(name="bob", status="testing")
+        tracker.create(name="carol", status="testing")
+        tracker.create(name="dave", status="testing")
         
+        with storage.open(path("tracker/status/testing.index")) as input:
+            index_entries = LinesFormat(list).load(input)
+        del index_entries[1]
+        with storage.open(path("tracker/status/testing.index"), "w") as output:
+            LinesFormat(list).save(index_entries, output)
         
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            
+            tracker = FeatureTracker(default_config(datadir="tracker"), storage)
+            
+            assert_that(len(w), equal_to(1), 
+                        "number of warnings")
+            
+            last_warning = w[-1]
+            assert_that(last_warning.message, instance_of(RepairWarning), 
+                        "should issue a repair warning")
+            assert_that(str(last_warning.message), contains_string("bob"),
+                        "should name the feature that has been repaired")
+            assert_that(str(last_warning.message), contains_string("lost+found"),
+                        "should name the status it has been assigned")
+            
+            repaired_feature = tracker.feature_named("bob")
+            
+            assert_that(repaired_feature in tracker.features_with_status(LostAndFoundStatus), 
+                        LostAndFoundStatus + " status should include the repaired feature")
+            
+            assert_status("after repair", tracker,
+                          {"testing": [tracker.feature_named("alice"),
+                                       tracker.feature_named("carol"),
+                                       tracker.feature_named("dave")],
+                           "lost+found": [repaired_feature]})
+            

@@ -434,6 +434,12 @@ def write_features_as_csv(features_table, out):
 
 
 def main():
+    def warning_to_stderr(message, category, filename, lineno, file=None, line=None):
+        sys.stderr.write("WARNING: " + str(message) + "\n")
+    
+    import warnings
+    warnings.showwarning = warning_to_stderr
+    
     try:
         CommandLineInterface(deft.tracker, sys.stdout, sys.stderr).run(sys.argv)
     except deft.tracker.UserError as e:

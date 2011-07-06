@@ -1,11 +1,12 @@
 
 import sys
+from warnings import warn
 from functools import partial
 import itertools
 import os
 from glob import iglob
 from deft.indexing import PriorityIndex
-from deft.formats import TextFormat, YamlFormat
+from deft.formats import TextFormat, YamlFormat, LinesFormat
 from deft.storage.filesystem import FileStorage
 
 FormatVersion = '3.0'
@@ -20,6 +21,9 @@ PropertiesSuffix = ".properties.yaml"
 
 # Used to report user errors that have been explicitly detected
 class UserError(Exception):
+    pass
+
+class RepairWarning(UserWarning):
     pass
 
 
@@ -72,6 +76,12 @@ def save_config_to_storage(storage, config):
         YamlFormat.save(config, output)
 
 
+
+PriorityIndexFormat = LinesFormat(PriorityIndex)
+
+LostAndFoundStatus = "lost+found"
+
+
 class FeatureTracker(object):
     def __init__(self, config, storage):
         repo_format = config['format']
@@ -90,13 +100,25 @@ class FeatureTracker(object):
         for f in self.storage.list(self._status_path("*")):
             status = os.path.basename(f)[:-(len(StatusIndexSuffix))]
             with self.storage.open(f) as input:
-                feature_names = input.read().splitlines()
+                index = PriorityIndexFormat.load(input)
             
-            self._status_index[status] = PriorityIndex(feature_names)
-            
-            for name in feature_names:
+            self._status_index[status] = index
+            for name in index:
                 self._name_index[name] = Feature(tracker=self, name=name, status=status)
-    
+        
+        indexed_features = set(itertools.chain.from_iterable(self._status_index.itervalues()))
+        all_features = set([os.path.basename(f)[:-len(DescriptionSuffix)]
+                                 for f in self.storage.list(self._feature_path("*", DescriptionSuffix))])
+        unindexed_features = all_features - indexed_features
+        
+        for name in unindexed_features:
+            warn("feature " + repr(name) + " did not have a status or priority: " +
+                 "assigned status " + LostAndFoundStatus + ", requires manual repair",
+                 category=RepairWarning)
+            self._add_to_status_index(LostAndFoundStatus, name)
+            self._name_index[name] = Feature(tracker=self, name=name, status=LostAndFoundStatus)
+        
+
     def configure(self, **config):
         self.config.update(config)
         self.save_config()
@@ -124,12 +146,14 @@ class FeatureTracker(object):
         
         self._name_index[name] = feature
         
-        status_index = self._status(status)
-        status_index.append(name)
-        
-        self._save_status_index(status)
+        self._add_to_status_index(status, name)
         
         return feature
+    
+    def _add_to_status_index(self, status, name):
+        status_index = self._status(status)
+        status_index.append(name)
+        self._save_status_index(status)
     
     @property
     def statuses(self):
@@ -203,7 +227,7 @@ class FeatureTracker(object):
     def _save_status_index(self, status):
         with self.storage.open(self._status_path(status), "w") as output:
             for feature_name in self._status(status):
-                output.writelines(feature_name+"\n")
+                output.write(feature_name+"\n")
     
     def _has_feature_named(self, name):
         return name in self._name_index
