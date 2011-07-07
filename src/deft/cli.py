@@ -1,5 +1,6 @@
 
 import sys
+import warnings
 from functools import partial
 import os
 import shutil
@@ -433,11 +434,11 @@ def write_features_as_csv(features_table, out):
     csv_out.writerows(features_table)
 
 
-def main():
-    def warning_to_stderr(message, category, filename, lineno, file=None, line=None):
-        sys.stderr.write("WARNING: " + str(message) + "\n")
+def warning_to_stderr(message, category, filename, lineno, file=None, line=None):
+    sys.stderr.write("WARNING: " + str(message) + "\n")
     
-    import warnings
+
+def main():
     warnings.showwarning = warning_to_stderr
     
     try:
