@@ -1,9 +1,10 @@
 
 import warnings
+from collections import Counter
+from functools import wraps
 from deft.formats import LinesFormat
-from deft.tracker import (
-    FeatureTracker, default_config, PropertiesSuffix, 
-    UserError, LostAndFoundStatus, RepairWarning)
+from deft.tracker import (FeatureTracker, default_config, PropertiesSuffix, 
+                          UserError, LostAndFoundStatus, RepairWarning)
 from deft.storage.memory import MemStorage
 from deft.storage.filesystem_tests import path
 from hamcrest import *
@@ -322,54 +323,136 @@ class FeatureTracker_HappyPath_Tests:
         self.tracker.save()
         
         assert_that(list(self.storage.list("tracker/alice.*")), equal_to([]))
-        
-    
+
+
+
+def ignoring_warnings(fn):
+    @wraps(fn)
+    def apply_context(*args, **kwargs):
+        with warnings.catch_warnings(record=True):
+            return fn(*args, **kwargs)
+    return apply_context
+
 
 class FeatureTracker_StorageRepair_Tests:
     """
     These tests monkey about with the underlying storage to simulate failed merges.
     """
     
+    @ignoring_warnings
     def test_puts_features_that_are_not_in_any_status_index_into_the_lost_and_found_index(self):
         storage = MemStorage()
         
-        tracker = FeatureTracker(default_config(datadir="tracker"), storage)
+        create_features(storage, {"testing": ["alice", "bob", "carol", "dave"]})
+        corrupt_index(storage, "testing", delete_entry("bob"))
+        tracker = create_tracker(storage)
         
-        tracker.create(name="alice", status="testing")
-        tracker.create(name="bob", status="testing")
-        tracker.create(name="carol", status="testing")
-        tracker.create(name="dave", status="testing")
+        repaired_feature = tracker.feature_named("bob")
+            
+        assert_that(repaired_feature in tracker.features_with_status(LostAndFoundStatus), 
+                    LostAndFoundStatus + " status should include the repaired feature")
+            
+        assert_status("after repair", tracker,
+                      {"testing": [tracker.feature_named("alice"),
+                                   tracker.feature_named("carol"),
+                                   tracker.feature_named("dave")],
+                       "lost+found": [repaired_feature]})
+    
+    def test_issues_warning_when_repairing_feature_that_is_not_in_any_status_index(self):
+        storage = MemStorage()
         
-        with storage.open(path("tracker/status/testing.index")) as input:
-            index_entries = LinesFormat(list).load(input)
-        del index_entries[1]
-        with storage.open(path("tracker/status/testing.index"), "w") as output:
-            LinesFormat(list).save(index_entries, output)
+        create_features(storage, {"testing": ["alice", "bob", "carol", "dave"]})
+        corrupt_index(storage, "testing", delete_entry("bob"))
         
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             
-            tracker = FeatureTracker(default_config(datadir="tracker"), storage)
+            tracker = create_tracker(storage)
             
             assert_that(len(w), equal_to(1), 
                         "number of warnings")
             
-            last_warning = w[-1]
-            assert_that(last_warning.message, instance_of(RepairWarning), 
+            last_warning = w[-1].message
+            assert_that(last_warning, instance_of(RepairWarning), 
                         "should issue a repair warning")
-            assert_that(str(last_warning.message), contains_string("bob"),
+            assert_that(str(last_warning), contains_string("bob"),
                         "should name the feature that has been repaired")
-            assert_that(str(last_warning.message), contains_string("lost+found"),
+            assert_that(str(last_warning), contains_string("lost+found"),
                         "should name the status it has been assigned")
             
-            repaired_feature = tracker.feature_named("bob")
-            
-            assert_that(repaired_feature in tracker.features_with_status(LostAndFoundStatus), 
-                        LostAndFoundStatus + " status should include the repaired feature")
-            
-            assert_status("after repair", tracker,
-                          {"testing": [tracker.feature_named("alice"),
-                                       tracker.feature_named("carol"),
-                                       tracker.feature_named("dave")],
-                           "lost+found": [repaired_feature]})
-            
+    
+    @ignoring_warnings
+    def test_removes_duplicated_entries_when_in_same_index(self):
+        storage = MemStorage()
+        
+        create_features(storage, {"testing": ["alice", "bob", "carol", "dave"]})
+        corrupt_index(storage, "testing", insert_entry(3, "bob"))
+        tracker = create_tracker(storage)
+        
+        counts = Counter([f.name for f in tracker.features_with_status("testing")])
+        
+        for (name, count) in counts.items():
+            assert_that(count, equal_to(1),
+                        name + " should only appear once, count")
+    
+
+    @ignoring_warnings
+    def test_removes_duplicated_entries_when_in_different_indices(self):
+        storage = MemStorage()
+        
+        create_features(storage, {"s1": ["alice", "bob", "carol"],
+                                  "s2": ["dave", "eve"]})
+        corrupt_index(storage, "s2", insert_entry(2, "bob"))
+        tracker = create_tracker(storage)
+        
+        counts = Counter([f.name for f in tracker.features_with_status("s1")]) \
+               + Counter([f.name for f in tracker.features_with_status("s2")])
+        
+        for (name, count) in counts.items():
+            assert_that(count, equal_to(1),
+                        name + " should only appear once, count")
+
+    #To test:
+    # - Warnings from detection of duplicate index entries
+    # - Corrected indices are saved immediately
+    # - Lost+Found index is saved if orphaned features are detected
+    # - When index contains name of nonexistent feature
+
+
+
+def corrupt_index(storage, name, modifier):
+    index_path = path("tracker/status/" + name + ".index")
+    with storage.open(index_path) as input:
+        index_entries = LinesFormat(list).load(input)
+
+    modifier(index_entries)
+    
+    with storage.open(index_path, "w") as output:
+        LinesFormat(list).save(index_entries, output)
+
+
+def delete_entry_at(n):
+    def modifier(seq):
+        del seq[n]
+    return modifier
+
+def delete_entry(entry):
+    def modifier(seq):
+        seq.remove(entry)
+    return modifier
+
+def insert_entry(i, new_entry):
+    def modifier(seq):
+        seq.insert(i, new_entry)
+    return modifier
+
+
+def create_tracker(storage):
+    return FeatureTracker(default_config(datadir="tracker"), storage)
+
+def create_features(storage, names_by_status):
+    tracker = create_tracker(storage)
+    for status in names_by_status:
+        for name in names_by_status[status]:
+            tracker.create(name=name, status=status)
+

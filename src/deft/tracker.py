@@ -82,6 +82,10 @@ PriorityIndexFormat = LinesFormat(PriorityIndex)
 LostAndFoundStatus = "lost+found"
 
 
+def rootname(path, suffix):
+    return os.path.basename(path)[:-len(suffix)]
+
+
 class FeatureTracker(object):
     def __init__(self, config, storage):
         repo_format = config['format']
@@ -97,18 +101,25 @@ class FeatureTracker(object):
         self._index_features()
     
     def _index_features(self):
-        for f in self.storage.list(self._status_path("*")):
-            status = os.path.basename(f)[:-(len(StatusIndexSuffix))]
-            with self.storage.open(f) as input:
-                index = PriorityIndexFormat.load(input)
-            
-            self._status_index[status] = index
-            for name in index:
-                self._name_index[name] = Feature(tracker=self, name=name, status=status)
+        indexed_features = set()
         
-        indexed_features = set(itertools.chain.from_iterable(self._status_index.itervalues()))
-        all_features = set([os.path.basename(f)[:-len(DescriptionSuffix)]
-                                 for f in self.storage.list(self._feature_path("*", DescriptionSuffix))])
+        for f in self.storage.list(self._status_path("*")):
+            status_name = rootname(f, StatusIndexSuffix)
+            
+            with self.storage.open(f) as input:
+                indexed_names = LinesFormat(list).load(input)
+            
+            status_index = PriorityIndex([])
+            for name in indexed_names:
+                if name not in indexed_features:
+                    status_index.append(name)
+                    self._name_index[name] = Feature(tracker=self, name=name, status=status_name)
+                    indexed_features.add(name)
+                    
+            self._status_index[status_name] = status_index
+        
+        all_features = set(rootname(f, DescriptionSuffix)
+                           for f in self.storage.list(self._feature_path("*", DescriptionSuffix)))
         unindexed_features = all_features - indexed_features
         
         for name in unindexed_features:
