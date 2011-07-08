@@ -33,8 +33,8 @@ def default_config(datadir=DefaultDataDir, initial_status="new"):
         'datadir': datadir,
         'initial_status': initial_status}
 
-def init_tracker(**config_overrides):
-    return init_with_storage(FileStorage(os.getcwd()), config_overrides)
+def init_tracker(warning_listener, **config_overrides):
+    return init_with_storage(FileStorage(os.getcwd()), warning_listener, config_overrides)
 
 
 def tracker_storage():
@@ -49,20 +49,23 @@ def tracker_storage():
 
     return FileStorage(basedir)
 
-def load_tracker():
-    return load_with_storage(tracker_storage())
+def load_tracker(warning_listener):
+    return load_with_storage(tracker_storage(), warning_listener)
 
-def init_with_storage(storage, config_overrides):
+
+def init_with_storage(storage, warning_listener, config_overrides):
     if storage.exists(ConfigDir):
         raise UserError("tracker already initialised in directory " + ConfigDir)
     
-    tracker = FeatureTracker(default_config(**config_overrides), storage)
+    tracker = FeatureTracker(default_config(**config_overrides), storage, warning_listener)
     tracker.save_config()
     
     return tracker
 
-def load_with_storage(storage):
-    return FeatureTracker(load_config_from_storage(storage), storage)
+def load_with_storage(storage, warning_listener):
+    return FeatureTracker(load_config_from_storage(storage), storage, warning_listener)
+
+
 
 def load_config_from_storage(storage):
     if not storage.exists(ConfigDir):
@@ -85,9 +88,8 @@ LostAndFoundStatus = "lost+found"
 def rootname(path, suffix):
     return os.path.basename(path)[:-len(suffix)]
 
-
 class FeatureTracker(object):
-    def __init__(self, config, storage):
+    def __init__(self, config, storage, warning_listener):
         repo_format = config['format']
         if repo_format != FormatVersion:
             raise UserError("incompatible tracker: found data in format version %s, " \
@@ -95,39 +97,37 @@ class FeatureTracker(object):
         
         self.config = config
         self.storage = storage
+        self.warning_listener = warning_listener
         self._name_index = {}
         self._status_index = {}
         
         self._index_features()
     
     def _index_features(self):
-        indexed_features = set()
-        
         for f in self.storage.list(self._status_path("*")):
-            status_name = rootname(f, StatusIndexSuffix)
-            
             with self.storage.open(f) as input:
                 indexed_names = LinesFormat(list).load(input)
             
-            status_index = PriorityIndex([])
+            status_name = rootname(f, StatusIndexSuffix)
+            status_index = self._status(status_name)
+            
             for name in indexed_names:
-                if name not in indexed_features:
+                if name not in self._name_index:
                     status_index.append(name)
                     self._name_index[name] = Feature(tracker=self, name=name, status=status_name)
-                    indexed_features.add(name)
+                else:
+                    feature = self._name_index[name]
+                    self.warning_listener.duplicate_entries(feature=feature, removed_from_status=status_name)
                     
-            self._status_index[status_name] = status_index
-        
         all_features = set(rootname(f, DescriptionSuffix)
                            for f in self.storage.list(self._feature_path("*", DescriptionSuffix)))
-        unindexed_features = all_features - indexed_features
+        unindexed_features = all_features - set(self._name_index)
         
         for name in unindexed_features:
-            warn("feature " + repr(name) + " did not have a status or priority: " +
-                 "assigned status " + LostAndFoundStatus + ", requires manual repair",
-                 category=RepairWarning)
             self._add_to_status_index(LostAndFoundStatus, name)
-            self._name_index[name] = Feature(tracker=self, name=name, status=LostAndFoundStatus)
+            feature = Feature(tracker=self, name=name, status=LostAndFoundStatus)
+            self._name_index[name] = feature
+            self.warning_listener.unindexed_feature(feature=feature)
         
 
     def configure(self, **config):

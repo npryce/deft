@@ -1,12 +1,12 @@
 
-import warnings
 from collections import Counter
 from functools import wraps
 from deft.formats import LinesFormat
 from deft.tracker import (FeatureTracker, default_config, PropertiesSuffix, 
-                          UserError, LostAndFoundStatus, RepairWarning)
+                          UserError, LostAndFoundStatus)
 from deft.storage.memory import MemStorage
 from deft.storage.filesystem_tests import path
+from deft.warn import IgnoreWarnings, WarningRecorder
 from hamcrest import *
 
 
@@ -31,13 +31,17 @@ def assert_priority_order(description, tracker, features, status=None):
 class FeatureTracker_HappyPath_Tests:
     def setup(self):
         self.storage = MemStorage("basedir")
-        self.tracker = FeatureTracker(default_config(datadir="tracker"), self.storage)
+        self.tracker = FeatureTracker(config=default_config(datadir="tracker"), 
+                                      storage=self.storage, 
+                                      warning_listener=IgnoreWarnings())
     
     def test_initially_contains_no_features(self):
         assert_that(list(self.tracker.all_features()), has_length(0))
     
     def test_reports_initial_status(self):
-        tracker = FeatureTracker(default_config(initial_status="testing"), self.storage)
+        tracker = FeatureTracker(config=default_config(initial_status="testing"), 
+                                 storage=self.storage, 
+                                 warning_listener=IgnoreWarnings())
         assert_that(tracker.initial_status, equal_to("testing"))
         
     def test_default_initial_status_is_new(self):
@@ -339,7 +343,6 @@ class FeatureTracker_StorageRepair_Tests:
     These tests monkey about with the underlying storage to simulate failed merges.
     """
     
-    @ignoring_warnings
     def test_puts_features_that_are_not_in_any_status_index_into_the_lost_and_found_index(self):
         storage = MemStorage()
         
@@ -358,30 +361,20 @@ class FeatureTracker_StorageRepair_Tests:
                                    tracker.feature_named("dave")],
                        "lost+found": [repaired_feature]})
     
+    
     def test_issues_warning_when_repairing_feature_that_is_not_in_any_status_index(self):
         storage = MemStorage()
         
         create_features(storage, {"testing": ["alice", "bob", "carol", "dave"]})
         corrupt_index(storage, "testing", delete_entry("bob"))
         
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            
-            tracker = create_tracker(storage)
-            
-            assert_that(len(w), equal_to(1), 
-                        "number of warnings")
-            
-            last_warning = w[-1].message
-            assert_that(last_warning, instance_of(RepairWarning), 
-                        "should issue a repair warning")
-            assert_that(str(last_warning), contains_string("bob"),
-                        "should name the feature that has been repaired")
-            assert_that(str(last_warning), contains_string("lost+found"),
-                        "should name the status it has been assigned")
-            
+        warnings = WarningRecorder()
+        tracker = create_tracker(storage, warning_listener=warnings)
+        
+        assert_that(list(warnings), equal_to([
+                    ("unindexed_feature", {"feature": tracker.feature_named("bob")})]))
+        
     
-    @ignoring_warnings
     def test_removes_duplicated_entries_when_in_same_index(self):
         storage = MemStorage()
         
@@ -396,7 +389,6 @@ class FeatureTracker_StorageRepair_Tests:
                         name + " should only appear once, count")
     
 
-    @ignoring_warnings
     def test_removes_duplicated_entries_when_in_different_indices(self):
         storage = MemStorage()
         
@@ -411,6 +403,28 @@ class FeatureTracker_StorageRepair_Tests:
         for (name, count) in counts.items():
             assert_that(count, equal_to(1),
                         name + " should only appear once, count")
+        
+        repaired_feature = tracker.feature_named("bob")
+        assert_that(repaired_feature.status, equal_to("s1"))
+        
+        assert_that(repaired_feature in tracker.features_with_status("s1"))
+        assert_that(repaired_feature not in tracker.features_with_status("s2"))
+        
+
+    def test_warns_when_removing_duplicate_index_entries(self):
+        storage = MemStorage()
+        
+        create_features(storage, {"s1": ["alice", "bob", "carol"],
+                                  "s2": ["dave", "eve"]})
+        corrupt_index(storage, "s2", insert_entry(2, "bob"))
+        
+        warnings = WarningRecorder()
+        tracker = create_tracker(storage, warning_listener=warnings)
+            
+        assert_that(list(warnings), equal_to([
+                    ("duplicate_entries", {"feature": tracker.feature_named("bob"), 
+                                           "removed_from_status": "s2"})]))
+            
 
     #To test:
     # - Warnings from detection of duplicate index entries
@@ -447,8 +461,10 @@ def insert_entry(i, new_entry):
     return modifier
 
 
-def create_tracker(storage):
-    return FeatureTracker(default_config(datadir="tracker"), storage)
+def create_tracker(storage, warning_listener=None):
+    return FeatureTracker(config=default_config(datadir="tracker"), 
+                          storage=storage, 
+                          warning_listener=warning_listener if warning_listener is not None else IgnoreWarnings())
 
 def create_features(storage, names_by_status):
     tracker = create_tracker(storage)

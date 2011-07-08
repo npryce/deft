@@ -180,12 +180,12 @@ class InMemoryEnvironment(object):
             raise ProcessError(command, 1, stdout.getvalue(), 
                                traceback.format_exc() + "\n\nstderr:\n\n" + stderr.getvalue())
     
-    def init_tracker(self, **config_overrides):
-        return init_with_storage(self.storage, config_overrides)
+    def init_tracker(self, warning_listener, **config_overrides):
+        return init_with_storage(self.storage, warning_listener, config_overrides)
     
-    def load_tracker(self):
-        return load_with_storage(self.storage)
-
+    def load_tracker(self, warning_listener):
+        return load_with_storage(self.storage, warning_listener)
+    
     def abspath(self, subpath):
         return self.storage.abspath(subpath)
     

@@ -9,6 +9,7 @@ import yaml
 import subprocess
 from argparse import ArgumentParser, Action
 import deft.tracker
+from deft.warn import PrintWarnings
 from deft.tracker import UserError, FormatVersion
 from deft.upgrade import create_upgrader
 
@@ -32,7 +33,7 @@ def run_editor_process(path):
 
 def with_tracker(function):
     def wrapper(self, args):
-        tracker = self.backend.load_tracker()
+        tracker = self.backend.load_tracker(self.warning_output)
         function(self, tracker, args)
         tracker.save()
     
@@ -42,9 +43,6 @@ def with_tracker(function):
 def _ignore_output(s):
     pass
     
-
-
-
 
 def append_value(namespace, name, value):
     values = getattr(namespace, name) or []
@@ -66,12 +64,25 @@ class AppendPropertyDeleter(Action):
         append_value(namespace, self.dest, deleter)
 
 
+_DuplicateEntriesMessage = \
+    "found multiple index entries for feature {feature.name}: " + \
+    "ignored duplicate entry in index of status {removed_from_status}, " + \
+    "using status {feature.status}, priority {feature.priority}"
+
+_UnindexedFeatureMessage = \
+    "feature {feature.name} did not have a status or priority: " + \
+    "assigned status {feature.status}, requires manual repair"
+                               
+
 class CommandLineInterface(object):
     def __init__(self, backend, out, err, editor=run_editor_process):
         self.backend = backend
         self.editor = editor
         self.out = out
-        self.err = err
+        self.warning_output = PrintWarnings(err, "WARNING: ",
+            duplicate_entries=_DuplicateEntriesMessage,
+            unindexed_feature=_UnindexedFeatureMessage)
+        
         
     def run(self, argv):
         command = argv[0]
@@ -268,7 +279,7 @@ class CommandLineInterface(object):
         if args.initial_status is not None:
             config['initial_status'] = args.initial_status
         
-        self.backend.init_tracker(**config)
+        self.backend.init_tracker(self.warning_output, **config)
         args.info_output("initialised Deft tracker")
     
     
@@ -436,6 +447,7 @@ def write_features_as_csv(features_table, out):
 
 def warning_to_stderr(message, category, filename, lineno, file=None, line=None):
     sys.stderr.write("WARNING: " + str(message) + "\n")
+
     
 
 def main():
