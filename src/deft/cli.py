@@ -72,6 +72,9 @@ _DuplicateEntriesMessage = \
 _UnindexedFeatureMessage = \
     "feature {feature.name} did not have a status or priority: " + \
     "assigned status {feature.status}, requires manual repair"
+
+_UnknownFeatureMessage = \
+    "nonexistent feature {name} found in index for status {status}: removed from index"
                                
 
 class CommandLineInterface(object):
@@ -81,7 +84,8 @@ class CommandLineInterface(object):
         self.out = out
         self.warning_output = PrintWarnings(err, "WARNING: ",
             duplicate_entries=_DuplicateEntriesMessage,
-            unindexed_feature=_UnindexedFeatureMessage)
+            unindexed_feature=_UnindexedFeatureMessage,
+            unknown_feature=_UnknownFeatureMessage)
         
         
     def run(self, argv):
