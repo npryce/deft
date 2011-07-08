@@ -23,9 +23,6 @@ PropertiesSuffix = ".properties.yaml"
 class UserError(Exception):
     pass
 
-class RepairWarning(UserWarning):
-    pass
-
 
 def default_config(datadir=DefaultDataDir, initial_status="new"):
     return {
@@ -113,8 +110,12 @@ class FeatureTracker(object):
             
             for name in indexed_names:
                 if name not in self._name_index:
-                    status_index.append(name)
-                    self._name_index[name] = Feature(tracker=self, name=name, status=status_name)
+                    feature = Feature(tracker=self, name=name, status=status_name)
+                    if feature.is_valid:
+                        status_index.append(name)
+                        self._name_index[name] = feature
+                    else:
+                        self.warning_listener.unknown_feature(name=name, status=status_name)
                 else:
                     feature = self._name_index[name]
                     self.warning_listener.duplicate_entries(feature=feature, removed_from_status=status_name)
@@ -276,7 +277,7 @@ class FeatureFileProperty(object):
     def __set__(self, feature, new_value):
         self._validate(new_value)
         feature._tracker._save(feature._path(self._suffix), new_value, self._format)
-
+    
 
 ReservedPropertyNames = frozenset(["status", "priority", "description"])
 
@@ -321,6 +322,11 @@ class Feature(object):
     @property
     def properties_file(self):
         return self._abspath(PropertiesSuffix)
+    
+    @property
+    def is_valid(self):
+        storage = self._tracker.storage
+        return storage.exists(self._path(DescriptionSuffix)) or storage.exists(self._path(PropertiesSuffix))
     
     def _path(self, suffix):
         return self._tracker._feature_path(self._name, suffix)

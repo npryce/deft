@@ -424,13 +424,37 @@ class FeatureTracker_StorageRepair_Tests:
         assert_that(list(warnings), equal_to([
                     ("duplicate_entries", {"feature": tracker.feature_named("bob"), 
                                            "removed_from_status": "s2"})]))
-            
+
+    def test_filters_nonexistent_features_from_indices(self):
+        storage = MemStorage()
+        create_features(storage, {"s1": ["alice", "bob"],
+                                  "s2": ["carol", "dave"]})
+        corrupt_index(storage, "s2", insert_entry(2, "eve"))
+        
+        tracker = create_tracker(storage)
+        
+        assert_status("after repair", tracker,
+                      {"s1": [tracker.feature_named("alice"),
+                              tracker.feature_named("bob")],
+                       "s2": [tracker.feature_named("carol"),
+                              tracker.feature_named("dave")]})
+    
+    def test_warns_if_index_contains_nonexistent_feature(self):
+        storage = MemStorage()
+        create_features(storage, {"s1": ["alice", "bob"],
+                                  "s2": ["carol", "dave"]})
+        corrupt_index(storage, "s2", insert_entry(2, "eve"))
+        
+        warnings = WarningRecorder()
+        tracker = create_tracker(storage, warning_listener=warnings)
+        
+        assert_that(list(warnings), equal_to([
+                    ("unknown_feature", {"name": "eve", "status": "s2"})]))
+        
 
     #To test:
-    # - Warnings from detection of duplicate index entries
     # - Corrected indices are saved immediately
     # - Lost+Found index is saved if orphaned features are detected
-    # - When index contains name of nonexistent feature
 
 
 
