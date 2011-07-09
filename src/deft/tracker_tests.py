@@ -6,7 +6,7 @@ from deft.tracker import (FeatureTracker, default_config, PropertiesSuffix,
                           UserError, LostAndFoundStatus)
 from deft.storage.memory import MemStorage
 from deft.storage.filesystem_tests import path
-from deft.warn import IgnoreWarnings, WarningRecorder
+from deft.warn import IgnoreWarnings, WarningRecorder, WarningRaiser
 from hamcrest import *
 
 
@@ -33,7 +33,7 @@ class FeatureTracker_HappyPath_Tests:
         self.storage = MemStorage("basedir")
         self.tracker = FeatureTracker(config=default_config(datadir="tracker"), 
                                       storage=self.storage, 
-                                      warning_listener=IgnoreWarnings())
+                                      warning_listener=WarningRaiser(AssertionError))
     
     def test_initially_contains_no_features(self):
         assert_that(list(self.tracker.all_features()), has_length(0))

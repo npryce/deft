@@ -1,7 +1,17 @@
 
 from StringIO import StringIO
-from deft.warn import PrintWarnings, IgnoreWarnings, WarningRecorder, warnings_recorded_by
+from deft.warn import PrintWarnings, IgnoreWarnings, WarningRecorder, WarningRaiser, fallback_format
 from hamcrest import *
+
+
+class FallbackFormat_Test:
+    def test_turns_warning_name_into_words(self):
+        assert_that(fallback_format("example_warning_name", {}),
+                    equal_to("example warning name"))
+        
+    def test_appends_warning_parameters_in_parentheses(self):
+        assert_that(fallback_format("another_warning", {"foo": "bar", "boz": 10}),
+                    equal_to("another warning (boz: 10, foo: 'bar')"))
 
 
 class PrintWarnings_Test:
@@ -20,7 +30,8 @@ class PrintWarnings_Test:
         
         warn.example_warning(name="alice", oranges=10, bananas=20)
         
-        assert_that(out.getvalue(), equal_to("WARNING: example warning (name: 'alice', oranges: 10, bananas: 20)\n"))
+        assert_that(out.getvalue(), equal_to(
+                "WARNING: example warning (bananas: 20, name: 'alice', oranges: 10)\n"))
 
 
 class IgnoreWarnings_Tests:
@@ -50,3 +61,24 @@ class WarningRecorderTest_Tests:
                                               ("another_warning", {"apples": 20})]))
         assert_that(warnings[0], equal_to(("a_warning", {"hello": "world"})))
         assert_that(warnings[1], equal_to(("another_warning", {"apples": 20})))
+
+
+class WarningRaiser_Tests:
+    def test_raises_warnings_as_exceptions(self):
+        warnings = WarningRaiser()
+        
+        try:
+            warnings.example_warning(who="carol", bananas=10)
+        except UserWarning as e:
+            assert_that(str(e), contains_string("example warning (bananas: 10, who: 'carol')"))
+    
+    def test_can_specify_the_type_of_exception_raised(self):
+        class ExampleException(Exception):
+            pass
+        
+        warnings = WarningRaiser(ExampleException)
+        
+        try:
+            warnings.point_blank()
+        except ExampleException as e:
+            assert_that(str(e), contains_string("point blank"))

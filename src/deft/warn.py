@@ -19,14 +19,15 @@ class PrintWarnings(object):
             return self._formats[warning_name].format(**args)
         else:
             return fallback_format(warning_name, args)
-        
+
     
 
 def format_dict(d):
-    return ", ".join(name + ": " + repr(value) for (name, value) in d.items())
+    return ", ".join(name + ": " + repr(value) for (name, value) in sorted(d.items()))
+
 
 def fallback_format(warning_name, args):
-    return warning_name.replace("_", " ") + " (" + format_dict(args) + ")"
+    return warning_name.replace("_", " ") + (" (" + format_dict(args) + ")" if args else "")
 
 
 class IgnoreWarnings(object):
@@ -36,6 +37,7 @@ class IgnoreWarnings(object):
     @staticmethod
     def _ignore_warning(**kwargs):
         pass
+
 
 
 class WarningRecorder(object):
@@ -56,6 +58,13 @@ class WarningRecorder(object):
             self._warnings.append((warning_name, kwargs))
         return record_warning
 
-def warnings_recorded_by(w):
-    return w._warnings
 
+
+class WarningRaiser(object):
+    def __init__(self, exception_to_raise=UserWarning):
+        self._exception_to_raise = exception_to_raise
+    
+    def __getattr__(self, warning_name):
+        def raise_warning(**kwargs):
+            raise self._exception_to_raise(fallback_format(warning_name, kwargs))
+        return raise_warning
