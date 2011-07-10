@@ -124,7 +124,7 @@ class FeatureTracker(object):
                            for f in self.storage.list(self._feature_path("*", DescriptionSuffix)))
         unindexed_features = all_features - set(self._name_index)
         
-        for name in unindexed_features:
+        for name in sorted(unindexed_features):
             self._add_to_status_index(LostAndFoundStatus, name)
             feature = Feature(tracker=self, name=name, status=LostAndFoundStatus)
             self._name_index[name] = feature

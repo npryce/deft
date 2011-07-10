@@ -377,7 +377,27 @@ class FeatureTracker_StorageRepair_Tests:
                                    tracker.feature_named("carol"),
                                    tracker.feature_named("dave")],
                        "lost+found": [repaired_feature]})
-    
+ 
+    def test_saves_lost_and_found_index_when_multiple_orphaned_features_are_repaired(self):
+        self.create_features({"testing": ["alice", "bob", "carol", "dave"]})
+        self.corrupt_index("testing", delete_entry("bob"))
+        self.corrupt_index("testing", delete_entry("carol"))
+        self.create_tracker() # will repair the index
+        
+        
+        tracker = self.create_tracker() # another tracker
+        bob = tracker.feature_named("bob")
+        carol = tracker.feature_named("carol")
+        
+        for repaired_feature in [bob, carol]:
+            assert_that(repaired_feature in tracker.features_with_status(LostAndFoundStatus), 
+                        LostAndFoundStatus + " status should include the repaired feature")
+
+        assert_status("after repair", tracker,
+                      {"testing": [tracker.feature_named("alice"),
+                                   tracker.feature_named("dave")],
+                       "lost+found": [bob, carol]})
+   
     def test_issues_warning_when_repairing_feature_that_is_not_in_any_status_index(self):
         self.create_features({"testing": ["alice", "bob", "carol", "dave"]})
         self.corrupt_index("testing", delete_entry("bob"))
