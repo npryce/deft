@@ -489,10 +489,6 @@ class FeatureTracker_StorageRepair_Tests:
         self.create_tracker(warning_listener=WarningRaiser(AssertionError))
 
     
-    #To test:
-    # - Corrected indices are saved immediately
-
-    
 
     def create_tracker(self, warning_listener=None):
         return FeatureTracker(config=default_config(datadir="tracker"), 
