@@ -129,7 +129,7 @@ class FeatureTracker(object):
         unindexed_features = all_features - set(self._name_index)
         
         for name in sorted(unindexed_features):
-            self._add_to_status_index(LostAndFoundStatus, name)
+            self._status(LostAndFoundStatus).append(name)
             repaired_statuses.add(LostAndFoundStatus)
             feature = Feature(tracker=self, name=name, status=LostAndFoundStatus)
             self._name_index[name] = feature
