@@ -27,6 +27,15 @@ def assert_priority_order(description, tracker, features, status=None):
                     "priority " + str(expected_priority) + " after " + description)
 
 
+def assert_features_not_duplicated_in_indices(description, tracker):
+    counts = Counter()
+    for status in tracker.statuses:
+        for f in tracker.features_with_status(status):
+            counts[f.name] += 1
+    
+    for name in counts:
+        assert_that(description + ", count for " + name, counts[name], equal_to(1))
+
 
 class FeatureTracker_HappyPath_Tests:
     def setup(self):
@@ -363,20 +372,17 @@ class FeatureTracker_StorageRepair_Tests:
                        "lost+found": [repaired_feature]})
     
     
-    def test_saves_lost_and_found_index_when_orphaned_feature_is_repaired(self):
+    def test_persists_lost_and_found_index_when_orphaned_feature_is_repaired(self):
         self.test_puts_features_that_are_not_in_any_status_index_into_the_lost_and_found_index()
         
-        tracker = self.create_tracker()
-        repaired_feature = tracker.feature_named("bob")
-            
-        assert_that(repaired_feature in tracker.features_with_status(LostAndFoundStatus), 
-                    LostAndFoundStatus + " status should include the repaired feature")
-            
+        # Should not need to repair the indices and so will not issue repair warnings
+        tracker = self.create_tracker(warning_listener=WarningRaiser(AssertionError))
+        
         assert_status("after repair", tracker,
                       {"testing": [tracker.feature_named("alice"),
                                    tracker.feature_named("carol"),
                                    tracker.feature_named("dave")],
-                       "lost+found": [repaired_feature]})
+                       "lost+found": [tracker.feature_named("bob")]})
  
     def test_saves_lost_and_found_index_when_multiple_orphaned_features_are_repaired(self):
         self.create_features({"testing": ["alice", "bob", "carol", "dave"]})
@@ -414,11 +420,7 @@ class FeatureTracker_StorageRepair_Tests:
         self.corrupt_index("testing", insert_entry(3, "bob"))
         tracker = self.create_tracker()
         
-        counts = Counter([f.name for f in tracker.features_with_status("testing")])
-        
-        for (name, count) in counts.items():
-            assert_that(count, equal_to(1),
-                        name + " should only appear once, count")
+        assert_features_not_duplicated_in_indices("after repair", tracker)
     
 
     def test_removes_duplicated_entries_when_in_different_indices(self):
@@ -427,20 +429,23 @@ class FeatureTracker_StorageRepair_Tests:
         self.corrupt_index("s2", insert_entry(2, "bob"))
         tracker = self.create_tracker()
         
-        counts = Counter([f.name for f in tracker.features_with_status("s1")]) \
-               + Counter([f.name for f in tracker.features_with_status("s2")])
+        assert_features_not_duplicated_in_indices("after repair", tracker)
         
-        for (name, count) in counts.items():
-            assert_that(count, equal_to(1),
-                        name + " should only appear once, count")
-        
-        repaired_feature = tracker.feature_named("bob")
-        assert_that(repaired_feature.status, equal_to("s1"))
-        
-        assert_that(repaired_feature in tracker.features_with_status("s1"))
-        assert_that(repaired_feature not in tracker.features_with_status("s2"))
+        assert_status("tracker state after repair", tracker,
+                      {"s1": [tracker.feature_named("alice"), 
+                              tracker.feature_named("bob"), 
+                              tracker.feature_named("carol")],
+                       "s2": [tracker.feature_named("dave"), 
+                              tracker.feature_named("eve")]})
         
 
+    def test_persists_removal_of_duplicate_index_entries(self):
+        self.test_removes_duplicated_entries_when_in_different_indices()
+        
+        # Should not need to repair the indices and so will not issue repair warnings
+        self.create_tracker(warning_listener=WarningRaiser(AssertionError))
+        
+    
     def test_warns_when_removing_duplicate_index_entries(self):
         self.create_features({"s1": ["alice", "bob", "carol"],
                               "s2": ["dave", "eve"]})
@@ -477,6 +482,12 @@ class FeatureTracker_StorageRepair_Tests:
         assert_that(list(warnings), equal_to([
                     ("unknown_feature", {"name": "eve", "status": "s2"})]))
         
+    def test_persists_removal_of_nonexistent_features_from_indices(self):
+        self.test_filters_nonexistent_features_from_indices()
+        
+        # Should not need to repair the indices and so will not issue repair warnings
+        self.create_tracker(warning_listener=WarningRaiser(AssertionError))
+
     
     #To test:
     # - Corrected indices are saved immediately

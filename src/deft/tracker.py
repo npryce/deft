@@ -101,6 +101,8 @@ class FeatureTracker(object):
         self._index_features()
     
     def _index_features(self):
+        repaired_statuses = set()
+        
         for f in self.storage.list(self._status_path("*")):
             with self.storage.open(f) as input:
                 indexed_names = LinesFormat(list).load(input)
@@ -115,22 +117,27 @@ class FeatureTracker(object):
                         status_index.append(name)
                         self._name_index[name] = feature
                     else:
+                        repaired_statuses.add(status_name)
                         self.warning_listener.unknown_feature(name=name, status=status_name)
                 else:
                     feature = self._name_index[name]
+                    repaired_statuses.add(status_name)
                     self.warning_listener.duplicate_entries(feature=feature, removed_from_status=status_name)
-                    
+        
         all_features = set(rootname(f, DescriptionSuffix)
                            for f in self.storage.list(self._feature_path("*", DescriptionSuffix)))
         unindexed_features = all_features - set(self._name_index)
         
         for name in sorted(unindexed_features):
             self._add_to_status_index(LostAndFoundStatus, name)
+            repaired_statuses.add(LostAndFoundStatus)
             feature = Feature(tracker=self, name=name, status=LostAndFoundStatus)
             self._name_index[name] = feature
             self.warning_listener.unindexed_feature(feature=feature)
         
-
+        for status_name in repaired_statuses:
+            self._save_status_index(status_name)
+    
     def configure(self, **config):
         self.config.update(config)
         self.save_config()
