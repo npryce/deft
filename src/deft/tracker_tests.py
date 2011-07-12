@@ -160,7 +160,7 @@ class FeatureTracker_HappyPath_Tests:
         
         assert_that(self.tracker.statuses, equal_to(["S", "T", "U"]))
         
-    def test_does_not_list_empty_indices(self):
+    def test_does_not_list_empty_status_indices(self):
         alice = self.tracker.create(name="alice", status="S")
         bob = self.tracker.create(name="bob", status="U")
         carol = self.tracker.create(name="carol", status="T")
@@ -316,6 +316,33 @@ class FeatureTracker_HappyPath_Tests:
             raise AssertionError("should have failed")
         except UserError as expected:
             pass
+        
+
+    def test_can_bulk_change_status_of_all_features_with_the_same_status(self):
+        alice = self.tracker.create(name="alice", status="S")
+        bob = self.tracker.create(name="bob", status="S")
+        carol = self.tracker.create(name="carol", status="T")
+        dave = self.tracker.create(name="dave", status="U")
+        
+        self.tracker.bulk_change_status(from_status="S", to_status="T")
+        
+        assert_status("after bulk change", self.tracker,
+                      {"S": [],
+                       "T": [carol, alice, bob],
+                       "U": [dave]})
+
+    def test_can_bulk_change_to_same_status(self):
+        alice = self.tracker.create(name="alice", status="S")
+        bob = self.tracker.create(name="bob", status="S")
+        carol = self.tracker.create(name="carol", status="T")
+        dave = self.tracker.create(name="dave", status="U")
+        
+        self.tracker.bulk_change_status(from_status="S", to_status="S")
+        
+        assert_status("after bulk change", self.tracker,
+                      {"S": [alice, bob],
+                       "T": [carol],
+                       "U": [dave]})
         
     def test_purging_a_feature_removes_all_trace_of_it_from_tracker_and_storage(self):
         alice = self.tracker.create(name="alice", status="new", description="alice-description")

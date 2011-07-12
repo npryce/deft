@@ -190,6 +190,11 @@ class FeatureTracker(object):
     def all_features(self):
         return (self.feature_named(n) for n in itertools.chain.from_iterable(
                 self._status(s) for s in sorted(self._status_index)))
+
+    def bulk_change_status(self, from_status, to_status):
+        # dumb implementation: can be optimised
+        for f in self.features_with_status(from_status):
+            f.status = to_status
     
     def purge(self, name):
         feature = self.feature_named(name)

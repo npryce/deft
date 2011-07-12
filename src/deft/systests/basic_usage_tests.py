@@ -135,15 +135,42 @@ def can_change_status_of_feature(env):
 
 
 @systest
-def can_query_status_of_feature(env):
+def can_change_status_of_feature(env):
     env.deft("init")
-    env.deft("create", "a-feature")
+    env.deft("create", "x")
+    env.deft("create", "y")
+    env.deft("status", "x", "in-progress")
     
-    assert_that(env.deft("status", "a-feature").value, equal_to("new"))
+    assert_that(env.deft("list", "--status", "new").rows, equal_to([
+                ["new", "1", "y"]]))
+    assert_that(env.deft("list", "--status", "in-progress").rows, equal_to([
+                ["in-progress", "1", "x"]]))
     
-    env.deft("status", "a-feature", "testing")
+    assert_that(env.deft("status", "x").value, equal_to("in-progress"))
     
-    assert_that(env.deft("status", "a-feature").value, equal_to("testing"))
+    assert_that(env.deft("priority", "y").value, equal_to("1"),
+                "priority of y increased now x moved to new status bucket")
+
+@systest
+def can_change_status_of_all_features_with_given_status(env):
+    env.deft("init")
+    env.deft("create", "x", "--status", "testing")
+    env.deft("create", "y", "--status", "testing")
+    env.deft("create", "z", "--status", "testing")
+    env.deft("create", "a", "--status", "control")
+    
+    env.deft("status", "--all-with-status", "testing", "tested")
+    
+    assert_that(env.deft("list", "--status", "tested").rows, equal_to([
+                ["tested", "1", "x"],
+                ["tested", "2", "y"],
+                ["tested", "3", "z"]]))
+    assert_that(env.deft("list", "--status", "control").rows, equal_to([
+                ["control", "1", "a"]]))
+    
+    assert_that(env.deft("status", "x").value, equal_to("tested"))
+    assert_that(env.deft("status", "y").value, equal_to("tested"))
+    assert_that(env.deft("status", "z").value, equal_to("tested"))
 
 
 @systest

@@ -87,7 +87,6 @@ class CommandLineInterface(object):
             unindexed_feature=_UnindexedFeatureMessage,
             unknown_feature=_UnknownFeatureMessage)
         
-        
     def run(self, argv):
         command = argv[0]
         
@@ -175,9 +174,16 @@ class CommandLineInterface(object):
         
         status_parser = subparsers.add_parser("status", 
                                               help="query or change the status of a feature")
-        status_parser.add_argument("feature",
-                                   help="feature name",
+        status_parser.add_argument("name",
+                                   help="feature name, or status name if the --all-with-status flag is set",
                                    metavar="name")
+        status_parser.add_argument("-s", "--all-with-status",
+                                   help="change the status of all features that currently have status S",
+                                   dest="name_is_status",
+                                   action="store_const",
+                                   const=True,
+                                   default=False)
+                                   
         status_parser.add_argument("status",
                                    help="the new status of the feature, if changing the status",
                                    nargs="?",
@@ -334,11 +340,18 @@ class CommandLineInterface(object):
     
     @with_tracker
     def run_status(self, tracker, args):
-        feature = tracker.feature_named(args.feature)
-        if args.status is not None:
-            feature.status = args.status
+        if args.name_is_status:
+            if args.status is None:
+                raise UserError("new status not specified")
+            else:
+                tracker.bulk_change_status(from_status=args.name, to_status=args.status)
         else:
-            self.println(feature.status)
+            feature = tracker.feature_named(args.name)
+            if args.status is None:
+                self.println(feature.status)
+            else:
+                feature.status = args.status
+
     
     @with_tracker
     def run_priority(self, tracker, args):
@@ -452,13 +465,13 @@ def write_features_as_csv(features_table, out):
 def warning_to_stderr(message, category, filename, lineno, file=None, line=None):
     sys.stderr.write("WARNING: " + str(message) + "\n")
 
-    
 
 def main():
     warnings.showwarning = warning_to_stderr
     
     try:
-        CommandLineInterface(deft.tracker, sys.stdout, sys.stderr).run(sys.argv)
+        cli = CommandLineInterface(deft.tracker, sys.stdout, sys.stderr)
+        cli.run(sys.argv)
     except deft.tracker.UserError as e:
         sys.stderr.write(str(e) + "\n")
         sys.exit(1)

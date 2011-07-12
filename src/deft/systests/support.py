@@ -169,7 +169,6 @@ class InMemoryEnvironment(object):
         def fake_editor(path):
             relpath = self.storage.relpath(path)
             with self.storage.open(relpath, "w") as output:
-                print type(output)
                 output.write(editor_content)
         
         cli = CommandLineInterface(self, out=stdout, err=stderr, editor=fake_editor)
