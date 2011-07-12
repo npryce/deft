@@ -393,6 +393,13 @@ class FeatureTracker_HappyPath_Tests:
         assert_that(not self.storage.exists("tracker/status/testing.index"),
                     "index file should not exist after all entries have been removed")
 
+        
+    def test_asking_for_an_empty_index_does_not_create_an_empty_file(self):
+        empty = self.tracker.features_with_status("testing")
+        assert_that(empty, equal_to([]))
+        
+        assert_that(not self.storage.exists("tracker/status/testing.index"),
+                    "should not have created an empty index file")
 
 def ignoring_warnings(fn):
     @wraps(fn)
