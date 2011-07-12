@@ -249,9 +249,14 @@ class FeatureTracker(object):
         return self._status_index.setdefault(status, PriorityIndex([]))
     
     def _save_status_index(self, status):
-        with self.storage.open(self._status_path(status), "w") as output:
-            for feature_name in self._status(status):
-                output.write(feature_name+"\n")
+        index = self._status(status)
+        path = self._status_path(status)
+        
+        if len(index) == 0:
+            self.storage.remove(path)
+        else:
+            with self.storage.open(self._status_path(status), "w") as output:
+                PriorityIndexFormat.save(index, output)
     
     def _has_feature_named(self, name):
         return name in self._name_index

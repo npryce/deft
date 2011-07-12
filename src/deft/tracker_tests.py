@@ -364,6 +364,34 @@ class FeatureTracker_HappyPath_Tests:
         
         assert_that(list(self.storage.list("tracker/alice.*")), equal_to([]))
 
+    def test_deletes_index_file_when_it_becomes_empty(self):
+        alice = self.tracker.create(name="alice", status="testing")
+        bob = self.tracker.create(name="bob", status="testing")
+        carol = self.tracker.create(name="carol", status="testing")
+        
+        assert_that(self.storage.exists("tracker/status/testing.index"), 
+                    "index file exists")
+        
+        alice.status = "another-status"
+        bob.status = "another-status"
+        carol.status = "another-status"
+        
+        assert_that(not self.storage.exists("tracker/status/testing.index"),
+                    "index file should not exist after all entries have been removed")
+
+
+    def test_deletes_index_file_when_it_becomes_by_purging_features(self):
+        self.tracker.create(name="alice", status="testing")
+        self.tracker.create(name="bob", status="testing")
+        
+        assert_that(self.storage.exists("tracker/status/testing.index"), 
+                    "index file exists")
+        
+        self.tracker.purge("alice")
+        self.tracker.purge("bob")
+        
+        assert_that(not self.storage.exists("tracker/status/testing.index"),
+                    "index file should not exist after all entries have been removed")
 
 
 def ignoring_warnings(fn):
