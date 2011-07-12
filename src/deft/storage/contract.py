@@ -152,7 +152,13 @@ class StorageContract(ReadOnlyStorageContract):
         assert_that(not self.storage.exists("parent/x"))
         assert_that(self.storage.exists("basedir/y"))
         assert_that(self.storage.open("basedir/y").read(), equal_to("x-contents"))
+    
         
+    @raises(IOError)
+    def test_cannot_rename_directories(self):
+        self.given_file("a/b/c")
+        self.storage.rename("a/b", "a/bb")
+    
     @raises(IOError)
     def test_cannot_rename_nonexistent_files(self):
         self.storage.rename("file/that/does/not/exist", "irrelevant")

@@ -86,6 +86,9 @@ class MemStorage(object):
         if newpath in self.files:
             raise IOError(newpath + " already exists")
         
+        if len(self.list(os.path.join(relpath, "*"))) != 0:
+            raise IOError(relpath + " is a directory")
+        
         data = self.files.pop(relpath)
         self.makedirs(os.path.dirname(newpath))
         self.files[newpath] = data

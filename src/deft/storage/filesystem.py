@@ -27,8 +27,11 @@ class FileStorage(object):
         try:
             if not os.path.exists(old_abspath):
                 raise IOError(old_abspath + " does not exist")
+            if os.path.isdir(old_abspath):
+                raise IOError(old_abspath + " is a directory")
             if os.path.exists(new_abspath):
                 raise IOError(new_abspath + " already exists")
+
             
             os.renames(old_abspath, new_abspath)
             
