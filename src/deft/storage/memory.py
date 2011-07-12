@@ -93,7 +93,6 @@ class MemStorage(object):
         self.makedirs(os.path.dirname(newpath))
         self.files[newpath] = data
         
-        
     def remove(self, relpath):
         self._check_can_write("remove", relpath)
         

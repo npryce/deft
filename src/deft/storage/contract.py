@@ -152,7 +152,6 @@ class StorageContract(ReadOnlyStorageContract):
         assert_that(not self.storage.exists("parent/x"))
         assert_that(self.storage.exists("basedir/y"))
         assert_that(self.storage.open("basedir/y").read(), equal_to("x-contents"))
-    
         
     @raises(IOError)
     def test_cannot_rename_directories(self):
