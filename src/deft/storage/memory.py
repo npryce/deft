@@ -3,6 +3,7 @@ import sys
 from StringIO import StringIO
 import os
 from fnmatch import fnmatch
+from contextlib import contextmanager
 
 
 def read_only_save_callback(data):
@@ -26,8 +27,9 @@ class MemoryIO(StringIO):
 
 
 class MemStorage(object):
-    def __init__(self, basedir="basedir"):
+    def __init__(self, basedir="basedir", readonly=False):
         self.basedir = basedir
+        self.readonly = readonly
         self.files = {}
         self.read_counts = {}
     
@@ -68,6 +70,8 @@ class MemStorage(object):
         return MemoryIO(content=self.files[relpath])
     
     def _open_write(self, relpath):
+        self._check_can_write("write", relpath)
+        
         def store_data(data):
             self.files[relpath] = data
         
@@ -86,8 +90,10 @@ class MemStorage(object):
         self.makedirs(os.path.dirname(newpath))
         self.files[newpath] = data
         
-
+        
     def remove(self, relpath):
+        self._check_can_write("remove", relpath)
+        
         for subpath in self.list(os.path.join(relpath, "*")):
             self.files.pop(subpath, None)
         self.files.pop(relpath, None)
@@ -105,7 +111,22 @@ class MemStorage(object):
         return sorted(filter(relpath_matches, self.files.keys()))
     
     def makedirs(self, relpath):
+        self._check_can_write("make directory", relpath)
+        
         if relpath != "":
             self.makedirs(os.path.dirname(relpath))
             self.files[relpath] = None
+    
+    def _check_can_write(self, action, relpath):
+        if self.readonly:
+            raise IOError("cannot "+action+" "+relpath+": storage is in read-only mode")
 
+    
+    @property
+    @contextmanager
+    def writeable(self):
+        self.readonly = False
+        try:
+            yield self
+        finally:
+            self.readonly = True
