@@ -1,11 +1,11 @@
-attachments
-bash-autocomplete
-bulk-purge
 cfd-visualisation
-deft-gui
-git-integration
 github-import
+bash-autocomplete
+git-integration
+attachments
+bulk-purge
 change-status-and-properties
 change-priority-and-properties
 list-by-properties
 list-top-n-features
+deft-gui
