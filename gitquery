@@ -1,0 +1,2 @@
+#!/bin/sh
+PYTHONPATH=src python2.7-dev/bin/python -m deft.storage.git "$@"
