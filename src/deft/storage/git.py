@@ -9,7 +9,6 @@ from dulwich.objects import Blob, Tree, Commit
 from deft.storage.memory import MemoryIO
 from deft.storage.overlay import OverlayStorage
 from deft.upgrade import create_upgrader
-from deft.warn import PrintWarnings
 
 
 def date_of(commit):
@@ -117,9 +116,11 @@ if __name__ == '__main__':
     import sys
     import deft.tracker
     from deft.cli import features_to_table, write_features_as_text
+    from deft.warn import PrintWarnings
+    
+    date = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
     
     git = GitVersionedStorage(".")
-    date = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
     
     revision = git.at_end_of(date)
     overlay = OverlayStorage(revision)
