@@ -74,6 +74,9 @@ class ReadOnlyStorageContract:
         assert_that(list(self.storage.list("a/zzz*")), equal_to([]))
         assert_that(list(self.storage.list("zzz/*")), equal_to([]))
     
+        
+    def test_returns_no_results_when_listing_pattern_refers_to_nonexistent_directory(self):
+        assert_that(list(self.storage.list("no/where/*.txt")), equal_to([]))
     
     def test_can_report_real_path_for_relative_path(self):
         assert_that(self.create_storage("/foo/bar").abspath("x/y"), equal_to("/foo/bar/x/y"))
