@@ -58,6 +58,9 @@ class GitTreeStorage(object):
     def exists(self, relpath):
         return self._resolve_path(relpath) is not None
     
+    def isdir(self, relpath):
+        return type(self._resolve_path(relpath)) == Tree
+    
     def list(self, relpattern):
         "Note: partial implementation, just enough for the FeatureTracker"
         

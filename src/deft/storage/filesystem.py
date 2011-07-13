@@ -14,6 +14,9 @@ class FileStorage(object):
     def exists(self, relpath):
         return os.path.exists(self.abspath(relpath))
     
+    def isdir(self, relpath):
+        return os.path.isdir(self.abspath(relpath))
+    
     def open(self, relpath, mode="r"):
         if mode == "w":
             self._ensure_parent_dir_exists(relpath)
@@ -33,7 +36,6 @@ class FileStorage(object):
                 raise IOError(new_abspath + " already exists")
             
             os.renames(old_abspath, new_abspath)
-            
         except OSError as e:
             raise IOError(e.strerror)
     

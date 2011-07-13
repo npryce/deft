@@ -26,7 +26,10 @@ class MemoryIO(StringIO):
         self.close()
 
 
+
 class MemStorage(object):
+    "Only suitable for storing small directory trees and small amounts of data"
+    
     def __init__(self, basedir="basedir", readonly=False):
         self.basedir = basedir
         self.readonly = readonly
@@ -40,6 +43,10 @@ class MemStorage(object):
         norm_abspath = os.path.normpath(abspath)
         norm_basedir = os.path.normpath(self.basedir)
         return os.path.relpath(norm_abspath, norm_basedir)
+    
+    def isdir(self, relpath):
+        # A hack-job: should model directories properly
+        return len(self.list(os.path.join(relpath, "*"))) != 0
     
     def read_count(self, relpath):
         return self.read_counts.get(relpath, 0)
@@ -86,7 +93,7 @@ class MemStorage(object):
         if newpath in self.files:
             raise IOError(newpath + " already exists")
         
-        if len(self.list(os.path.join(relpath, "*"))) != 0:
+        if self.isdir(relpath):
             raise IOError(relpath + " is a directory")
         
         data = self.files.pop(relpath)

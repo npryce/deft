@@ -16,6 +16,12 @@ class ReadOnlyStorageContract:
         assert_that(self.storage.exists("other-dir"), equal_to(False))
         assert_that(self.storage.exists("example-dir/yet-another-file"), equal_to(False))
     
+    def test_reports_if_path_refers_to_a_directory(self):
+        self.given_file("a-dir/another-dir/a-file")
+        
+        assert_that(self.storage.isdir("a-dir"))
+        assert_that(self.storage.isdir("a-dir/another-dir"))
+        assert_that(not self.storage.isdir("a-dir/another-dir/a-file"))
     
     def test_can_open_file_for_reading(self):
         self.given_file("foo.txt", content="testing!")
@@ -91,10 +97,12 @@ class StorageContract(ReadOnlyStorageContract):
         with self.storage.open("parent/subparent/example.txt", "w") as output:
             output.write("testing")
         
-        assert_that(self.storage.exists("parent"), equal_to(True))
-        assert_that(self.storage.exists("parent/subparent"), equal_to(True))
-        assert_that(self.storage.exists("parent/subparent/example.txt"), equal_to(True))
-
+        assert_that(self.storage.exists("parent/subparent/example.txt"))
+        assert_that(self.storage.exists("parent/subparent"))
+        assert_that(self.storage.isdir("parent/subparent"))
+        assert_that(self.storage.exists("parent"))
+        assert_that(self.storage.isdir("parent/subparent"))
+        
         
     def test_can_delete_files(self):
         self.given_file("to-be-deleted")
@@ -134,7 +142,6 @@ class StorageContract(ReadOnlyStorageContract):
         
         assert_that(self.storage.exists("another-dir"), equal_to(False))
     
-    
     def test_can_rename_files(self):
         self.given_file("x", content="x-contents")
         
@@ -145,13 +152,13 @@ class StorageContract(ReadOnlyStorageContract):
         assert_that(self.storage.open("y").read(), equal_to("x-contents"))
         
     def test_can_rename_files_to_new_directory(self):
-        self.given_file("parent/x", content="x-contents")
+        self.given_file("fromdir/x", content="x-contents")
         
-        self.storage.rename("parent/x", "basedir/y")
+        self.storage.rename("fromdir/x", "todir/y")
         
-        assert_that(not self.storage.exists("parent/x"))
-        assert_that(self.storage.exists("basedir/y"))
-        assert_that(self.storage.open("basedir/y").read(), equal_to("x-contents"))
+        assert_that(not self.storage.exists("fromdir/x"))
+        assert_that(self.storage.exists("todir/y"))
+        assert_that(self.storage.open("todir/y").read(), equal_to("x-contents"))
         
     @raises(IOError)
     def test_cannot_rename_directories(self):
