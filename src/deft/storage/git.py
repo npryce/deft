@@ -7,10 +7,13 @@ import stat
 from dulwich.repo import Repo
 from dulwich.objects import Blob, Tree, Commit
 from deft.storage.memory import MemoryIO
+from deft.storage.overlay import OverlayStorage
+from deft.upgrade import create_upgrader
+from deft.warn import PrintWarnings
 
 
 def date_of(commit):
-    return date.fromtimestamp(commit.author_time)
+    return date.fromtimestamp(commit.commit_time)
 
 
 class GitVersionedStorage(object):
@@ -69,11 +72,11 @@ class GitTreeStorage(object):
         parent = self._resolve_path(parent_path)
         
         if parent is None:
-            raise IOError("directory " + self.abspath(parent_path) + " does not exist")
-        
-        return [os.path.join(parent_path, name) 
-                for (name, mode, sha) in parent.iteritems() 
-                if fnmatch(name, file_pattern)]
+            return []
+        else:
+            return [os.path.join(parent_path, name) 
+                    for (name, mode, sha) in parent.iteritems() 
+                    if fnmatch(name, file_pattern)]
     
     def open(self, relpath, mode="r"):
         if mode != "r":
@@ -119,12 +122,9 @@ if __name__ == '__main__':
     date = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
     
     revision = git.at_end_of(date)
-    tracker = deft.tracker.load_with_storage(revision)
+    overlay = OverlayStorage(revision)
+    create_upgrader().upgrade(overlay)
+    tracker = deft.tracker.load_with_storage(overlay, PrintWarnings(sys.stderr, "WARNING: "))
     
     write_features_as_text(features_to_table(tracker.all_features()), sys.stdout)
-    sys.stdout.write("\n\n")
-    f = tracker.feature_named("git-integration")
-    sys.stdout.write(f.name)
-    sys.stdout.write("\n" + ("-"*len(f.name)) + "\n\n")
-    sys.stdout.write(f.description)
 
