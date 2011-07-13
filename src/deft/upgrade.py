@@ -46,7 +46,7 @@ def upgrade_2_1_to_3_0(storage, config):
     statuses = {}
     status_ext = ".status"
     for f in storage.list(join(config["datadir"], "*"+status_ext)):
-        line = open(f).read()
+        line = storage.open(f).read()
         
         feature_name = basename(f)[:-len(status_ext)]
         priority = int(line[:8])
@@ -68,7 +68,7 @@ def upgrade_2_1_to_3_0(storage, config):
 def upgrade_2_0_to_2_1(storage, config):
     for status_file in storage.list(join(config["datadir"], "*.status")):
         properties_file = status_file[:-len("status")] + "properties.yaml"
-        with open(properties_file, "w") as output:
+        with storage.open(properties_file, "w") as output:
             yaml.safe_dump({}, output, default_flow_style=False)
     
     config["format"] = "2.1"
@@ -77,11 +77,12 @@ def upgrade_1_0_to_2_0(storage, config):
     datadir = config["datadir"]
     status_files = storage.list(join(datadir, "*.status"))
     for f in status_files:
-        yaml = storage.load_yaml(f)
-        priority = yaml["priority"]
-        status = yaml["status"]
+        with storage.open(f, "r") as input:
+            feature_info = yaml.safe_load(input)
+        priority = feature_info["priority"]
+        status = feature_info["status"]
         
-        with open(f, "r") as output:
+        with storage.open(f, "w") as output:
             output.write("{1:>8} {0}".format(status, priority))
     
     config["format"] = "2.0"
