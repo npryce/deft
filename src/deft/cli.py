@@ -462,13 +462,7 @@ def write_features_as_csv(features_table, out):
     csv_out.writerows(features_table)
 
 
-def warning_to_stderr(message, category, filename, lineno, file=None, line=None):
-    sys.stderr.write("WARNING: " + str(message) + "\n")
-
-
 def main():
-    warnings.showwarning = warning_to_stderr
-    
     try:
         cli = CommandLineInterface(deft.tracker, sys.stdout, sys.stderr)
         cli.run(sys.argv)

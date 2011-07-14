@@ -15,7 +15,7 @@ def date_of(commit):
     return date.fromtimestamp(commit.commit_time)
 
 
-class GitVersionedStorage(object):
+class GitHistory(object):
     def __init__(self, repodir, deftdir="."):
         self.repo = Repo(repodir)
         self.deftdir = deftdir
@@ -34,6 +34,11 @@ class GitVersionedStorage(object):
                     found.append((commit_date, commit))
         
         return max(found, key=lambda t: t[0])[1]
+    
+    def __getitem__(self, commit_sha):
+        commit = self.repo.commit(commit_sha)
+        tree = self.repo.tree(commit.tree)
+        return GitTreeStorage(self.repo, tree, self.deftdir)
     
     def at_end_of(self, date):
         commit = self.last_commit_on(date)
@@ -114,18 +119,17 @@ class GitTreeStorage(object):
 
 if __name__ == '__main__':
     import sys
-    import deft.tracker
-    from deft.cli import features_to_table, write_features_as_text
-    from deft.warn import PrintWarnings
+    from deft.tracker import UserError
+    from deft.storage.historical import HistoricalBackend
+    from deft.cli import CommandLineInterface
     
-    date = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
+    commitspec = sys.argv[1]
+    cli_args = sys.argv[0:1] + sys.argv[2:]
     
-    git = GitVersionedStorage(".")
-    
-    revision = git.at_end_of(date)
-    overlay = OverlayStorage(revision)
-    create_upgrader().upgrade(overlay)
-    tracker = deft.tracker.load_with_storage(overlay, PrintWarnings(sys.stderr, "WARNING: "))
-    
-    write_features_as_text(features_to_table(tracker.all_features()), sys.stdout)
-
+    try:
+        git = GitHistory(".")
+        cli = CommandLineInterface(HistoricalBackend(git[commitspec]), sys.stdout, sys.stderr)
+        cli.run(cli_args)
+    except UserError as e:
+        sys.stderr.write(str(e) + "\n")
+        sys.exit(1)
