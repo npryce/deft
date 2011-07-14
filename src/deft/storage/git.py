@@ -1,4 +1,5 @@
 
+import sys
 from time import localtime
 from datetime import date, datetime
 from fnmatch import fnmatch
@@ -8,7 +9,10 @@ from dulwich.repo import Repo
 from dulwich.objects import Blob, Tree, Commit
 from deft.storage.memory import MemoryIO
 from deft.storage.overlay import OverlayStorage
+from deft.tracker import UserError
 from deft.upgrade import create_upgrader
+from deft.cli import CommandLineInterface
+from deft.history import HistoricalBackend
 
 
 def date_of(commit):
@@ -117,12 +121,7 @@ class GitTreeStorage(object):
     
 
 
-if __name__ == '__main__':
-    import sys
-    from deft.tracker import UserError
-    from deft.storage.historical import HistoricalBackend
-    from deft.cli import CommandLineInterface
-    
+def main():    
     commitspec = sys.argv[1]
     cli_args = sys.argv[0:1] + sys.argv[2:]
     
@@ -133,3 +132,6 @@ if __name__ == '__main__':
     except UserError as e:
         sys.stderr.write(str(e) + "\n")
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()

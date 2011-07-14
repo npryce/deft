@@ -15,5 +15,3 @@ class HistoricalBackend(object):
         overlay = OverlayStorage(self.readonly_snapshot)
         create_upgrader().upgrade(overlay)
         return load_with_storage(overlay, warning_listener)
-
-        
