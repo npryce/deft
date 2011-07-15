@@ -4,5 +4,6 @@ gnome-terminal \
 	--tab-with-profile=Testing -e "make continually target=in-process-tests" -t "In Process Tests" \
 	--tab-with-profile=Testing -e "make continually target=in-process-tests systest=mem" -t "In Process System Tests" \
 	--tab-with-profile=Testing -e "make continually target=out-of-process-tests" -t "System Tests" \
+        --tab-with-profile=Testing -e "/usr/bin/env PYTHONPATH=src python2.7-dev/bin/python" -t "Python REPL" \
 	--hide-menubar
 
