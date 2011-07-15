@@ -1,7 +1,7 @@
 
 import sys
 from time import localtime
-from datetime import date, datetime
+from datetime import date, time, datetime
 from fnmatch import fnmatch
 import os
 import stat
@@ -18,36 +18,39 @@ from deft.history import HistoricalBackend
 def date_of(commit):
     return date.fromtimestamp(commit.commit_time)
 
+def time_of(commit):
+    return datetime.fromtimestamp(commit.commit_time).time()
+
 
 class GitHistory(object):
     def __init__(self, repodir, deftdir="."):
         self.repo = Repo(repodir)
         self.deftdir = deftdir
     
-    def last_commit_on(self, date):
-        commit_shas = [self.repo.head()]
-        found = []
-        
-        while commit_shas:
-            commit = self.repo.commit(commit_shas.pop())
-            commit_date = date_of(commit)
-            
-            if commit_date >= date:
-                commit_shas.extend(commit.parents)
-                if commit_date == date:
-                    found.append((commit_date, commit))
-        
-        return max(found, key=lambda t: t[0])[1]
-    
     def __getitem__(self, commit_sha):
         commit = self.repo.commit(commit_sha)
         tree = self.repo.tree(commit.tree)
         return GitTreeStorage(self.repo, tree, self.deftdir)
     
-    def at_end_of(self, date):
-        commit = self.last_commit_on(date)
-        tree = self.repo.tree(commit.tree)
-        return GitTreeStorage(self.repo, tree, self.deftdir)
+    def eod_commits(self):
+        results = {}
+        commit_shas = set([self.repo.head()])
+        
+        while commit_shas:
+            commit_sha = commit_shas.pop()
+            commit = self.repo.commit(commit_sha)
+            commit_date = date_of(commit)
+            
+            commit_info = (time_of(commit), commit_sha)
+            
+            if commit_date in results:
+                results[commit_date] = max(results[commit_date], commit_info)
+            else:
+                results[commit_date] = commit_info
+            
+            commit_shas.update(commit.parents)
+        
+        return dict((date, sha) for (date, (time, sha)) in results.iteritems())
 
 
 def is_subtree(tree, name):

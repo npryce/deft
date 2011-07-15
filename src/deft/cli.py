@@ -332,9 +332,9 @@ class CommandLineInterface(object):
         table = features_to_table(features, args.properties)
         
         if args.format == "text":
-            write_features_as_text(table, self.out)
+            write_table_as_text(table, self.out)
         elif args.format == "csv":
-            write_features_as_csv(table, self.out)
+            write_table_as_csv(table, self.out)
         else:
             raise ValueError("unexpected format: " + args.format)
     
@@ -433,7 +433,7 @@ def features_to_table(features, property_names=[]):
     return [tuple([f.status, f.priority, f.name] + property_values(f, property_names)) for f in features]
 
 
-def write_features_as_text(features_table, out):
+def write_table_as_text(features_table, out):
     if not features_table:
         return
     
@@ -457,7 +457,7 @@ def write_features_as_text(features_table, out):
         out.write(os.linesep)
 
 
-def write_features_as_csv(features_table, out):
+def write_table_as_csv(features_table, out):
     csv_out = csv.writer(out)
     csv_out.writerows(features_table)
 
@@ -469,4 +469,6 @@ def main():
     except deft.tracker.UserError as e:
         sys.stderr.write(str(e) + "\n")
         sys.exit(1)
+    except KeyboardInterrupt:
+        pass
     # Unexpected exceptions pass through and Python interpreter will print the stacktrace

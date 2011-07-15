@@ -68,8 +68,8 @@ class FeaturesToTable_Test:
         assert_that(cli.features_to_table([]), equal_to([]))
 
 
-class WriteFeaturesAsText_Test:
-    def test_formats_features_as_aligned_columns(self):
+class WriteTableAsText_Test:
+    def test_formats_table_as_aligned_columns(self):
         features = [
             ("pending", 1, "alice"),
             ("pending", 2, "bob"),
@@ -79,7 +79,7 @@ class WriteFeaturesAsText_Test:
         
         output = StringIO()
         
-        cli.write_features_as_text(features, output)
+        cli.write_table_as_text(features, output)
         
         formatted_lines = output.getvalue().splitlines()
         
@@ -93,14 +93,14 @@ class WriteFeaturesAsText_Test:
     def test_writes_empty_list_as_empty_string(self):
         output = StringIO()
         
-        cli.write_features_as_text([], output)
+        cli.write_table_as_text([], output)
         
         assert_that(output.getvalue(), equal_to(""))
 
 
     
 
-class WriteFeaturesAsCSV_Test:
+class WriteTableAsCSV_Test:
     def writes_features_in_csv(self):
         features = [
             ("pending", 1, "alice"),
@@ -111,7 +111,7 @@ class WriteFeaturesAsCSV_Test:
         
         output = StringIO()
         
-        cli.write_features_as_csv(features, output, dialect="excel")
+        cli.write_table_as_csv(features, output, dialect="excel")
         
         csv_lines = output.getvalue().splitlines()
         assert_that(csv_lines, equal_to([
@@ -124,6 +124,6 @@ class WriteFeaturesAsCSV_Test:
     def test_formats_empty_list_as_empty_string(self):
         output = StringIO()
         
-        cli.write_features_as_csv([], output)
+        cli.write_table_as_csv([], output)
         
         assert_that(output.getvalue(), equal_to(""))
