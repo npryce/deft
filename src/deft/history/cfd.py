@@ -5,7 +5,7 @@ from deft.tracker import UserError
 from deft.storage.git import GitHistory
 from deft.storage.historical import HistoricalBackend
 from deft.warn import PrintWarnings    
-from deft.cli import write_table_as_text, write_table_as_csv
+from deft.formats import TextTableFormat, CSVTableFormat
 
 
 class AppendSingletonLists(Action):
@@ -36,8 +36,8 @@ parser.add_argument("-d", "--tracker-directory",
 parser.add_argument("-c", "--csv",
                     dest="format",
                     action="store_const",
-                    const=write_table_as_csv,
-                    default=write_table_as_text)
+                    const=CSVTableFormat,
+                    default=TextTableFormat)
 
 warning_listener = PrintWarnings(sys.stderr, "WARNING: ")
 
@@ -71,7 +71,7 @@ try:
                  for date, commit_sha 
                  in sorted(git.eod_commits().iteritems())] # Temporary slice to make runtime faster
     
-    args.format(summaries, sys.stdout)
+    args.format.save(summaries, sys.stdout)
 except KeyboardInterrupt:
     pass
 

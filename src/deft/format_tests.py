@@ -1,6 +1,6 @@
 
 from StringIO import StringIO
-from deft.formats import LinesFormat
+from deft.formats import LinesFormat, TextTableFormat, CSVTableFormat
 from hamcrest import *
 
 
@@ -26,3 +26,64 @@ class LinesFormat_Tests:
     def test_writes_each_element_of_iterable_on_a_line(self):
         assert_that(saved(LinesFormat(list), ["alice", "bob", "carol"]), equal_to("alice\nbob\ncarol\n"))
         assert_that(saved(LinesFormat(tuple), ("alice", "bob", "carol")), equal_to("alice\nbob\ncarol\n"))
+
+
+class TextTableFormat_Test:
+    def test_formats_table_as_aligned_columns(self):
+        features = [
+            ("pending", 1, "alice"),
+            ("pending", 2, "bob"),
+            ("active", 8, "carol"),
+            ("active", 9, "dave"),
+            ("active", 10, "eve")]
+        
+        output = StringIO()
+        
+        TextTableFormat.save(features, output)
+        
+        formatted_lines = output.getvalue().splitlines()
+        
+        assert_that(formatted_lines, equal_to([
+                    "pending  1 alice",
+                    "pending  2 bob  ",
+                    "active   8 carol",
+                    "active   9 dave ",
+                    "active  10 eve  "]))
+        
+    def test_writes_empty_list_as_empty_string(self):
+        output = StringIO()
+        
+        TextTableFormat.save([], output)
+        
+        assert_that(output.getvalue(), equal_to(""))
+
+
+    
+
+class CSVTableFormat_Test:
+    def writes_features_in_csv(self):
+        features = [
+            ("pending", 1, "alice"),
+            ("pending", 2, "bob"),
+            ("active", 8, "carol"),
+            ("active", 9, "dave"),
+            ("active", 10, "eve")]
+        
+        output = StringIO()
+        
+        CSVTableFormat.save(features, output, dialect="excel")
+        
+        csv_lines = output.getvalue().splitlines()
+        assert_that(csv_lines, equal_to([
+                    "pending,1,alice",
+                    "pending,2,bob",
+                    "active,8,carol",
+                    "active,9,dave",
+                    "active,10,eve"]))
+    
+    def test_formats_empty_list_as_empty_string(self):
+        output = StringIO()
+        
+        CSVTableFormat.save([], output)
+        
+        assert_that(output.getvalue(), equal_to(""))

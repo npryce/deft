@@ -4,7 +4,6 @@ import warnings
 from functools import partial
 import os
 import shutil
-import csv
 import yaml
 import subprocess
 from argparse import ArgumentParser, Action
@@ -12,6 +11,7 @@ import deft.tracker
 from deft.warn import PrintWarnings
 from deft.tracker import UserError, FormatVersion
 from deft.upgrade import create_upgrader
+from deft.formats import *
 
 
 EditorEnvironmentVariables = ["DEFT_EDITOR", "VISUAL", "EDITOR"]
@@ -166,8 +166,8 @@ class CommandLineInterface(object):
                                  help="output in CSV format (default is human-readable text)",
                                  dest="format",
                                  action="store_const",
-                                 const="csv",
-                                 default="text")
+                                 const=CSVTableFormat,
+                                 default=TextTableFormat)
         
         statuses_parser = subparsers.add_parser("statuses",
                                                 help="list all active statuses")
@@ -331,12 +331,7 @@ class CommandLineInterface(object):
         
         table = features_to_table(features, args.properties)
         
-        if args.format == "text":
-            write_table_as_text(table, self.out)
-        elif args.format == "csv":
-            write_table_as_csv(table, self.out)
-        else:
-            raise ValueError("unexpected format: " + args.format)
+        args.format.save(table, self.out)
     
     @with_tracker
     def run_status(self, tracker, args):
@@ -431,35 +426,6 @@ def property_values(feature, names):
 
 def features_to_table(features, property_names=[]):
     return [tuple([f.status, f.priority, f.name] + property_values(f, property_names)) for f in features]
-
-
-def write_table_as_text(features_table, out):
-    if not features_table:
-        return
-    
-    max_elts = partial(map, max)
-    
-    alignl = "{1:<{0}}".format
-    alignr = "{1:>{0}}".format
-    def align_for(v):
-        return alignr if type(v) == int else alignl
-
-    table = [map(str,t) for t in features_table]
-    zeros = [0 for elt in features_table[0]]
-    aligns = [align_for(v) for v in features_table[0]]
-    col_widths = reduce(max_elts, [map(len,t) for t in table], zeros)
-    col_formatters = map(partial, aligns, col_widths)
-    formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
-    lines = [" ".join(row) for row in formatted_table]
-    
-    for line in lines:
-        out.write(line)
-        out.write(os.linesep)
-
-
-def write_table_as_csv(features_table, out):
-    csv_out = csv.writer(out)
-    csv_out.writerows(features_table)
 
 
 def main():
