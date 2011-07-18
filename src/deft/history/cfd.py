@@ -32,7 +32,7 @@ parser.add_argument("buckets",
                     action=AppendSingletonLists,
                     default=[])
 parser.add_argument("-b" "--bucket",
-                    help="treat all the given statuses as a single bucket",
+                    help="treat all the following statuses as a single bucket",
                     dest="buckets",
                     metavar="STATUS",
                     nargs="+",
@@ -43,15 +43,24 @@ parser.add_argument("-d", "--tracker-directory",
                     nargs=1,
                     default=".")
 parser.add_argument("-c", "--csv",
+                    help="output in CSV format (defaults to human readable text)",
                     dest="format",
                     action="store_const",
                     const=CSVTableFormat,
                     default=TextTableFormat)
 parser.add_argument("-u", "--unstacked",
+                    help="do not calculate stacked values " \
+                         "(for piping into tools that can generate stacked charts themselves)",
                     dest="stacked",
                     action="store_const",
                     const=unstacked,
                     default=stacked)
+parser.add_argument("--no-headers",
+                    help="suppress the initial row of column headers",
+                    dest="headers",
+                    action="store_const",
+                    const=False,
+                    default=True)
 
 warning_listener = PrintWarnings(sys.stderr, "WARNING: ")
 
@@ -70,6 +79,8 @@ def summary(git, commit_sha, date, buckets):
         warning_listener.failed_to_load_historical_data(date=date, error=str(e))
         return [0 for b in buckets]
 
+def as_headers(buckets):
+    return [", ".join(statuses) for statuses in buckets]
 
 try:
     args = parser.parse_args()
@@ -83,6 +94,9 @@ try:
     summaries = [[date] + args.stacked(summary(git, commit_sha, date, buckets))
                  for date, commit_sha 
                  in sorted(git.eod_commits().iteritems())]
+    
+    if args.headers:
+        summaries = [["date"] + as_headers(buckets)] + summaries
     
     args.format.save(summaries, sys.stdout)
 except KeyboardInterrupt:
