@@ -15,3 +15,15 @@ class HistoricalBackend(object):
         overlay = OverlayStorage(self.readonly_snapshot)
         create_upgrader().upgrade(overlay)
         return load_with_storage(overlay, warning_listener)
+
+
+class History(object):
+    def __init__(self, storage_history, warning_listener):
+        self.storage_history = storage_history
+        self.warning_listener = warning_listener
+    
+    def __getitem__(self, revision_id):
+        return HistoricalBackend(self.storage_history[revision_id]).load_tracker(self.warning_listener)
+    
+    def eod_revisions(self):
+        return self.storage_history.eod_revisions()

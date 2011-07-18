@@ -22,7 +22,7 @@ def time_of(commit):
     return datetime.fromtimestamp(commit.commit_time).time()
 
 
-class GitHistory(object):
+class GitStorageHistory(object):
     def __init__(self, repodir, deftdir="."):
         self.repo = Repo(repodir)
         self.deftdir = deftdir
@@ -32,7 +32,7 @@ class GitHistory(object):
         tree = self.repo.tree(commit.tree)
         return GitTreeStorage(self.repo, tree, self.deftdir)
     
-    def eod_commits(self):
+    def eod_revisions(self):
         results = {}
         commit_shas = set([self.repo.head()])
         
@@ -129,7 +129,7 @@ def main():
     cli_args = sys.argv[0:1] + sys.argv[2:]
     
     try:
-        git = GitHistory(".")
+        git = GitStorageHistory(".")
         cli = CommandLineInterface(HistoricalBackend(git[commitspec]), sys.stdout, sys.stderr)
         cli.run(cli_args)
     except UserError as e:

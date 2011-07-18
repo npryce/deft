@@ -4,8 +4,8 @@ import operator
 from functional import scanl1
 from argparse import ArgumentParser, Action
 from deft.tracker import UserError
-from deft.storage.git import GitHistory
-from deft.storage.historical import HistoricalBackend
+from deft.storage.git import GitStorageHistory
+from deft.history import HistoricalBackend, History
 from deft.warn import PrintWarnings    
 from deft.formats import TextTableFormat, CSVTableFormat
 
@@ -65,15 +65,18 @@ parser.add_argument("--no-headers",
 warning_listener = PrintWarnings(sys.stderr, "WARNING: ")
 
 
+def all_zero(counts):
+    return all(count == 0 for count in counts)
+
 def count_features(tracker, bucket):
     return sum(len(list(tracker.features_with_status(s))) for s in bucket)
 
 def bucket_counts(tracker, buckets):
     return [count_features(tracker, b) for b in buckets]
 
-def summary(git, commit_sha, date, buckets):
+def summary(history, commit_sha, date, buckets):
     try:
-        tracker = HistoricalBackend(git[commit_sha]).load_tracker(warning_listener)
+        tracker = history[commit_sha]
         return bucket_counts(tracker, buckets)
     except UserError as e:
         warning_listener.failed_to_load_historical_data(date=date, error=str(e))
@@ -88,17 +91,23 @@ try:
     if not args.buckets:
         raise UserError("no status buckets defined")
     
-    buckets = list(reversed(args.buckets))
+    bucket_stack = list(reversed(args.buckets))
     
-    git = GitHistory(args.directory)
-    summaries = [[date] + args.stacked(summary(git, commit_sha, date, buckets))
-                 for date, commit_sha 
-                 in sorted(git.eod_commits().iteritems())]
+    history = History(GitStorageHistory(args.directory), warning_listener)
     
-    if args.headers:
-        summaries = [["date"] + as_headers(buckets)] + summaries
+    summaries = [(date, summary(history, commit_sha, date, bucket_stack))
+                 for (date, commit_sha)
+                 in sorted(history.eod_revisions().iteritems())]
     
-    args.format.save(summaries, sys.stdout)
+    header = [["date"] + as_headers(bucket_stack)] if args.headers else []
+    
+    rows = [[date] + args.stacked(summary)
+            for (date, summary)
+            in summaries
+            if not all_zero(summary)]
+    
+    args.format.save(header + rows, sys.stdout)
+
 except KeyboardInterrupt:
     pass
 
