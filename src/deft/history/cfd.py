@@ -1,5 +1,7 @@
 
 import sys
+import operator
+from functional import scanl1
 from argparse import ArgumentParser, Action
 from deft.tracker import UserError
 from deft.storage.git import GitHistory
@@ -7,10 +9,17 @@ from deft.storage.historical import HistoricalBackend
 from deft.warn import PrintWarnings    
 from deft.formats import TextTableFormat, CSVTableFormat
 
-
 class AppendSingletonLists(Action):
     def __call__(self, parser, namespace, values, option_string=None):
         getattr(namespace, self.dest).extend([[v] for v in values])
+
+
+
+def stacked(counts):
+    return list(scanl1(operator.add, counts))
+
+def unstacked(counts):
+    return counts
 
 
 parser = ArgumentParser(
@@ -38,9 +47,13 @@ parser.add_argument("-c", "--csv",
                     action="store_const",
                     const=CSVTableFormat,
                     default=TextTableFormat)
+parser.add_argument("-u", "--unstacked",
+                    dest="stacked",
+                    action="store_const",
+                    const=unstacked,
+                    default=stacked)
 
 warning_listener = PrintWarnings(sys.stderr, "WARNING: ")
-
 
 
 def count_features(tracker, bucket):
@@ -67,9 +80,9 @@ try:
     buckets = list(reversed(args.buckets))
     
     git = GitHistory(args.directory)
-    summaries = [[date] + summary(git, commit_sha, date, buckets)
+    summaries = [[date] + args.stacked(summary(git, commit_sha, date, buckets))
                  for date, commit_sha 
-                 in sorted(git.eod_commits().iteritems())] # Temporary slice to make runtime faster
+                 in sorted(git.eod_commits().iteritems())]
     
     args.format.save(summaries, sys.stdout)
 except KeyboardInterrupt:
