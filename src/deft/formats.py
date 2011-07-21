@@ -38,34 +38,34 @@ class LinesFormat(object):
             output.write("\n")
 
 
-class TextTableFormat(object):
-    @staticmethod
-    def save(features_table, out):
-        if not features_table:
-            return
+def write_table_as_text(features_table, out):
+    if not features_table:
+        return
     
-        max_elts = partial(map, max)
+    max_elts = partial(map, max)
     
-        alignl = "{1:<{0}}".format
-        alignr = "{1:>{0}}".format
-        def align_for(v):
-            return alignr if type(v) == int else alignl
+    alignl = "{1:<{0}}".format
+    alignr = "{1:>{0}}".format
+    def align_for(v):
+        return alignr if type(v) == int else alignl
 
-        table = [map(str,t) for t in features_table]
-        zeros = [0 for elt in features_table[0]]
-        aligns = [align_for(v) for v in features_table[0]]
-        col_widths = reduce(max_elts, [map(len,t) for t in table], zeros)
-        col_formatters = map(partial, aligns, col_widths)
-        formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
-        lines = [" ".join(row) for row in formatted_table]
-        
-        for line in lines:
-            out.write(line)
-            out.write(os.linesep)
+    table = [map(str,t) for t in features_table]
+    zeros = [0 for elt in features_table[0]]
+    aligns = [align_for(v) for v in features_table[0]]
+    col_widths = reduce(max_elts, [map(len,t) for t in table], zeros)
+    col_formatters = map(partial, aligns, col_widths)
+    formatted_table = [[col_formatters[i](row[i]) for i in range(len(row))] for row in table]
+    lines = [" ".join(row) for row in formatted_table]
+    
+    for line in lines:
+        out.write(line)
+        out.write(os.linesep)
 
 
-class CSVTableFormat(object):
-    @staticmethod
-    def save(table, output):
-        csv_output = csv.writer(output)
-        csv_output.writerows(table)
+def write_table_as_csv(table, output):
+    csv_output = csv.writer(output)
+    csv_output.writerows(table)
+
+
+def write_repr(thing, output):
+    output.write(repr(thing))

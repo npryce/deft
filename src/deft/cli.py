@@ -166,8 +166,8 @@ class CommandLineInterface(object):
                                  help="output in CSV format (default is human-readable text)",
                                  dest="format",
                                  action="store_const",
-                                 const=CSVTableFormat,
-                                 default=TextTableFormat)
+                                 const=write_table_as_csv,
+                                 default=write_table_as_text)
         
         statuses_parser = subparsers.add_parser("statuses",
                                                 help="list all active statuses")
@@ -331,7 +331,7 @@ class CommandLineInterface(object):
         
         table = features_to_table(features, args.properties)
         
-        args.format.save(table, self.out)
+        args.format(table, self.out)
     
     @with_tracker
     def run_status(self, tracker, args):
