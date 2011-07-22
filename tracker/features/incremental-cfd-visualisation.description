@@ -1,0 +1,3 @@
+The deft-cfd command should cache previous results so that it can work
+incrementally, without having to traverse the entire history in the
+repository.
