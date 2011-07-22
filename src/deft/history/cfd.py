@@ -6,7 +6,6 @@ import datetime
 import os
 from functional import scanl1
 from argparse import ArgumentParser, Action
-from pychart import *
 from deft.tracker import UserError
 from deft.storage.git import GitStorageHistory
 from deft.history import HistoricalBackend, History
@@ -70,11 +69,21 @@ Formats = {
     "repr": data_formatter(write_repr)
 }
 
-for format in ("pdf", "ps", "eps", "png", "svg"):
-    Formats[format] = write_table_as_chart
+try:
+    from pychart import *
 
-DefaultFormat = "pdf"
+    for format in ("pdf", "ps", "eps", "png", "svg"):
+        Formats[format] = write_table_as_chart
+    
+    DefaultFormat = "pdf"
 
+except ImportError:
+    DefaultFormat = "text"
+
+
+def format_help():
+    return "one of %s; defaults to %s"% (", ".join(sorted(Formats.keys())), 
+                                         DefaultFormat)
 
 class AppendSingletonLists(Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -101,11 +110,10 @@ parser.add_argument("-d", "--tracker-directory",
                     nargs=1,
                     default=".")
 parser.add_argument("-f", "--format",
-                    help="output format (one of %s; defaults to %s)"%(", ".join(Formats.keys()), DefaultFormat),
+                    help="output format (%s)"%(format_help(),),
                     dest="format",
                     default=DefaultFormat)
 
-warning_listener = PrintWarnings(sys.stderr, "WARNING: ")
 
 
 def cumulative(counts):
@@ -120,7 +128,7 @@ def count_features(tracker, bucket):
 def bucket_counts(tracker, buckets):
     return [count_features(tracker, b) for b in buckets]
 
-def summarise(history, commit_sha, date, buckets):
+def summarise(history, commit_sha, date, buckets, warning_listener):
     try:
         tracker = history[commit_sha]
         return bucket_counts(tracker, buckets)
@@ -131,10 +139,11 @@ def summarise(history, commit_sha, date, buckets):
 def as_headers(buckets):
     return [", ".join(statuses) for statuses in buckets]
 
+
 def cumulative_flow(history, buckets, warning_listener):
     bucket_stack = list(reversed(buckets))
     
-    summaries = [(date, summarise(history, commit_sha, date, bucket_stack))
+    summaries = [(date, summarise(history, commit_sha, date, bucket_stack, warning_listener))
                  for (date, commit_sha)
                  in sorted(history.eod_revisions().iteritems())]
     
@@ -148,6 +157,7 @@ def cumulative_flow(history, buckets, warning_listener):
 
 
 def main():
+    warning_listener = PrintWarnings(sys.stderr, "WARNING: ")
     try:
         args = parser.parse_args()
         
@@ -155,9 +165,9 @@ def main():
             raise UserError("no status buckets defined")
         
         if args.format not in Formats:
-            raise UserError("unknown format {format}, should be one of {known_formats}".format(
+            raise UserError("unknown format {format}, should be {known_formats}".format(
                     format=args.format,
-                    known_formats=(", ".join(Formats.keys()))))
+                    known_formats=format_help()))
         
         history = History(GitStorageHistory(args.directory), warning_listener)
         table = cumulative_flow(history, args.buckets, warning_listener)
