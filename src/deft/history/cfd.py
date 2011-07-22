@@ -63,6 +63,7 @@ def data_formatter(write_table_data):
         write_table_data(table, output)
     return apply_user_specified_stacking
 
+
 Formats = {
     "text": data_formatter(write_table_as_text),
     "csv": data_formatter(write_table_as_csv),
@@ -71,10 +72,14 @@ Formats = {
 
 try:
     from pychart import *
-
+    
     for format in ("pdf", "ps", "eps", "png", "svg"):
         Formats[format] = write_table_as_chart
     
+    # Pychart relies on global variables and initialises them from environment variables at import time!
+    theme.use_color = 1
+    theme.reinitialize()
+        
     DefaultFormat = "pdf"
 
 except ImportError:
