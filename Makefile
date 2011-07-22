@@ -75,7 +75,7 @@ output/install: Makefile
 
 dist: dist/Deft-$(DEFT_VER).tar.gz
 
-SCANNED_FILES=src testing-tools deft Makefile
+SCANNED_FILES=src testing-tools deft Makefile setup.py bin
 
 target=in-process-tests out-of-process-tests
 

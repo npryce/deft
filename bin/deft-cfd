@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+import deft.history.cfd
+
+deft.history.cfd.main()

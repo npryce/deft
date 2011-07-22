@@ -139,8 +139,7 @@ class OutOfProcessEnvironment(object):
 
 class DevEnvironment(OutOfProcessEnvironment):
     def binpath(self):
-        return os.pathsep.join([os.path.abspath('python-dev/bin'),
-                                os.path.abspath(os.getcwd()),
+        return os.pathsep.join([os.path.abspath("bin"),
                                 os.defpath])
 
 
