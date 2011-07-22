@@ -31,13 +31,13 @@ setup(name='Deft',
       provides=['deft'],
       packages=['deft', 'deft.storage', 'deft.history', 'deft.systests'],
       package_dir = {'': 'src'},
-      scripts=['deft'],
+      scripts=['bin/deft', 'bin/deft-cfd'],
       
       requires=[
         'yaml (==3.10)', 
-        'argparse(==1.2)', 
-        'functional(==0.4)',
-        'dulwich(==0.7.1)'],
+        'argparse (==1.2)', 
+        'functional (==0.4)',
+        'dulwich (==0.7.1)'],
       
       test_requires=[
         'nose (1.0.0)',
