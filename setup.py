@@ -29,7 +29,7 @@ setup(name='Deft',
       platforms=['any'],
       
       provides=['deft'],
-      packages=['deft', 'deft.systests'],
+      packages=['deft', 'deft.storage', 'deft.history', 'deft.systests'],
       package_dir = {'': 'src'},
       scripts=['deft'],
       
