@@ -7,3 +7,6 @@ feature-properties
 rename-issues
 commit-friendly-storage-format
 distribution
+priority-merge-conflict-warning
+bulk-change-status
+cfd-visualisation
