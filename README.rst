@@ -5,6 +5,8 @@ Deft is a simple distributed feature tracker (aka issue tracker,
 task tracker, bug tracker) designed to work with a distributed
 version control system such as Git.
 
+.. image:: https://github.com/npryce/deft/wiki/cfd.png
+
 Principles
 ----------
 
