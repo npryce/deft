@@ -39,5 +39,6 @@ class GitStorageHistory_Tests:
         
         date_index = history.eod_revisions()
         
-        # Note: there are several commits on 2011/05/29.  The latest one should be returned
+        # Note: there are several commits on these days.  The latest one should be returned
+        assert_that(date_index[date(2011,07,22)], equal_to("304896b628e478cd58cece4934153a2d67f6e2f6"))
         assert_that(date_index[date(2011,05,29)], equal_to("286759e14b5a799d8d0b1a319cda74f4d9343d82"))
