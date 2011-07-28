@@ -23,14 +23,14 @@ def time_of(commit):
 
 
 class GitStorageHistory(object):
-    def __init__(self, repodir, deftdir="."):
+    def __init__(self, repodir, storage_root_subdir=os.curdir):
         self.repo = Repo(repodir)
-        self.deftdir = deftdir
+        self.storage_root_subdir = storage_root_subdir
     
     def __getitem__(self, commit_sha):
         commit = self.repo.commit(commit_sha)
         tree = self.repo.tree(commit.tree)
-        return GitTreeStorage(self.repo, tree, self.deftdir)
+        return GitTreeStorage(self.repo, tree, self.storage_root_subdir)
     
     def eod_revisions(self):
         results = {}
@@ -58,16 +58,16 @@ def is_subtree(tree, name):
 
 
 class GitTreeStorage(object):
-    def __init__(self, repo, tree, deftdir):
+    def __init__(self, repo, tree, storage_root_subdir):
         self.repo = repo
         self.tree = tree
-        self.deftdir = deftdir
+        self.storage_root_subdir = storage_root_subdir
     
     def abspath(self, relpath):
-        if self.deftdir == ".":
+        if self.storage_root_subdir == os.curdir:
             return relpath
         else:
-            return os.path.join(self.deftdir, relpath)
+            return os.path.join(self.storage_root_subdir, relpath)
     
     def exists(self, relpath):
         return self._resolve_path(relpath) is not None
@@ -103,7 +103,7 @@ class GitTreeStorage(object):
         f = self.tree
         f_is_tree = True
         
-        for e in self._split_path(relpath):
+        for e in self._split_path(self.abspath(relpath)):
             if not (type(f) is Tree and e in f):
                 return None
             
