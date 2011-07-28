@@ -32,9 +32,16 @@ class GitStorageHistory(object):
         tree = self.repo.tree(commit.tree)
         return GitTreeStorage(self.repo, tree, self.storage_root_subdir)
     
-    def eod_revisions(self):
+    @property
+    def latest_revision(self):
+        return self.repo.head()
+    
+    def eod_revisions(self, max_revision=None):
+        if max_revision is None:
+            max_revision = self.latest_revision
+        
         results = {}
-        commit_shas = set([self.repo.head()])
+        commit_shas = set([max_revision])
         
         while commit_shas:
             commit_sha = commit_shas.pop()

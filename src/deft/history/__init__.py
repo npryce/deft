@@ -25,5 +25,9 @@ class History(object):
     def __getitem__(self, revision_id):
         return HistoricalBackend(self.storage_history[revision_id]).load_tracker(self.warning_listener)
     
-    def eod_revisions(self):
-        return self.storage_history.eod_revisions()
+    @property
+    def latest_revision(self):
+        return self.storage_history.latest_revision
+    
+    def eod_revisions(self, max_revision=None):
+        return self.storage_history.eod_revisions(max_revision)

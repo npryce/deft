@@ -145,12 +145,12 @@ def as_headers(buckets):
     return [", ".join(statuses) for statuses in buckets]
 
 
-def cumulative_flow(history, buckets, warning_listener):
+def cumulative_flow(history, max_revision, buckets, warning_listener):
     bucket_stack = list(reversed(buckets))
     
     summaries = [(date, summarise(history, commit_sha, date, bucket_stack, warning_listener))
                  for (date, commit_sha)
-                 in sorted(history.eod_revisions().iteritems())]
+                 in sorted(history.eod_revisions(max_revision).iteritems())]
     
     header_row = [["date"] + as_headers(bucket_stack)]
     data_rows = [[date] + cumulative(summary)
@@ -175,7 +175,7 @@ def main():
                     known_formats=format_help()))
         
         history = History(GitStorageHistory(args.directory), warning_listener)
-        table = cumulative_flow(history, args.buckets, warning_listener)
+        table = cumulative_flow(history, history.latest_revision, args.buckets, warning_listener)
         Formats[args.format](table, args, sys.stdout)
         
     except UserError as e:
