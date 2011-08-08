@@ -33,7 +33,7 @@ def run_editor_process(path):
 
 def with_tracker(function):
     def wrapper(self, args):
-        tracker = self.backend.load_tracker(self.warning_output)
+        tracker = self.backend.load_tracker(self.warning_listener)
         function(self, tracker, args)
         tracker.save()
     
@@ -82,7 +82,7 @@ class CommandLineInterface(object):
         self.backend = backend
         self.editor = editor
         self.out = out
-        self.warning_output = PrintWarnings(err, "WARNING: ",
+        self.warning_listener = PrintWarnings(err, "WARNING: ",
             duplicate_entries=_DuplicateEntriesMessage,
             unindexed_feature=_UnindexedFeatureMessage,
             unknown_feature=_UnknownFeatureMessage)
@@ -289,7 +289,7 @@ class CommandLineInterface(object):
         if args.initial_status is not None:
             config['initial_status'] = args.initial_status
         
-        self.backend.init_tracker(self.warning_output, **config)
+        self.backend.init_tracker(self.warning_listener, **config)
         args.info_output("initialised Deft tracker")
     
     
