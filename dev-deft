@@ -1,3 +1,0 @@
-#!/bin/sh
-DEVDIR=`dirname $0`
-PATH=$DEVDIR/python2.7-dev/bin:$PATH PYTHONPATH=$DEVDIR/src $DEVDIR/bin/deft "$@"

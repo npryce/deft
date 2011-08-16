@@ -1,0 +1,3 @@
+. python2.7-dev/bin/activate
+export PYTHONPATH=$PYTHONPATH:src
+export PATH=`pwd`/bin:$PATH
