@@ -1,40 +1,35 @@
-<html>
-  <head>
-    <title>Deft</title>
-    <link rel="stylesheet" type="text/css" href="/static/html5reset-1.6.1.css"/>
-    <link rel="stylesheet" type="text/css" href="/static/deft.css"/>
-    <script type="application/javascript" src="/static/jquery-1.6.2.min.js"></script>
-    <script type="application/javascript" src="/static/deft.js"></script>
-  </head>
-  <body>
-    <h1>Deft {{feature.name}}</h1>
+{% extends "layout.template" %}
+
+{% block nav %}
+  <p><a id="back" href="/">Back</a></p>
+{% end %}
+
+{% block main %}
+  <section>
+    <h1>Feature: {{feature.name}}</h1>
+  </section>
+  
+  <section>
+    <header>Properties</header>
     
-    <div class="deft-feature">
-      <h2>Properties</h2>
-      
-      {% if properties == {} %}
-      <p><em>No properties</em></p>
-      {% else %}
-      <table>
-	{% for name, value in properties.items() %}
-	<tr>
-	  <td class="deft-property-name">{{name}}</td>
-	  <td class="deft-property-value">{{value}}</td>
-	</tr>
-	{% end %}
-      </table>
+    <table>
+      <tr>
+	<td class="deft-status-name">status</td>
+	<td class="deft-status-value">{{feature.status}}</td>
+      </tr>
+      {% for name, value in feature.properties.items() %}
+      <tr>
+	<td class="deft-property-name">{{name}}</td>
+	<td class="deft-property-value">{{value}}</td>
+      </tr>
       {% end %}
-      
-      <h2>Description</h2>
-      <div class="deft-feature-description">
-	{{feature.description}}
-      </div>
+    </table>
+  </section>
+  
+  <section>
+    <header>Description</header>
+    <div class="deft-feature-description">
+      {% autoescape None %}{{markdown(feature.description)}}{% autoescape %}
     </div>
-    
-    <div class="about">
-      <p><a href="https://github.com/npryce/deft">Deft - Easy Distributed Feature Tracking</a>.  
-	By <a href="http://www.natpryce.com">Nat Pryce</a>.
-      </p>
-    </div>
-  </body>
-</html>
+  </section>
+{% end %}  

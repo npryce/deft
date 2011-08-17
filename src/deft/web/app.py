@@ -33,7 +33,7 @@ class FeatureRepresentation(tornado.web.RequestHandler):
     
     def get(self, feature_name):
         feature = self.tracker.feature_named(feature_name)
-        self.render("feature.template", tracker=self.tracker, feature=feature, properties=feature.properties)
+        self.render("feature.template", tracker=self.tracker, feature=feature, markdown=markdown.convert)
 
 
 class PackagedResources(tornado.web.RequestHandler):
