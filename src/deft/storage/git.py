@@ -60,9 +60,6 @@ class GitStorageHistory(object):
         return dict((date, sha) for (date, (time, sha)) in results.iteritems())
 
 
-def is_subtree(tree, name):
-    return tree[name][0] & mode & stat.S_IFDIR
-
 
 class GitTreeStorage(object):
     def __init__(self, repo, tree, storage_root_subdir):
