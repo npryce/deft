@@ -8,7 +8,7 @@ def read(fname):
 
 
 setup(name='Deft',
-      version='0.2.0',
+      version='0.3.0',
       description='Easy Distributed Feature Tracking',
       long_description=read("README.rst"),
       author='Nat Pryce',
@@ -29,15 +29,17 @@ setup(name='Deft',
       platforms=['any'],
       
       provides=['deft'],
-      packages=['deft', 'deft.storage', 'deft.history', 'deft.systests'],
+      packages=['deft', 'deft.storage', 'deft.history', 'deft.systests', 'deft.web'],
       package_dir = {'': 'src'},
-      scripts=['bin/deft', 'bin/deft-cfd'],
+      scripts=['bin/deft', 'bin/deft-cfd', 'bin/deft-web'],
       
       requires=[
         'yaml (==3.10)', 
         'argparse (==1.2)', 
         'functional (==0.4)',
-        'dulwich (==0.7.1)'],
+        'dulwich (==0.7.1)',
+        'tornado (==2.0)',
+        'Markdown (==2.03)'],
       
       test_requires=[
         'nose (1.0.0)',

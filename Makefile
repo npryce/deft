@@ -23,6 +23,8 @@ env: output/lib-src/PyChart-$(PYCHART_VER)
 	$(PYTHON_ENV)/bin/pip install pyYAML
 	$(PYTHON_ENV)/bin/pip install functional
 	$(PYTHON_ENV)/bin/pip install dulwich
+	$(PYTHON_ENV)/bin/pip install tornado
+	$(PYTHON_ENV)/bin/pip install Markdown
 	$(PYTHON_ENV)/bin/pip install nose
 	$(PYTHON_ENV)/bin/pip install pytest
 	$(PYTHON_ENV)/bin/pip install PyHamcrest

@@ -1,0 +1,111 @@
+body {
+    font-family: sans-serif;
+    margin: 32px;
+}
+
+#header {
+    width: 100%;
+    height: 64px;
+    top: 32px;
+    right: 32px;
+    bottom: auto;
+    left: 32px;
+}
+
+#about {
+    font-size: 12px;
+    color: #cccccc;
+    margin-top: 24px;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 24px;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 16px;
+    margin-top: 16px;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, td, th {    
+    border: 1px solid #aaa;
+    vertical-align: top;
+    padding: 8px;
+}
+
+th {
+    font-weight: bold;
+    text-align: left;
+    background: #eeeeee;
+    background: -moz-linear-gradient(top, #ffffff 0%, #e5e5e5 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#e5e5e5));
+    background: -webkit-linear-gradient(top, #ffffff 0%,#e5e5e5 100%);
+    background: -o-linear-gradient(top, #ffffff 0%,#e5e5e5 100%);
+    background: -ms-linear-gradient(top, #ffffff 0%,#e5e5e5 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e5e5e5',GradientType=0 );
+    background: linear-gradient(top, #ffffff 0%,#e5e5e5 100%);
+}
+
+ol {
+    padding-left: 0;
+}
+
+ol li {
+    padding-left: 3em;
+}
+
+table.deft-features {
+    table-layout: fixed;
+    width: 100%;
+}
+
+table.deft-features th {
+    white-space: nowrap;
+}
+
+table.deft-features td {
+    position: relative;
+    background-color: #efefef;
+    padding: 12px;
+}
+
+table.deft-features ol {
+    list-style-position:inside;
+}
+
+table.deft-features li {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 8px;
+    border: 1px solid #aaa;
+    background-color: white;
+}
+
+table.deft-features li h2 {
+    font-size: 18px;
+    font-weight: normal;
+    margin-top: 0px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+table.deft-features li p {
+    padding-bottom: 4px;
+    padding-right: 4px;
+    font-size: smaller;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+a.deft-feature-link {
+    text-decoration: none;
+}

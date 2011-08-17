@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>Deft</title>
+    <link rel="stylesheet" type="text/css" href="/static/html5reset-1.6.1.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/deft.css"/>
+    <script type="application/javascript" src="/static/jquery-1.6.2.min.js"></script>
+    <script type="application/javascript" src="/static/deft.js"></script>
+  </head>
+  <body>
+    <div id="main">
+      <table class="deft-features">
+	<tr>
+	  {% for status in tracker.statuses %}
+	  <th>{{status}}</th>
+	  {% end %}
+	</tr>
+	<tr>
+	  {% for status in tracker.statuses %}
+	  <td>
+	    <ol>
+	      {% for feature in tracker.features_with_status(status) %}
+	      <li>
+		<h2><a class="deft-feature-link" href="{{reverse_url('feature', feature.name)}}">{{feature.name}}</a></h2>
+		<p>{% autoescape None %}{{excerpt(feature.description)}}{% autoescape %}</p>
+	      </li>
+	      {% end %}
+	    </ol>
+	  </td>
+	  {% end %}
+	</tr>
+      </table>
+    </div>
+    
+    <footer id="about">
+      <p><a href="https://github.com/npryce/deft">Deft - Easy Distributed Feature Tracking</a>.  
+	By <a href="http://www.natpryce.com">Nat Pryce</a>.
+      </p>
+    </div>
+  </body>
+</html>

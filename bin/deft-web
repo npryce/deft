@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+import deft.web.app
+
+deft.web.app.main()
