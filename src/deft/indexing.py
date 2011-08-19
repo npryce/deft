@@ -9,6 +9,10 @@ class PriorityIndex:
         self._features_by_priority = list(feature_names_in_priority_order)
         self._priorities_by_feature = None
     
+    @property
+    def is_empty(self):
+        return len(self) == 0
+        
     def __len__(self):
         return len(self._features_by_priority)
     

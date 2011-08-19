@@ -319,7 +319,7 @@ class CommandLineInterface(object):
     
     @with_tracker
     def run_statuses(self, tracker, args):
-        for s in tracker.statuses:
+        for s in tracker.statuses():
             self.println(s)
     
     @with_tracker

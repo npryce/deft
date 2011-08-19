@@ -1,5 +1,7 @@
 {% extends "layout.template" %}
 
+{% block title %}: {{feature.name}} ({{feature.status}}){% end %}
+
 {% block nav %}
   <p><a id="back" href="/">Back</a></p>
 {% end %}

@@ -174,9 +174,8 @@ class FeatureTracker(object):
         status_index.append(name)
         self._save_status_index(status)
     
-    @property
-    def statuses(self):
-        return sorted([k for k in sorted(self._status_index.keys()) if self._status_index[k]])
+    def statuses(self, include_empty=False):
+        return sorted([k for k in self._status_index.keys() if include_empty or not self._status_index[k].is_empty])
     
     def feature_named(self, name):
         if self._has_feature_named(name):

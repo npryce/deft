@@ -1,20 +1,24 @@
 {% extends "layout.template" %}
 
+{% block nav %}
+<!-- <p><a href="">New Feature</a> | <a href="">Configure</a> | <a href="">Help</a></p> -->
+{% end %}
+
 {% block main %}
       <table class="deft-features">
 	<tr>
-	  {% for status in tracker.statuses %}
+	  {% for status in tracker.statuses(include_empty=True) %}
 	  <th>{{status}}</th>
 	  {% end %}
 	</tr>
 	<tr>
-	  {% for status in tracker.statuses %}
+	  {% for status in tracker.statuses(include_empty=True) %}
 	  <td>
 	    <ol>
 	      {% for feature in tracker.features_with_status(status) %}
 	      <li>
 		<h2><a class="deft-feature-link" href="{{reverse_url('feature', feature.name)}}">{{feature.name}}</a></h2>
-		<p>{% autoescape None %}{{excerpt(feature.description)}}{% autoescape %}</p>
+		{% autoescape None %}{{excerpt(feature.description)}}{% autoescape %}
 	      </li>
 	      {% end %}
 	    </ol>

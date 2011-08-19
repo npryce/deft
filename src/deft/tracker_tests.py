@@ -29,7 +29,7 @@ def assert_priority_order(description, tracker, features, status=None):
 
 def assert_features_not_duplicated_in_indices(description, tracker):
     counts = Counter()
-    for status in tracker.statuses:
+    for status in tracker.statuses():
         for f in tracker.features_with_status(status):
             counts[f.name] += 1
     
@@ -158,18 +158,24 @@ class FeatureTracker_HappyPath_Tests:
         dave = self.tracker.create(name="dave", status="T")
         eve = self.tracker.create(name="eve", status="S")
         
-        assert_that(self.tracker.statuses, equal_to(["S", "T", "U"]))
+        assert_that(self.tracker.statuses(), equal_to(["S", "T", "U"]))
         
-    def test_does_not_list_empty_status_indices(self):
+    def test_does_not_list_empty_status_indices_by_default(self):
         alice = self.tracker.create(name="alice", status="S")
         bob = self.tracker.create(name="bob", status="U")
         carol = self.tracker.create(name="carol", status="T")
         dave = self.tracker.create(name="dave", status="T")
         eve = self.tracker.create(name="eve", status="S")
         
-        bob.status = "V"
+        bob.status = "V" # U is now empty
         
-        assert_that(self.tracker.statuses, equal_to(["S", "T", "V"]))
+        assert_that(self.tracker.statuses(), equal_to(["S", "T", "V"]))
+        
+
+    def test_can_list_empty_status_indices(self):
+        self.test_does_not_list_empty_status_indices_by_default()
+        
+        assert_that(self.tracker.statuses(include_empty=True), equal_to(["S", "T", "U", "V"]))
         
     def test_an_unused_status_is_reported_as_empty(self):
         assert_status("never used status", self.tracker, {"unused_status": []})

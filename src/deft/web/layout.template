@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="/static/deft.css"/>
     <script type="application/javascript" src="/static/jquery-1.6.2.min.js"></script>
     <script type="application/javascript" src="/static/deft.js"></script>
+    {% block head %}{% end %}
   </head>
   <body>
     <nav id="nav">

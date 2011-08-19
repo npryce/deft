@@ -175,3 +175,6 @@ class PriorityIndex_Test:
         assert_that(repr(PriorityIndex(['alice', 'bob', 'carol'])), 
                     equal_to("PriorityIndex(['alice', 'bob', 'carol'])"))
 
+    def test_reports_if_empty(self):
+        assert_that(not PriorityIndex(['alice', 'bob', 'carol']).is_empty)
+        assert_that(PriorityIndex([]).is_empty)
