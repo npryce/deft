@@ -1,5 +1,9 @@
 {% extends "layout.template" %}
 
+{% block head %}
+    <script type="text/javascript" src="/static/deft.js"></script>
+{% end %}
+
 {% block nav %}
 <!-- <p><a href="">New Feature</a> | <a href="">Configure</a> | <a href="">Help</a></p> -->
 {% end %}
@@ -14,9 +18,9 @@
 	<tr>
 	  {% for status in tracker.statuses(include_empty=True) %}
 	  <td>
-	    <ol>
+	    <ol class="deft-status" data-deft-status="{{status}}">
 	      {% for feature in tracker.features_with_status(status) %}
-	      <li>
+	      <li data-deft-feature="{{feature.name}}">
 		<h2><a class="deft-feature-link" href="{{reverse_url('feature', feature.name)}}">{{feature.name}}</a></h2>
 		{% autoescape None %}{{excerpt(feature.description)}}{% autoescape %}
 	      </li>

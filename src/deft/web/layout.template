@@ -1,19 +1,23 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Deft {% block title %}{% end %}</title>
     <link rel="stylesheet" type="text/css" href="/static/html5reset-1.6.1.css"/>
     <link rel="stylesheet" type="text/css" href="/static/deft.css"/>
-    <script type="application/javascript" src="/static/jquery-1.6.2.min.js"></script>
-    <script type="application/javascript" src="/static/deft.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui-1.8.16.custom.min.js"></script>
     {% block head %}{% end %}
   </head>
+  
   <body>
     <nav id="nav">
       {% block nav %}{% end %}
     </nav>
+    
     <div id="main">
       {% block main %}{% end %}
     </div>
+    
     <footer id="about">
       <p><a href="https://github.com/npryce/deft">Deft - Easy Distributed Feature Tracking</a>.  
 	By <a href="http://www.natpryce.com">Nat Pryce</a>.

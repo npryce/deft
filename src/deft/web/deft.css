@@ -104,3 +104,7 @@ table.deft-features li p {
 a.deft-feature-link {
     text-decoration: none;
 }
+
+.deft-drag-placeholder {
+    border-style: dashed;
+}
